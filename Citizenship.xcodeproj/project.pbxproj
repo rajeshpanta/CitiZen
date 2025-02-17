@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		76A020F22D0E563800F31771 /* Lok-Citizenship.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lok-Citizenship.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		76A020F22D0E563800F31771 /* Citizenship.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Citizenship.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -36,7 +36,7 @@
 		76A020F32D0E563800F31771 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				76A020F22D0E563800F31771 /* Lok-Citizenship.app */,
+				76A020F22D0E563800F31771 /* Citizenship.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -44,9 +44,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		76A020F12D0E563800F31771 /* Lok-Citizenship */ = {
+		76A020F12D0E563800F31771 /* Citizenship */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 76A021002D0E563900F31771 /* Build configuration list for PBXNativeTarget "Lok-Citizenship" */;
+			buildConfigurationList = 76A021002D0E563900F31771 /* Build configuration list for PBXNativeTarget "Citizenship" */;
 			buildPhases = (
 				76A020EE2D0E563800F31771 /* Sources */,
 				76A020EF2D0E563800F31771 /* Frameworks */,
@@ -59,11 +59,11 @@
 			fileSystemSynchronizedGroups = (
 				76A020F42D0E563800F31771 /* Lok-Citizenship */,
 			);
-			name = "Lok-Citizenship";
+			name = Citizenship;
 			packageProductDependencies = (
 			);
 			productName = "Lok-Citizenship";
-			productReference = 76A020F22D0E563800F31771 /* Lok-Citizenship.app */;
+			productReference = 76A020F22D0E563800F31771 /* Citizenship.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -81,7 +81,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 76A020ED2D0E563800F31771 /* Build configuration list for PBXProject "Lok-Citizenship" */;
+			buildConfigurationList = 76A020ED2D0E563800F31771 /* Build configuration list for PBXProject "Citizenship" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -95,7 +95,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				76A020F12D0E563800F31771 /* Lok-Citizenship */,
+				76A020F12D0E563800F31771 /* Citizenship */,
 			);
 		};
 /* End PBXProject section */
@@ -301,7 +301,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		76A020ED2D0E563800F31771 /* Build configuration list for PBXProject "Lok-Citizenship" */ = {
+		76A020ED2D0E563800F31771 /* Build configuration list for PBXProject "Citizenship" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				76A020FE2D0E563900F31771 /* Debug */,
@@ -310,7 +310,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		76A021002D0E563900F31771 /* Build configuration list for PBXNativeTarget "Lok-Citizenship" */ = {
+		76A021002D0E563900F31771 /* Build configuration list for PBXNativeTarget "Citizenship" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				76A021012D0E563900F31771 /* Debug */,
