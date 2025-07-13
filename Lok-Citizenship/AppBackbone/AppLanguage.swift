@@ -33,7 +33,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var sttLocale: String {
         switch self {
         case .english: return "en-US"
-        case .nepali:  return "ne-NP"  // or "hi-IN" if you prefer
+        case .nepali:  return "ne-NP"
         case .spanish: return "es-ES"
         case .chinese: return "zh-CN"
         }

@@ -5,7 +5,7 @@ struct ContentView: View {
         NavigationStack {
             VStack(spacing: 30) {
                 Spacer()
-                Text("Welcome!\nYour Citizenship Journey Begins")
+                Text("Welcome!\nYour American Citizenship Journey Begins...")
                     .font(.largeTitle).bold()
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white)
@@ -13,7 +13,7 @@ struct ContentView: View {
 
                 Spacer()
 
-                NavigationLink("Let's Begin 📖") {
+                NavigationLink("📖 Let's Begin 📖") {
                     LanguageSelectionView()
                 }
                 .font(.title2).bold()

@@ -20,19 +20,19 @@ struct PracticeSelectionView: View {
         switch language {
         case .english:
             return [
-                PracticeItem(title: "Practice 1 – Easy Questions",
+                PracticeItem(title: "Practice 1 – Very Easy",
                              view: AnyView(Practice1()),
                              minHeight: 20, fontSize: 16),
-                PracticeItem(title: "Practice 2 – Easy Questions",
+                PracticeItem(title: "Practice 2 – Easy",
                              view: AnyView(Practice2()),
                              minHeight: 25, fontSize: 18),
-                PracticeItem(title: "Practice 3 – Medium Questions",
+                PracticeItem(title: "Practice 3 – Medium ",
                              view: AnyView(Practice3()),
                              minHeight: 30, fontSize: 20),
-                PracticeItem(title: "Practice 4 – Hard Questions",
+                PracticeItem(title: "Practice 4 – Hard",
                              view: AnyView(Practice4()),
                              minHeight: 35, fontSize: 22),
-                PracticeItem(title: "Practice 5 – Hardest Questions",
+                PracticeItem(title: "Practice 5 – Problamatic",
                              view: AnyView(Practice5()),
                              minHeight: 40, fontSize: 24)
             ]
@@ -100,7 +100,7 @@ struct PracticeSelectionView: View {
 
     private var pageTitle: String {
         switch language {
-        case .english: return "Choose Your Practice 👇🏻"
+        case .english: return "Pick A Practice Set 👇🏻"
         case .nepali:  return "आफ्नो अभ्यास छान्नुहोस् 👇🏻"
         case .spanish: return "Elige tu práctica 👇🏻"
         case .chinese: return "选择你的练习👇🏻"

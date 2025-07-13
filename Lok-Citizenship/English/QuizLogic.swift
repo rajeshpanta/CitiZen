@@ -1,4 +1,7 @@
 import Foundation
+import Combine
+import AVFoundation
+import Speech
 import SwiftUI
 
 class QuizLogic: ObservableObject {

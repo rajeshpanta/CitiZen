@@ -1,14 +1,33 @@
 import SwiftUI
+import Combine
+import AVFoundation
+import Speech
 
 struct अभ्यास5: View {
-    @StateObject var quizLogic = Quizतर्क()
-    @State private var selectedAnswer: Int? = nil
-    @State private var showAnswerFeedback: Bool = false
-    @State private var isAnswerCorrect: Bool = false
-    
-    @State private var showQuitConfirmation: Bool = false
-    @Environment(\.presentationMode) var presentationMode
-    @State private var isAnswered: Bool = false
+
+    @StateObject private var quizLogic = Quizतर्क()
+
+    @State private var selectedAnswer: Int?
+    @State private var showAnswerFeedback = false
+    @State private var isAnswerCorrect   = false
+    @State private var isAnswered        = false
+
+    // Live TTS / STT
+    @State private var isSpeaking  = false
+    @State private var isRecording = false
+    @State private var transcription = ""
+    @State private var authorizationStatus: SFSpeechRecognizerAuthorizationStatus = .notDetermined
+    @State private var micPermissionDenied = false
+    @State private var ttsChain: AnyCancellable?
+
+    // Quit alert
+    @State private var showQuitConfirmation = false
+    @Environment(\.presentationMode) private var presentationMode
+
+    // 2 ▸ SERVICES ───────────────────────────────────────────
+    private let tts: TextToSpeechService = ServiceLocator.shared.ttsService
+    private let stt: SpeechToTextService = ServiceLocator.shared.sttService
+
     
     let questions: [BilingualQuestion] = [
         BilingualQuestion(
@@ -54,7 +73,7 @@ struct अभ्यास5: View {
         BilingualQuestion(
             englishText: "What are two rights in the Declaration of Independence?",
             nepaliText: "स्वतन्त्रता घोषणापत्रमा उल्लेखित दुई अधिकार के हुन्?",
-            englishOptions: ["Right to bear arms & right to vote", "Right to work & right to protest", "Life and Liberty", "Freedom of speech & freedom of religion"],
+            englishOptions: ["Right to bear arms and right to vote", "Right to work and right to protest", "Life and Liberty", "Freedom of speech and freedom of religion"],
             nepaliOptions: ["हतियार बोक्ने अधिकार र मतदान गर्ने अधिकार", "काम गर्ने अधिकार र विरोध गर्ने अधिकार", "जीवन र स्वतन्त्रता", "बोल्ने स्वतन्त्रता र धर्मको स्वतन्त्रता"],
             correctAnswer: 2
         ),
@@ -94,7 +113,7 @@ struct अभ्यास5: View {
         BilingualQuestion(
             englishText: "What was the main concern of the United States during the Cold War?",
             nepaliText: "शीत युद्धको समयमा संयुक्त राज्य अमेरिकाको मुख्य चिन्ता के थियो?",
-            englishOptions: ["Nuclear disarmament", "Terrorism", "The spread of communism", "World War III"],
+            englishOptions: ["Nuclear disarmament", "Terrorism", "The spread of communism", "World War 3"],
             nepaliOptions: ["परमाणु निःशस्त्रीकरण", "आतंकवाद", "साम्यवादको फैलावट", "तेस्रो विश्वयुद्ध"],
             correctAnswer: 2
         ),
@@ -132,179 +151,384 @@ struct अभ्यास5: View {
 
     ]
 
-    
+
+    // Helper: locale for TTS/STT
+    private func localeCode() -> String {
+        quizLogic.selectedLanguage == .english ? "en-US" : "hi-IN"
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // MARK:  BODY
+    // ─────────────────────────────────────────────────────────
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                HStack {
-                    Button(action: { quizLogic.switchLanguage(to: .english) }) {
-                        Text("🇺🇸 English")
-                            .padding()
-                            .background(quizLogic.selectedLanguage == .english ? Color.blue : Color.gray)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    Spacer()
-                    
-                    Button(action: { quizLogic.switchLanguage(to: .nepali) }) {
-                        Text("🇳🇵 नेपाली")
-                            .padding()
-                            .background(quizLogic.selectedLanguage == .nepali ? Color.blue : Color.gray)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
+
+                languageToggle
+
+                /* live progress bar & counters */
+                VStack {
+                    ProgressView(value: Double(quizLogic.attemptedQuestions),
+                                 total: Double(max(quizLogic.totalQuestions, 1)))
+                        .accentColor(.green)
+                    Text("\(quizLogic.attemptedQuestions)/\(quizLogic.totalQuestions)  •  " +
+                         (quizLogic.selectedLanguage == .english
+                          ? "Score \(quizLogic.scorePercentage)%"
+                          : "स्कोर \(quizLogic.scorePercentage)%"))
+                        .font(.subheadline)
+                        .foregroundColor(.yellow)
                 }
-                .padding()
-                
-                if quizLogic.showResult {
-                    Text(quizLogic.selectedLanguage == .english ? "Quiz Completed!" : "क्विज समाप्त भयो!")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    Text(quizLogic.selectedLanguage == .english ? "Correct Answers: \(quizLogic.correctAnswers)" : "सही उत्तरहरू: \(quizLogic.correctAnswers)")
-                        .foregroundColor(.green)
-                    Text(quizLogic.selectedLanguage == .english ? "Incorrect Answers: \(quizLogic.incorrectAnswers)" : "गलत उत्तरहरू: \(quizLogic.incorrectAnswers)")
-                        .foregroundColor(.red)
-                    
-                    Button(quizLogic.selectedLanguage == .english ? "Restart Quiz" : "पुन: सुरु गर्नुहोस्") {
-                        quizLogic.startQuiz()
-                        selectedAnswer = nil
-                        showAnswerFeedback = false
-                        isAnswered = false
-                    }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    
+                .padding(.horizontal)
+
+                if quizLogic.showResult || quizLogic.hasFailed {
+                    resultOrFailView
                 } else {
-                    Text("\(quizLogic.currentQuestionIndex + 1). \(quizLogic.selectedLanguage == .english ? quizLogic.currentQuestion.englishText : quizLogic.currentQuestion.nepaliText)")
-                        .font(.title).bold()
-                        .foregroundColor(.white)
-                        .padding()
-                        .padding(.bottom, 20)
-                    
-                    ForEach(0..<quizLogic.currentQuestion.englishOptions.count, id: \.self) { index in
-                        Button(action: {
-                            if !isAnswered {
-                                selectedAnswer = index
-                                isAnswerCorrect = quizLogic.answerQuestion(index)
-                                showAnswerFeedback = true
-                                isAnswered = true
-                            }
-                        }) {
-                            Text(quizLogic.selectedLanguage == .english ?
-                                 quizLogic.currentQuestion.englishOptions[index] :
-                                    quizLogic.currentQuestion.nepaliOptions[index])
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                            .background(
-                                isAnswered
-                                ? (index == quizLogic.currentQuestion.correctAnswer ? Color.green : Color.red)
-                                : Color.blue
-                            )
-                            .cornerRadius(10)
+                    questionCard
+                    micBox
+                }
+            }
+            .padding(.bottom, 40)
+        }
+        .padding()
+        .background(background)
+        .navigationBarBackButtonHidden(true)
+        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { quitButton } }
+        .alert(isPresented: $showQuitConfirmation, content: quitAlert)
+        .alert("🎙️ माइक्रोफोन अनुमति छैन", isPresented: $micPermissionDenied) {
+            Button("OK", role: .cancel) {}
+        }
+
+        /* lifecycle */
+        .onAppear {
+            quizLogic.questions = questions
+            quizLogic.startQuiz()
+            stt.requestAuthorization()
+        }
+        .onReceive(tts.isSpeakingPublisher)  { isSpeaking  = $0 }
+        .onReceive(stt.isRecordingPublisher) { rec in
+            if isRecording && !rec { checkVoiceAnswer() }
+            isRecording = rec
+        }
+        .onReceive(stt.transcriptionPublisher)       { transcription      = $0 }
+        .onReceive(stt.authorizationStatusPublisher) { authorizationStatus = $0 }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // MARK:  SUB-VIEWS
+    // ════════════════════════════════════════════════════════
+
+    /* language toggle */
+    private var languageToggle: some View {
+        HStack {
+            langButton("🇺🇸 English", .english)
+            Spacer()
+            langButton("🇳🇵 नेपाली",  .nepali)
+        }
+        .padding(.horizontal)
+    }
+
+    private func langButton(_ label: String, _ lang: AppLanguage) -> some View {
+        Button(label) {
+            stopAllAudio(); quizLogic.switchLanguage(to: lang)
+        }
+        .padding()
+        .background(quizLogic.selectedLanguage == lang ? Color.blue : Color.gray)
+        .foregroundColor(.white)
+        .cornerRadius(10)
+    }
+
+    /* question + answers */
+    private var questionCard: some View {
+        VStack(spacing: 20) {
+
+            /* Question + 🔊 */
+            VStack(alignment: .leading, spacing: 6) {
+                Text("\(quizLogic.selectedLanguage == .english ? "Question" : "प्रश्न") " +
+                     "\(quizLogic.currentQuestionIndex + 1)/\(quizLogic.totalQuestions)")
+                    .font(.subheadline).foregroundColor(.yellow)
+
+                Text(textQuestion())
+                    .font(.title).bold().foregroundColor(.white)
+
+                HStack {
+                    Spacer()
+                    if isSpeaking {
+                        Button { stopAllAudio() } label: {
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.system(size: 28)).foregroundColor(.red)
                         }
-                        .disabled(isAnswered)
-                    }
-                    
-                    if showAnswerFeedback {
-                        Text(isAnswerCorrect ? "✅ \(quizLogic.selectedLanguage == .english ? "Correct!" : "सही!")✅" : "❌ \(quizLogic.selectedLanguage == .english ? "Wrong!" : "गलत!")❌")
-                            .font(.headline)
-                            .foregroundColor(isAnswerCorrect ? .green : .red)
-                            .padding()
-                        
-                        Button(quizLogic.selectedLanguage == .english ? "Next Question" : "अर्को प्रश्न") {
-                            quizLogic.moveToNextQuestion()
-                            showAnswerFeedback = false
-                            selectedAnswer = nil
-                            isAnswered = false
-                        }
-                        .padding()
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        
+                        .padding(.trailing, 24)
                     } else {
-                        HStack {
-                            Button(action: {
-                                quizLogic.previousQuestion()
-                                selectedAnswer = nil
-                                showAnswerFeedback = false
-                                isAnswered = false
-                            }) {
-                                Text(quizLogic.selectedLanguage == .english ? "Previous" : "अघिल्लो")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.gray)
-                                    .cornerRadius(10)
-                            }
-                            .disabled(quizLogic.currentQuestionIndex == 0)
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                quizLogic.moveToNextQuestion()
-                                selectedAnswer = nil
-                                showAnswerFeedback = false
-                                isAnswered = false
-                            }) {
-                                Text(quizLogic.selectedLanguage == .english ? "Skip" : "छोड्नुहोस्")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.orange)
-                                    .cornerRadius(10)
-                            }
-                            .disabled(quizLogic.showResult)
+                        Button {
+                            stopAllAudio(); speakQuestionAndOptions()
+                        } label: {
+                            Image(systemName: "speaker.wave.1.fill")
+                                .font(.system(size: 28)).foregroundColor(.blue)
                         }
-                        .padding()
+                        .padding(.trailing, 24)
+                        .disabled(isRecording || isAnswered)
                     }
                 }
+            }
+
+            /* answer buttons */
+            ForEach(quizLogic.currentQuestion.englishOptions.indices, id: \.self) { idx in
+                Button {
+                    stopAllAudio()
+                    guard !isAnswered else { return }
+                    selectedAnswer     = idx
+                    isAnswerCorrect    = quizLogic.answerQuestion(idx)
+                    showAnswerFeedback = true
+                    isAnswered         = true
+                } label: {
+                    Text(textOption(idx))
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(
+                            isAnswered
+                            ? (idx == quizLogic.currentQuestion.correctAnswer ? Color.green : Color.red)
+                            : Color.blue
+                        )
+                        .cornerRadius(10)
+                }
+                .disabled(isAnswered)
+            }
+
+            if showAnswerFeedback { feedbackAndNext } else { prevAndSkip }
+        }
+        .padding(.horizontal)
+    }
+
+    /* mic + transcript */
+    private var micBox: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("🎤 " + (quizLogic.selectedLanguage == .english ? "Your Answer:" : "तपाईंको उत्तर:"))
+                    .font(.headline).foregroundColor(.white)
+                Spacer()
+                micButton
+            }
+
+            ScrollView {
+                Text(transcription)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+            }
+            .frame(maxHeight: 120)
+        }
+        .padding(.horizontal)
+    }
+
+    private var micButton: some View {
+        Group {
+            if isRecording {
+                Button { stopAllAudio() } label: {
+                    Image(systemName: "mic.circle.fill")
+                        .font(.system(size: 40)).foregroundColor(.red)
+                }
+            } else {
+                Button {
+                    guard authorizationStatus == .authorized, !isAnswered else {
+                        if authorizationStatus != .authorized { micPermissionDenied = true }
+                        return
+                    }
+                    stopAllAudio()
+                    stt.startRecording(withOptions: optionsForCurrentLanguage(),
+                                       localeCode : localeCode(),
+                                       offlineOnly: (quizLogic.selectedLanguage == .english))
+                } label: {
+                    Image(systemName: "mic.circle")
+                        .font(.system(size: 40)).foregroundColor(.blue)
+                }
+                .disabled(isSpeaking || isAnswered)
             }
         }
-            .navigationBarBackButtonHidden(true)
-            .padding()
-            .onAppear {
-                quizLogic.questions = questions
-                quizLogic.startQuiz()
+        .padding(.trailing, 24)
+    }
+
+    /* nav buttons when NOT answered yet */
+    private var prevAndSkip: some View {
+        HStack {
+            Button(quizLogic.selectedLanguage == .english ? "Previous" : "अघिल्लो") {
+                stopAllAudio(); quizLogic.previousQuestion(); resetPerQuestionState()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(
-                Image("USANepal")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                    .overlay(Color.black.opacity(0.8))
-            )
-        
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text(quizLogic.selectedLanguage == .english ? "Practice 5" : "अभ्यास ५")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.green)
-                    }
-                }
-        
-            .navigationBarItems(trailing:
-                Button(action: {
-                    showQuitConfirmation = true
-                }) {
-                    Text(quizLogic.selectedLanguage == .english ? "Quit" : "छोड्नुहोस्")
-                        .foregroundColor(.red)
-                        .font(.title)
-                }
-            )
-            .alert(isPresented: $showQuitConfirmation) {
-                Alert(
-                    title: Text(quizLogic.selectedLanguage == .english ? "Quit Quiz?" : "क्विज छोड्नुहुन्छ?"),
-                    message: Text(quizLogic.selectedLanguage == .english ? "Are you sure you want to quit?" : "के तपाईँ पक्का छोड्न चाहनुहुन्छ?"),
-                    primaryButton: .destructive(Text(quizLogic.selectedLanguage == .english ? "Yes" : "हो")) {
-                        presentationMode.wrappedValue.dismiss()
-                    },
-                    secondaryButton: .cancel(Text(quizLogic.selectedLanguage == .english ? "No" : "होइन"))
-                )
+            .disabled(quizLogic.currentQuestionIndex == 0)
+            .foregroundColor(.white).padding().background(Color.gray).cornerRadius(10)
+
+            Spacer()
+
+            Button(quizLogic.selectedLanguage == .english ? "Skip" : "छोड्नुहोस्") {
+                stopAllAudio(); quizLogic.moveToNextQuestion(); resetPerQuestionState()
             }
+            .disabled(quizLogic.hasFailed || quizLogic.showResult)
+            .foregroundColor(.white).padding().background(Color.orange).cornerRadius(10)
         }
     }
+
+    /* feedback view when answered */
+    private var feedbackAndNext: some View {
+        VStack(spacing: 8) {
+            Text(isAnswerCorrect
+                 ? (quizLogic.selectedLanguage == .english ? "✅ Correct!" : "✅ सही!")
+                 : (quizLogic.selectedLanguage == .english ? "❌ Wrong!"   : "❌ गलत!"))
+                .font(.headline).foregroundColor(isAnswerCorrect ? .green : .red)
+
+            Text(quizLogic.selectedLanguage == .english
+                 ? "Mistakes: \(quizLogic.incorrectAnswers)/4"
+                 : "गलत: \(quizLogic.incorrectAnswers)/4")
+                .foregroundColor(.orange)
+
+            Button(quizLogic.selectedLanguage == .english ? "Next Question" : "अर्को प्रश्न") {
+                stopAllAudio(); quizLogic.moveToNextQuestion(); resetPerQuestionState()
+            }
+            .padding().background(Color.orange).foregroundColor(.white).cornerRadius(10)
+        }
+    }
+
+    /* result / fail */
+    private var resultOrFailView: some View {
+        VStack(spacing: 12) {
+
+            if quizLogic.hasFailed {
+                Text(quizLogic.selectedLanguage == .english
+                     ? "You reached 4 mistakes."
+                     : "तपाईंले ४ गल्ती गर्नुभयो।")
+                    .font(.largeTitle).bold().foregroundColor(.red)
+                Text(quizLogic.selectedLanguage == .english
+                     ? "Better luck next time!"
+                     : "अर्को पटक सफल हुनुहोस्!")
+                    .foregroundColor(.white)
+            } else {
+                Text(quizLogic.selectedLanguage == .english
+                     ? "Quiz Completed!"
+                     : "क्विज सम्पन्न!")
+                    .font(.largeTitle).bold().foregroundColor(.white)
+            }
+
+            Text(quizLogic.selectedLanguage == .english
+                 ? "Correct: \(quizLogic.correctAnswers)"
+                 : "सही: \(quizLogic.correctAnswers)")
+                .foregroundColor(.green)
+
+            Text(quizLogic.selectedLanguage == .english
+                 ? "Incorrect: \(quizLogic.incorrectAnswers)"
+                 : "गलत: \(quizLogic.incorrectAnswers)")
+                .foregroundColor(.red)
+
+            Text(quizLogic.selectedLanguage == .english
+                 ? "Score: \(quizLogic.scorePercentage)%"
+                 : "स्कोर: \(quizLogic.scorePercentage)%")
+                .font(.headline).foregroundColor(.yellow)
+
+            Button(quizLogic.selectedLanguage == .english ? "Restart Quiz" : "पुनः सुरु") {
+                stopAllAudio(); quizLogic.startQuiz(); resetPerQuestionState()
+            }
+            .padding().background(Color.blue).foregroundColor(.white).cornerRadius(10)
+        }
+        .padding()
+    }
+
+    // Background
+    private var background: some View {
+        ZStack {
+            Image("USANepal").resizable().scaledToFill()
+            Color.black.opacity(0.8)
+        }
+        .ignoresSafeArea()
+    }
+
+    /* quit button + alert */
+    private var quitButton: some View {
+        Button(quizLogic.selectedLanguage == .english ? "Quit" : "छोड्नुहोस्") {
+            stopAllAudio(); showQuitConfirmation = true
+        }
+        .foregroundColor(.red)
+    }
+
+    private func quitAlert() -> Alert {
+        Alert(
+            title: Text(quizLogic.selectedLanguage == .english ? "Quit Quiz?" : "क्विज छोड्नुहुन्छ?"),
+            message: Text(quizLogic.selectedLanguage == .english ? "Are you sure you want to quit?" : "के तपाईँ पक्का छोड्न चाहनुहुन्छ?"),
+            primaryButton: .destructive(Text(quizLogic.selectedLanguage == .english ? "Yes" : "हो")) {
+                stopAllAudio(); presentationMode.wrappedValue.dismiss()
+            },
+            secondaryButton: .cancel(Text(quizLogic.selectedLanguage == .english ? "No" : "होइन"))
+        )
+    }
+
+    // ════════════════════════════════════════════════════════
+    // MARK:  SPEECH HELPERS
+    // ════════════════════════════════════════════════════════
+
+    private func speakQuestionAndOptions() {
+        let lc = localeCode()
+        var chain: AnyPublisher<Void, Never> = tts
+            .speak(textQuestion(), languageCode: lc)
+            .flatMap { _ in Just(()).delay(for: .seconds(1.5), scheduler: DispatchQueue.main) }
+            .flatMap { tts.speak(optionsIntroText(), languageCode: lc) }
+            .flatMap { _ in Just(()).delay(for: .seconds(1.0), scheduler: DispatchQueue.main) }
+            .eraseToAnyPublisher()
+
+        for opt in optionsForCurrentLanguage() {
+            chain = chain
+                .flatMap { tts.speak(opt, languageCode: lc) }
+                .flatMap { _ in Just(()).delay(for: .seconds(1.0), scheduler: DispatchQueue.main) }
+                .eraseToAnyPublisher()
+        }
+        ttsChain = chain.sink { _ in }
+    }
+
+    private func checkVoiceAnswer() {
+        guard !isAnswered else { return }
+        let spoken = transcription.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let idx = optionsForCurrentLanguage().firstIndex(where: {
+            let lcOpt = $0.lowercased()
+            return spoken == lcOpt || spoken.contains(lcOpt)
+        }) else { return }
+
+        stopAllAudio()
+        isAnswered         = true
+        selectedAnswer     = idx
+        isAnswerCorrect    = quizLogic.answerQuestion(idx)
+        showAnswerFeedback = true
+    }
+
+    private func resetPerQuestionState() {
+        selectedAnswer     = nil
+        isAnswered         = false
+        showAnswerFeedback = false
+        transcription      = ""
+    }
+
+    private func stopAllAudio() {
+        ttsChain?.cancel(); ttsChain = nil
+        tts.stopSpeaking(); stt.stopRecording()
+    }
+
+    // Helpers – language‐specific strings --------------------
+    private func textQuestion() -> String {
+        quizLogic.selectedLanguage == .english
+        ? quizLogic.currentQuestion.englishText
+        : quizLogic.currentQuestion.nepaliText
+    }
+
+    private func textOption(_ idx: Int) -> String {
+        quizLogic.selectedLanguage == .english
+        ? quizLogic.currentQuestion.englishOptions[idx]
+        : quizLogic.currentQuestion.nepaliOptions[idx]
+    }
+
+    private func optionsIntroText() -> String {
+        quizLogic.selectedLanguage == .english ? "Your options are:" : "तपाईंका विकल्पहरू:"
+    }
+
+    private func optionsForCurrentLanguage() -> [String] {
+        quizLogic.selectedLanguage == .english
+        ? quizLogic.currentQuestion.englishOptions
+        : quizLogic.currentQuestion.nepaliOptions
+    }
+}

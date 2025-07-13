@@ -1,96 +1,103 @@
 import Foundation
 import SwiftUI
 
-class Quizतर्क: ObservableObject {
+// ─────────────────────────────────────────────────────────────
+// MARK:  Language & Question
+// ─────────────────────────────────────────────────────────────
+//enum Language { case english, nepali }
+
+struct BilingualQuestion {
+    let englishText:    String
+    let nepaliText:     String
+    let englishOptions: [String]
+    let nepaliOptions:  [String]
+    let correctAnswer:  Int
+}
+
+// ─────────────────────────────────────────────────────────────
+// MARK:  Quiz Engine
+// ─────────────────────────────────────────────────────────────
+/// <#Description#>
+final class Quizतर्क: ObservableObject {
+
+    // Published ------------------------------------------------
     @Published var questions: [BilingualQuestion] = []
-    @Published var currentQuestionIndex: Int = 0
-    @Published var correctAnswers: Int = 0
-    @Published var incorrectAnswers: Int = 0
-    @Published var showResult: Bool = false
-    @Published var selectedLanguage: Language = .english // ✅ Language Toggle
+    @Published var currentQuestionIndex           = 0
+    @Published var correctAnswers                 = 0
+    @Published var incorrectAnswers               = 0
+    @Published var showResult                     = false
+    @Published var hasFailed                      = false
+    @Published var selectedLanguage: AppLanguage  = .english
 
-    enum Language {
-        case english, nepali
-    }
+    
+    // MARK: - NEW initializer  🔥
+        init(initialLanguage: AppLanguage = .nepali) {
+            self.selectedLanguage = initialLanguage
+        }
 
+    // Config ---------------------------------------------------
+    private let maxMistakesAllowed = 4
+
+    // Safe access (⚠️  FIXED)
     var currentQuestion: BilingualQuestion {
-        guard currentQuestionIndex < questions.count else {
+        guard currentQuestionIndex < questions.count, !questions.isEmpty else {
+            // placeholder used while the array is still empty
             return BilingualQuestion(
-                englishText: "No question available",
-                nepaliText: "प्रश्न उपलब्ध छैन",
+                englishText:    "",
+                nepaliText:     "",
                 englishOptions: [],
-                nepaliOptions: [],
-                correctAnswer: 0
+                nepaliOptions:  [],
+                correctAnswer:  0
             )
         }
         return questions[currentQuestionIndex]
     }
 
-    var totalQuestions: Int {
-        questions.count
-    }
+    // Helpers --------------------------------------------------
+    var totalQuestions: Int       { questions.count }
+    var attemptedQuestions: Int   { correctAnswers + incorrectAnswers }
+    var scorePercentage: Int      { totalQuestions == 0 ? 0 : (correctAnswers * 100) / totalQuestions }
 
-    var attemptedQuestions: Int {
-        correctAnswers + incorrectAnswers
-    }
+    // Language toggle
+    func switchLanguage(to lang: AppLanguage) { selectedLanguage = lang }
 
-    var scorePercentage: Int {
-        guard totalQuestions > 0 else { return 0 }
-        return (correctAnswers * 100) / totalQuestions
-    }
-
-    func answerQuestion(_ answerIndex: Int) -> Bool {
+    // Answer ---------------------------------------------------
+    @discardableResult
+    func answerQuestion(_ idx: Int) -> Bool {
         guard currentQuestionIndex < questions.count else { return false }
 
-        let isCorrect = currentQuestion.correctAnswer == answerIndex
-        if isCorrect {
-            correctAnswers += 1
-        } else {
+        let ok = idx == currentQuestion.correctAnswer
+        if  ok { correctAnswers   += 1 }
+        else   {
             incorrectAnswers += 1
+            if incorrectAnswers >= maxMistakesAllowed { hasFailed = true }
         }
-
-        return isCorrect // ✅ No auto-advance! Next question only when user clicks "Next"
+        return ok
     }
 
+    // Navigation ----------------------------------------------
     func moveToNextQuestion() {
-        if currentQuestionIndex < questions.count - 1 {
-            currentQuestionIndex += 1
-        } else {
-            showResult = true
-        }
+        if currentQuestionIndex < questions.count - 1 { currentQuestionIndex += 1 }
+        else                                          { showResult = true      }
     }
 
     func previousQuestion() {
-        if currentQuestionIndex > 0 {
-            currentQuestionIndex -= 1
-            showResult = false
-        }
+        guard currentQuestionIndex > 0 else { return }
+        currentQuestionIndex -= 1
     }
 
-    func resetQuiz() {
+    // Lifecycle -----------------------------------------------
+    func startQuiz() {
+        // Don’t crash if the host view forgot to assign questions
+        if questions.isEmpty {
+            assertionFailure("Quizतर्क.startQuiz(): questions array is empty")
+            return
+        }
         questions.shuffle()
         currentQuestionIndex = 0
-        correctAnswers = 0
-        incorrectAnswers = 0
-        showResult = false
+        correctAnswers       = 0
+        incorrectAnswers     = 0
+        showResult           = false
+        hasFailed            = false
     }
-
-    func startQuiz() {
-        questions.shuffle()
-        resetQuiz()
-        showResult = false
-    }
-
-    func switchLanguage(to language: Language) {
-        selectedLanguage = language
-    }
-}
-
-// ✅ Updated Bilingual Question Model
-struct BilingualQuestion {
-    let englishText: String
-    let nepaliText: String
-    let englishOptions: [String] // ✅ Separate options for English
-    let nepaliOptions: [String]  // ✅ Separate options for Nepali
-    let correctAnswer: Int
 }
