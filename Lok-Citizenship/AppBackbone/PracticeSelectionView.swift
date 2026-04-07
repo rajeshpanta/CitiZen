@@ -21,76 +21,76 @@ struct PracticeSelectionView: View {
         case .english:
             return [
                 PracticeItem(title: "Practice 1 – Very Easy",
-                             view: AnyView(Practice1()),
+                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice1))),
                              minHeight: 20, fontSize: 16),
                 PracticeItem(title: "Practice 2 – Easy",
-                             view: AnyView(Practice2()),
+                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice2))),
                              minHeight: 25, fontSize: 18),
                 PracticeItem(title: "Practice 3 – Medium ",
-                             view: AnyView(Practice3()),
+                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice3))),
                              minHeight: 30, fontSize: 20),
                 PracticeItem(title: "Practice 4 – Hard",
-                             view: AnyView(Practice4()),
+                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice4))),
                              minHeight: 35, fontSize: 22),
                 PracticeItem(title: "Practice 5 – Problamatic",
-                             view: AnyView(Practice5()),
+                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice5))),
                              minHeight: 40, fontSize: 24)
             ]
 
         case .nepali:
             return [
                 PracticeItem(title: "पहिलो अभ्यास – सजिलो प्रश्नहरू",
-                             view: AnyView(अभ्यास1()),
+                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice1))),
                              minHeight: 20, fontSize: 16),
                 PracticeItem(title: "दोस्रो अभ्यास – सजिलो प्रश्नहरू",
-                             view: AnyView(अभ्यास2()),
+                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice2))),
                              minHeight: 25, fontSize: 18),
                 PracticeItem(title: "तेस्रो अभ्यास – मध्यम प्रश्नहरू",
-                             view: AnyView(अभ्यास3()),
+                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice3))),
                              minHeight: 30, fontSize: 20),
                 PracticeItem(title: "चौथो अभ्यास – कठिन प्रश्नहरू",
-                             view: AnyView(अभ्यास4()),
+                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice4))),
                              minHeight: 35, fontSize: 22),
                 PracticeItem(title: "पाँचौं अभ्यास – अति कठिन प्रश्नहरू",
-                             view: AnyView(अभ्यास5()),
+                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice5))),
                              minHeight: 40, fontSize: 24)
             ]
 
         case .spanish:
             return [
                 PracticeItem(title: "Práctica 1 – Preguntas fáciles",
-                             view: AnyView(Practica1()),
+                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice1))),
                              minHeight: 20, fontSize: 16),
                 PracticeItem(title: "Práctica 2 – Preguntas fáciles",
-                             view: AnyView(Practica2()),
+                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice2))),
                              minHeight: 25, fontSize: 18),
                 PracticeItem(title: "Práctica 3 – Preguntas intermedias",
-                             view: AnyView(Practica3()),
+                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice3))),
                              minHeight: 30, fontSize: 20),
                 PracticeItem(title: "Práctica 4 – Preguntas difíciles",
-                             view: AnyView(Practica4()),
+                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice4))),
                              minHeight: 35, fontSize: 22),
                 PracticeItem(title: "Práctica 5 – Preguntas muy difíciles",
-                             view: AnyView(Practica5()),
+                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice5))),
                              minHeight: 40, fontSize: 24)
             ]
 
         case .chinese:
             return [
                 PracticeItem(title: "练习 1 – 简单问题",
-                             view: AnyView(PracticeCN1()),
+                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice1))),
                              minHeight: 20, fontSize: 16),
                 PracticeItem(title: "练习 2 – 简单问题",
-                             view: AnyView(PracticeCN2()),
+                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice2))),
                              minHeight: 25, fontSize: 18),
                 PracticeItem(title: "练习 3 – 中等问题",
-                             view: AnyView(PracticeCN3()),
+                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice3))),
                              minHeight: 30, fontSize: 20),
                 PracticeItem(title: "练习 4 – 困难问题",
-                             view: AnyView(PracticeCN4()),
+                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice4))),
                              minHeight: 35, fontSize: 22),
                 PracticeItem(title: "练习 5 – 最难问题",
-                             view: AnyView(PracticeCN5()),
+                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice5))),
                              minHeight: 40, fontSize: 24)
             ]
         }

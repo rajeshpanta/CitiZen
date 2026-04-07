@@ -1,0 +1,13 @@
+## Xcode user data
+*.xcuserstate
+xcuserdata/
+
+## Build artifacts
+build/
+DerivedData/
+*.xcarchive
+
+## OS files
+.DS_Store
+*.swp
+*~
