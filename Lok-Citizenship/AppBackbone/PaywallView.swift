@@ -125,6 +125,19 @@ struct PaywallView: View {
         .interactiveDismissDisabled(purchasing)
         .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
         .sheet(isPresented: $showTerms) { TermsOfUseView() }
+        .alert("Verification Issue",
+               isPresented: Binding(
+                   get: { store.entitlementError != nil },
+                   set: { if !$0 { store.clearEntitlementError() } }
+               )
+        ) {
+            Button("Restore Purchases") {
+                Task { await store.restorePurchases() }
+            }
+            Button("Dismiss", role: .cancel) { }
+        } message: {
+            Text(store.entitlementError ?? "")
+        }
     }
 
     // ═════════════════════════════════════════════════════════════

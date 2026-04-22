@@ -1,17 +1,16 @@
 import SwiftUI
-import Combine
-import AVFoundation
-import Speech
 
 /// A single reusable quiz view that replaces all 20 Practice views.
 /// Configured entirely by the `QuizConfig` passed in at init time.
 struct QuizView: View {
 
     let config: QuizConfig
+    let level: Int
 
-    // MARK: - Quiz engine
+    // MARK: - Quiz engine + voice controller
 
     @StateObject private var quizLogic = UnifiedQuizLogic()
+    @StateObject private var voice: VoiceQuizController
 
     // MARK: - Per-question UI state (reset between questions)
 
@@ -20,45 +19,53 @@ struct QuizView: View {
     @State private var isAnswerCorrect    = false
     @State private var isAnswered         = false
 
-    // MARK: - TTS / STT state (mirrors from Combine publishers)
-
-    @State private var isSpeaking  = false
-    @State private var isRecording = false
-    @State private var transcription = ""
-    @State private var authorizationStatus: SFSpeechRecognizerAuthorizationStatus = .notDetermined
-    @State private var ttsChain: AnyCancellable?
-
-    // MARK: - Alerts
+    // MARK: - Alerts & Paywall
 
     @State private var showQuitConfirmation = false
     @State private var micPermissionDenied  = false
     @Environment(\.presentationMode) private var presentationMode
 
-    // MARK: - Services
+    // MARK: - Init (wire voice controller to quiz logic in manual mode)
 
-    private let tts: TextToSpeechService = ServiceLocator.shared.ttsService
-    private let stt: SpeechToTextService = ServiceLocator.shared.sttService
+    init(config: QuizConfig, level: Int) {
+        self.config = config
+        self.level = level
+
+        let logic = UnifiedQuizLogic()
+        let vc = VoiceQuizController(quizLogic: logic)
+        vc.autoAdvance = false  // practice mode: view controls answer flow
+        _quizLogic = StateObject(wrappedValue: logic)
+        _voice = StateObject(wrappedValue: vc)
+    }
 
     // MARK: - Derived helpers
 
-    /// True when the quiz supports language switching (bilingual or trilingual).
     private var isMultilingual: Bool {
         !config.languageToggles.isEmpty
     }
 
-    /// Current localized UI strings based on the selected language variant.
     private var strings: QuizStrings {
         config.stringsForVariant(quizLogic.selectedVariantIndex)
     }
 
-    /// Current TTS/STT locale based on the selected language variant.
     private var localeCode: String {
         config.localeForVariant(quizLogic.selectedVariantIndex)
     }
+    
+    private var quizLevel: String {
+        "practice_\(level)"
+    }
 
-    /// Whether STT should prefer on-device recognition for the current variant.
     private var offlineOnly: Bool {
         config.offlineForVariant(quizLogic.selectedVariantIndex)
+    }
+    
+
+    /// Sync voice controller config when variant changes.
+    private func syncVoiceConfig() {
+        voice.localeCode = localeCode
+        voice.offlineSTT = offlineOnly
+        voice.variantIndex = quizLogic.selectedVariantIndex
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -69,24 +76,19 @@ struct QuizView: View {
         ScrollView {
             VStack(spacing: 20) {
 
-                // Language toggle (only for bilingual / trilingual quizzes)
                 if isMultilingual {
                     languageToggleBar
                 }
 
-                // Progress bar + score
                 progressSection
 
-                // Quiz content or result screen
-                if quizLogic.showResult || quizLogic.hasFailed {
+                if quizLogic.isFinished {
                     resultCard
                 } else if isMultilingual {
-                    // Bilingual/trilingual layout: question → options → mic
                     questionSection
                     optionsSection
                     micSection
                 } else {
-                    // English-only layout: question → mic → options
                     questionSection
                     micSection
                     optionsSection
@@ -99,55 +101,56 @@ struct QuizView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(strings.quit, role: .destructive) {
-                    stopAllAudio()
+                    voice.stop()
                     showQuitConfirmation = true
                 }
                 .foregroundColor(.red)
             }
         }
         .background(
-            ZStack {
-                Image(config.backgroundImage).resizable().scaledToFill()
-                Color.black.opacity(0.8)
-            }
+            LinearGradient(
+                colors: [
+                    Color(red: 0.0, green: 0.10, blue: 0.30),
+                    Color(red: 0.0, green: 0.05, blue: 0.18),
+                    Color.black
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
             .ignoresSafeArea()
         )
-
-        // Quit confirmation alert
         .alert(isPresented: $showQuitConfirmation) {
             Alert(
                 title: Text(strings.quitTitle),
                 message: Text(strings.quitMessage),
                 primaryButton: .destructive(Text(strings.quitYes)) {
-                    stopAllAudio()
+                    voice.stop()
                     presentationMode.wrappedValue.dismiss()
                 },
                 secondaryButton: .cancel(Text(strings.quitNo))
             )
         }
-
-        // Mic permission denied alert
         .alert(strings.micPermissionAlert, isPresented: $micPermissionDenied) {
             Button("OK", role: .cancel) { }
         }
-
-        // Setup on first appearance
         .onAppear {
             quizLogic.selectedVariantIndex = config.defaultVariantIndex
             quizLogic.questions = config.questions
-            quizLogic.startQuiz()
-            stt.requestAuthorization()
-        }
 
-        // Bridge Combine publishers → @State
-        .onReceive(tts.isSpeakingPublisher) { isSpeaking = $0 }
-        .onReceive(stt.isRecordingPublisher) { rec in
-            // When recording stops, check if voice matched an answer
-            if isRecording && !rec { checkVoiceAnswer() }
-            isRecording = rec
+            // Analytics context
+            quizLogic.languageTag = localeCode
+            quizLogic.levelTag = level
+
+            quizLogic.startQuiz()
+            syncVoiceConfig()
+            voice.requestAuthorization()
         }
-        .onReceive(stt.transcriptionPublisher)       { transcription       = $0 }
-        .onReceive(stt.authorizationStatusPublisher) { authorizationStatus = $0 }
+        
+        // When voice matches an answer in manual mode, process it
+        .onChange(of: voice.matchedAnswerIndex) { idx in
+            guard let idx else { return }
+            processAnswer(idx)
+            voice.resetMatch()
+        }
     }
 }
 
@@ -159,7 +162,6 @@ private extension QuizView {
 
     // MARK: Language toggle bar
 
-    /// Row of buttons to switch between languages (e.g. English ↔ Nepali).
     var languageToggleBar: some View {
         HStack {
             ForEach(Array(config.languageToggles.enumerated()), id: \.offset) { _, toggle in
@@ -167,8 +169,9 @@ private extension QuizView {
                     Spacer()
                 }
                 Button(toggle.label) {
-                    stopAllAudio()
+                    voice.stop()
                     quizLogic.switchVariant(to: toggle.variantIndex)
+                    syncVoiceConfig()
                 }
                 .padding(isMultilingual && config.languageToggles.count > 2 ? 8 : 16)
                 .background(quizLogic.selectedVariantIndex == toggle.variantIndex
@@ -203,7 +206,6 @@ private extension QuizView {
     var questionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            // Bilingual: separate yellow "Question 1/15" label
             if isMultilingual {
                 Text("\(strings.questionLabel) "
                      + "\(quizLogic.currentQuestionIndex + 1)/\(quizLogic.totalQuestions)")
@@ -211,9 +213,6 @@ private extension QuizView {
                     .foregroundColor(.yellow)
             }
 
-            // Question text
-            // English-only: inline number prefix "1.  What is..."
-            // Bilingual: just the question text (number is in the label above)
             if isMultilingual {
                 Text(quizLogic.currentText)
                     .font(.title).bold().foregroundColor(.white)
@@ -222,32 +221,30 @@ private extension QuizView {
                     .font(.title).bold().foregroundColor(.white)
             }
 
-            // Speaker button (TTS)
             speakerButton
         }
         .padding(.horizontal)
     }
 
-    /// TTS speaker icon: red while speaking, blue otherwise.
     var speakerButton: some View {
         HStack {
             Spacer()
-            if isSpeaking {
-                Button { stopAllAudio() } label: {
+            if voice.isSpeaking {
+                Button { voice.stop() } label: {
                     Image(systemName: "speaker.wave.2.fill")
                         .font(.system(size: 28)).foregroundColor(.red)
                 }
                 .padding(.trailing, 24)
             } else {
                 Button {
-                    stopAllAudio()
+                    voice.stop()
                     speakQuestionAndOptions()
                 } label: {
                     Image(systemName: "speaker.wave.1.fill")
                         .font(.system(size: 28)).foregroundColor(.blue)
                 }
                 .padding(.trailing, 24)
-                .disabled(isRecording || isAnswered)
+                .disabled(voice.isRecording || isAnswered)
             }
         }
     }
@@ -257,33 +254,44 @@ private extension QuizView {
     var optionsSection: some View {
         VStack(spacing: 12) {
 
-            // Four multiple-choice buttons
             ForEach(quizLogic.currentOptions.indices, id: \.self) { idx in
                 Button {
-                    stopAllAudio()
+                    voice.stop()
                     guard !isAnswered else { return }
-                    selectedAnswer     = idx
-                    isAnswerCorrect    = quizLogic.answerQuestion(idx)
-                    showAnswerFeedback = true
-                    isAnswered         = true
+                    processAnswer(idx)
                 } label: {
-                    Text(quizLogic.currentOptions[idx])
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity, minHeight: 50)
-                        .background(
-                            isAnswered
-                            ? (idx == quizLogic.currentQuestion.correctAnswer
-                               ? Color.green : Color.red)
-                            : Color.blue
-                        )
-                        .cornerRadius(10)
+                    HStack {
+                        Text(optionLetter(idx))
+                            .font(.headline.bold())
+                            .foregroundColor(answerButtonTextColor(idx))
+                            .frame(width: 28)
+                        Text(quizLogic.currentOptions[idx])
+                            .foregroundColor(answerButtonTextColor(idx))
+                            .multilineTextAlignment(.leading)
+                        Spacer()
+                        if isAnswered && idx == quizLogic.currentQuestion.correctAnswer {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                        } else if isAnswered && idx == selectedAnswer && idx != quizLogic.currentQuestion.correctAnswer {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.red)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(answerButtonBackground(idx))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(answerButtonBorder(idx), lineWidth: 1.5)
+                    )
                 }
                 .disabled(isAnswered)
             }
 
-            // After answering: feedback + Next button
-            // Before answering: Previous + Skip buttons
             if showAnswerFeedback {
                 feedbackAndNext
             } else {
@@ -292,18 +300,30 @@ private extension QuizView {
         }
     }
 
-    /// Shows correct/wrong feedback, mistake count, and Next Question button.
     var feedbackAndNext: some View {
         VStack(spacing: 4) {
             Text(isAnswerCorrect ? strings.correct : strings.wrong)
                 .font(.headline)
                 .foregroundColor(isAnswerCorrect ? .green : .red)
 
+            // Show explanation after wrong answer
+            if !isAnswerCorrect {
+                let explanation = quizLogic.currentQuestion.variants.first?.explanation ?? ""
+                if !explanation.isEmpty {
+                    Text(explanation)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
+                }
+            }
+
             Text("\(strings.mistakesLabel) \(quizLogic.incorrectAnswers)/4")
                 .foregroundColor(.orange)
 
             Button(strings.nextQuestion) {
-                stopAllAudio()
+                voice.stop()
                 quizLogic.moveToNextQuestion()
                 resetPerQuestionState()
             }
@@ -315,11 +335,10 @@ private extension QuizView {
         .padding(.bottom, 4)
     }
 
-    /// Previous and Skip navigation buttons.
     var prevAndSkip: some View {
         HStack {
             Button(strings.previous) {
-                stopAllAudio()
+                voice.stop()
                 quizLogic.previousQuestion()
                 resetPerQuestionState()
             }
@@ -332,11 +351,11 @@ private extension QuizView {
             Spacer()
 
             Button(strings.skip) {
-                stopAllAudio()
+                voice.stop()
                 quizLogic.moveToNextQuestion()
                 resetPerQuestionState()
             }
-            .disabled(quizLogic.showResult || quizLogic.hasFailed)
+            .disabled(quizLogic.isFinished)
             .foregroundColor(.white)
             .padding()
             .background(Color.orange)
@@ -349,8 +368,6 @@ private extension QuizView {
     var micSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                // English-only: "Your Answer:"
-                // Bilingual: "🎤 Your Answer:" (with emoji prefix)
                 Text(isMultilingual
                      ? "🎤 \(strings.yourAnswer)"
                      : strings.yourAnswer)
@@ -361,9 +378,8 @@ private extension QuizView {
                 micButton
             }
 
-            // Live transcription display
             ScrollView {
-                Text(transcription)
+                Text(voice.transcription)
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(.secondarySystemBackground))
@@ -374,33 +390,27 @@ private extension QuizView {
         .padding(.horizontal)
     }
 
-    /// Mic icon: red pulsing circle while recording, blue outline otherwise.
     var micButton: some View {
         Group {
-            if isRecording {
-                Button { stopAllAudio() } label: {
+            if voice.isRecording {
+                Button { voice.stop() } label: {
                     Image(systemName: "mic.circle.fill")
                         .font(.system(size: 40)).foregroundColor(.red)
                 }
             } else {
                 Button {
-                    guard authorizationStatus == .authorized, !isAnswered else {
-                        if authorizationStatus != .authorized {
+                    guard voice.authorizationStatus == .authorized, !isAnswered else {
+                        if voice.authorizationStatus != .authorized {
                             micPermissionDenied = true
                         }
                         return
                     }
-                    stopAllAudio()
-                    stt.startRecording(
-                        withOptions: quizLogic.currentOptions,
-                        localeCode:  localeCode,
-                        offlineOnly: offlineOnly
-                    )
+                    voice.startManualListening()
                 } label: {
                     Image(systemName: "mic.circle")
                         .font(.system(size: 40)).foregroundColor(.blue)
                 }
-                .disabled(isSpeaking || isAnswered)
+                .disabled(voice.isSpeaking || isAnswered)
             }
         }
         .padding(.trailing, 24)
@@ -410,7 +420,7 @@ private extension QuizView {
 
     var resultCard: some View {
         VStack(spacing: 8) {
-            if quizLogic.hasFailed {
+            if quizLogic.status == .failed {
                 Text(strings.failedTitle)
                     .font(.largeTitle).bold().foregroundColor(.red)
                 Text(strings.failedSubtitle)
@@ -427,8 +437,21 @@ private extension QuizView {
             Text("\(strings.scoreLabel): \(quizLogic.scorePercentage)%")
                 .font(.headline).foregroundColor(.yellow)
 
+            progressSummary
+
+            shareButton(
+                score: quizLogic.correctAnswers,
+                total: quizLogic.attemptedQuestions,
+                passed: quizLogic.status != .failed
+            )
+
             Button(strings.restartQuiz) {
-                stopAllAudio()
+                voice.stop()
+
+                // Analytics context
+                quizLogic.languageTag = localeCode
+                quizLogic.levelTag = level
+
                 quizLogic.startQuiz()
                 resetPerQuestionState()
             }
@@ -438,72 +461,123 @@ private extension QuizView {
             .cornerRadius(10)
         }
     }
+
+    var progressSummary: some View {
+        let pm = ProgressManager.shared
+        return VStack(spacing: 4) {
+            Divider().background(Color.white.opacity(0.3))
+            Text("Lifetime Stats")
+                .font(.caption).foregroundColor(.gray)
+            HStack(spacing: 16) {
+                VStack {
+                    Text("\(pm.totalQuestionsAnswered)")
+                        .font(.headline).foregroundColor(.white)
+                    Text("Answered")
+                        .font(.caption2).foregroundColor(.gray)
+                }
+                VStack {
+                    Text("\(pm.accuracyPercentage)%")
+                        .font(.headline).foregroundColor(.white)
+                    Text("Accuracy")
+                        .font(.caption2).foregroundColor(.gray)
+                }
+                VStack {
+                    Text("\(pm.currentStreak)")
+                        .font(.headline).foregroundColor(.orange)
+                    Text("Streak")
+                        .font(.caption2).foregroundColor(.gray)
+                }
+            }
+            .padding(.top, 4)
+        }
+        .padding(.vertical, 8)
+    }
 }
 
 // ═════════════════════════════════════════════════════════════════
-// MARK: - SPEECH HELPERS
+// MARK: - ANSWER + SPEECH HELPERS
 // ═════════════════════════════════════════════════════════════════
 
 private extension QuizView {
 
-    /// Speak the question text, then "Your options are:", then each option.
-    /// Uses config.questionToOptionsDelay (2.0s for English, 1.5s for others).
-    func speakQuestionAndOptions() {
-        let lc = localeCode
-        let introDelay = config.questionToOptionsDelay
-
-        var chain: AnyPublisher<Void, Never> = tts
-            .speak(quizLogic.currentText, languageCode: lc)
-            .flatMap { _ in Just(()).delay(for: .seconds(introDelay),
-                                          scheduler: DispatchQueue.main) }
-            .flatMap { tts.speak(strings.optionsIntro, languageCode: lc) }
-            .flatMap { _ in Just(()).delay(for: .seconds(1.0),
-                                          scheduler: DispatchQueue.main) }
-            .eraseToAnyPublisher()
-
-        for opt in quizLogic.currentOptions {
-            chain = chain
-                .flatMap { tts.speak(opt, languageCode: lc) }
-                .flatMap { _ in Just(()).delay(for: .seconds(1.0),
-                                              scheduler: DispatchQueue.main) }
-                .eraseToAnyPublisher()
-        }
-
-        ttsChain = chain.sink { _ in }
-    }
-
-    /// When STT stops recording, check if the transcription matches any option.
-    /// Uses the same case-insensitive contains-matching as the original views.
-    func checkVoiceAnswer() {
+    /// Central answer handler — used by both tap and voice paths.
+    func processAnswer(_ idx: Int) {
         guard !isAnswered else { return }
-        let spoken = transcription
-            .lowercased()
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard let idx = quizLogic.currentOptions.firstIndex(where: {
-            let lc = $0.lowercased()
-            return spoken == lc || spoken.contains(lc)
-        }) else { return }
-
-        stopAllAudio()
-        isAnswered         = true
         selectedAnswer     = idx
         isAnswerCorrect    = quizLogic.answerQuestion(idx)
         showAnswerFeedback = true
+        isAnswered         = true
     }
 
-    /// Clear per-question state when moving to the next question.
+    /// Speak the question text, then "Your options are:", then each option.
+    func speakQuestionAndOptions() {
+        let introDelay = config.questionToOptionsDelay
+        var items: [(text: String, delay: TimeInterval)] = [
+            (quizLogic.currentText, introDelay),
+            (strings.optionsIntro, 1.0)
+        ]
+        for opt in quizLogic.currentOptions {
+            items.append((opt, 1.0))
+        }
+        syncVoiceConfig()
+        voice.speakSequence(items)
+    }
+
+    func optionLetter(_ idx: Int) -> String {
+        ["A", "B", "C", "D", "E", "F"][min(idx, 5)]
+    }
+
+    func answerButtonBackground(_ idx: Int) -> Color {
+        guard isAnswered else { return Color.white.opacity(0.08) }
+        if idx == quizLogic.currentQuestion.correctAnswer { return Color.green.opacity(0.2) }
+        if idx == selectedAnswer { return Color.red.opacity(0.2) }
+        return Color.white.opacity(0.04)
+    }
+
+    func answerButtonBorder(_ idx: Int) -> Color {
+        guard isAnswered else { return Color.white.opacity(0.12) }
+        if idx == quizLogic.currentQuestion.correctAnswer { return Color.green.opacity(0.6) }
+        if idx == selectedAnswer { return Color.red.opacity(0.6) }
+        return Color.white.opacity(0.05)
+    }
+
+    func answerButtonTextColor(_ idx: Int) -> Color {
+        guard isAnswered else { return .white }
+        if idx == quizLogic.currentQuestion.correctAnswer { return .green }
+        if idx == selectedAnswer { return .red.opacity(0.8) }
+        return .white.opacity(0.3)
+    }
+
     func resetPerQuestionState() {
         selectedAnswer     = nil
         isAnswered         = false
         showAnswerFeedback = false
-        transcription      = ""
+        voice.resetMatch()
     }
 
-    /// Stop all audio: cancel TTS chain, stop synthesizer, stop mic.
-    func stopAllAudio() {
-        ttsChain?.cancel(); ttsChain = nil
-        tts.stopSpeaking()
-        stt.stopRecording()
+    func shareButton(score: Int, total: Int, passed: Bool) -> some View {
+        let card = ShareCardView(
+            score: score,
+            total: total,
+            passed: passed,
+            streak: ProgressManager.shared.currentStreak
+        )
+        return Button {
+            guard let image = card.renderImage() else { return }
+            let av = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let root = scene.windows.first?.rootViewController else { return }
+            if let popover = av.popoverPresentationController {
+                popover.sourceView = root.view
+                popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            root.present(av, animated: true)
+        } label: {
+            Label("Share Result", systemImage: "square.and.arrow.up")
+                .font(.subheadline.bold())
+                .foregroundColor(.blue)
+        }
+        .padding(.top, 4)
     }
 }

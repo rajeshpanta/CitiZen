@@ -30,16 +30,27 @@ final class LocalTTSService: NSObject, TextToSpeechService {
         stopSpeaking()
         finished = PassthroughSubject<Void, Never>()
 
-        let voice = AVSpeechSynthesisVoice(language: languageCode) ??
-                    AVSpeechSynthesisVoice(language: "en-US")!    // fallback
+        let voice = AVSpeechSynthesisVoice(language: languageCode)
+                    ?? AVSpeechSynthesisVoice(language: "en-US")
+                    ?? AVSpeechSynthesisVoice.speechVoices().first
 
         let u = AVSpeechUtterance(string: text)
         u.voice = voice
         u.rate  = AVSpeechUtteranceDefaultSpeechRate
+        u.preUtteranceDelay = 0    // no pause before speaking
+        u.postUtteranceDelay = 0   // no pause after speaking
 
-        try? AVAudioSession.sharedInstance()
-            .setCategory(.playback, mode: .spokenAudio, options: .duckOthers)
-        try? AVAudioSession.sharedInstance().setActive(true)
+        let session = AVAudioSession.sharedInstance()
+        do {
+            if session.category != .playback {
+                try session.setCategory(.playback, mode: .spokenAudio, options: .duckOthers)
+            }
+            try session.setActive(true)
+        } catch {
+            #if DEBUG
+            print("[TTS] Audio session setup failed: \(error)")
+            #endif
+        }
 
         synthesizer.speak(u)
         isSpeaking.send(true)
@@ -65,6 +76,6 @@ extension LocalTTSService: AVSpeechSynthesizerDelegate {
     private func done() {
         isSpeaking.send(false)
         finished.send(()); finished.send(completion: .finished)
-        try? AVAudioSession.sharedInstance().setActive(false)
+        // Keep audio session active for faster TTS/STT transitions.
     }
 }

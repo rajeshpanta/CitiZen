@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict/>
+<dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>CitiZen needs microphone access so you can practice answering citizenship test questions out loud, just like the real USCIS interview.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>CitiZen uses speech recognition to evaluate your spoken answers during practice and mock interview sessions.</string>
+</dict>
 </plist>

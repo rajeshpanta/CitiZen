@@ -5,10 +5,18 @@ import UIKit                           // ← NEW: needed for UIColor
 struct Lok_CitizenshipApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    @State private var hasCompletedOnboarding = ProgressManager.shared.hasCompletedOnboarding
+
+    /// Resolve saved language preference to AppLanguage enum. Falls back to English.
+    private var savedLanguage: AppLanguage {
+        guard let raw = ProgressManager.shared.preferredLanguage,
+              let lang = AppLanguage(rawValue: raw) else { return .english }
+        return lang
+    }
+
     // ─────────────────────────────────────────────────────────────
     /// Force all navigation-bar titles to render in white
-    /// (works for both inline and large titles)
-    init() {                          // ← NEW BLOCK
+    init() {
         let attrs: [NSAttributedString.Key : Any] = [
             .foregroundColor : UIColor.white
         ]
@@ -19,8 +27,23 @@ struct Lok_CitizenshipApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationView {
-                ContentView()
+            Group {
+                if hasCompletedOnboarding {
+                    NavigationView {
+                        PracticeSelectionView(language: savedLanguage)
+                    }
+                } else {
+                    OnboardingView { _ in
+                        hasCompletedOnboarding = true
+                    }
+                }
+            }
+            .onAppear {
+                Analytics.track(.appOpened)
+                NotificationManager.shared.checkAuthorization()
+                if NotificationManager.shared.isEnabled {
+                    NotificationManager.shared.scheduleAll()
+                }
             }
         }
     }

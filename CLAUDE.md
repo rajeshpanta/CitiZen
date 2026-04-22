@@ -10,7 +10,7 @@ CitiZen is a SwiftUI iOS app that helps users study for the U.S. citizenship tes
 
 This is an Xcode project (`Citizenship.xcodeproj`). Build and run via Xcode or:
 ```
-xcodebuild -project Citizenship.xcodeproj -scheme Lok-Citizenship -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project Citizenship.xcodeproj -scheme Citizenship -destination 'platform=iOS Simulator,name=iPhone 16' build
 ```
 There are no tests, linters, or package managers configured.
 

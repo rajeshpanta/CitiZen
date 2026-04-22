@@ -4,99 +4,185 @@
 
 import SwiftUI
 
-// MARK: – Helper struct to bundle each destination
+// MARK: - Helper struct to bundle each destination
 private struct PracticeItem: Identifiable {
-    let id        = UUID()
-    let title     : String
-    let view      : AnyView
-    let minHeight : CGFloat
-    let fontSize  : CGFloat
+    let id = UUID()
+    let title: String
+    let view: AnyView
+    let minHeight: CGFloat
+    let fontSize: CGFloat
+    let level: Int   // 1-5, used for gating
 }
 
 struct PracticeSelectionView: View {
-    let language: AppLanguage
+    @State var language: AppLanguage
+
+    @ObservedObject private var store = StoreManager.shared
+    @ObservedObject private var tracker = QuestionTracker.shared
+    @State private var showPaywall = false
+    @State private var paywallTrigger = "locked_level"
 
     private var items: [PracticeItem] {
         switch language {
         case .english:
             return [
-                PracticeItem(title: "Practice 1 – Very Easy",
-                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice1))),
-                             minHeight: 20, fontSize: 16),
-                PracticeItem(title: "Practice 2 – Easy",
-                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice2))),
-                             minHeight: 25, fontSize: 18),
-                PracticeItem(title: "Practice 3 – Medium ",
-                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice3))),
-                             minHeight: 30, fontSize: 20),
-                PracticeItem(title: "Practice 4 – Hard",
-                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice4))),
-                             minHeight: 35, fontSize: 22),
-                PracticeItem(title: "Practice 5 – Problamatic",
-                             view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice5))),
-                             minHeight: 40, fontSize: 24)
+                PracticeItem(
+                    title: "Practice 1 – Very Easy",
+                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice1), level: 1)),
+                    minHeight: 20,
+                    fontSize: 16,
+                    level: 1
+                ),
+                PracticeItem(
+                    title: "Practice 2 – Easy",
+                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice2), level: 2)),
+                    minHeight: 25,
+                    fontSize: 18,
+                    level: 2
+                ),
+                PracticeItem(
+                    title: "Practice 3 – Medium",
+                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice3), level: 3)),
+                    minHeight: 30,
+                    fontSize: 20,
+                    level: 3
+                ),
+                PracticeItem(
+                    title: "Practice 4 – Hard",
+                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice4), level: 4)),
+                    minHeight: 35,
+                    fontSize: 22,
+                    level: 4
+                ),
+                PracticeItem(
+                    title: "Practice 5 – Expert",
+                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice5), level: 5)),
+                    minHeight: 40,
+                    fontSize: 24,
+                    level: 5
+                )
             ]
 
         case .nepali:
             return [
-                PracticeItem(title: "पहिलो अभ्यास – सजिलो प्रश्नहरू",
-                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice1))),
-                             minHeight: 20, fontSize: 16),
-                PracticeItem(title: "दोस्रो अभ्यास – सजिलो प्रश्नहरू",
-                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice2))),
-                             minHeight: 25, fontSize: 18),
-                PracticeItem(title: "तेस्रो अभ्यास – मध्यम प्रश्नहरू",
-                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice3))),
-                             minHeight: 30, fontSize: 20),
-                PracticeItem(title: "चौथो अभ्यास – कठिन प्रश्नहरू",
-                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice4))),
-                             minHeight: 35, fontSize: 22),
-                PracticeItem(title: "पाँचौं अभ्यास – अति कठिन प्रश्नहरू",
-                             view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice5))),
-                             minHeight: 40, fontSize: 24)
+                PracticeItem(
+                    title: "पहिलो अभ्यास – सजिलो प्रश्नहरू",
+                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice1), level: 1)),
+                    minHeight: 20,
+                    fontSize: 16,
+                    level: 1
+                ),
+                PracticeItem(
+                    title: "दोस्रो अभ्यास – सजिलो प्रश्नहरू",
+                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice2), level: 2)),
+                    minHeight: 25,
+                    fontSize: 18,
+                    level: 2
+                ),
+                PracticeItem(
+                    title: "तेस्रो अभ्यास – मध्यम प्रश्नहरू",
+                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice3), level: 3)),
+                    minHeight: 30,
+                    fontSize: 20,
+                    level: 3
+                ),
+                PracticeItem(
+                    title: "चौथो अभ्यास – कठिन प्रश्नहरू",
+                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice4), level: 4)),
+                    minHeight: 35,
+                    fontSize: 22,
+                    level: 4
+                ),
+                PracticeItem(
+                    title: "पाँचौं अभ्यास – अति कठिन प्रश्नहरू",
+                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice5), level: 5)),
+                    minHeight: 40,
+                    fontSize: 24,
+                    level: 5
+                )
             ]
 
         case .spanish:
             return [
-                PracticeItem(title: "Práctica 1 – Preguntas fáciles",
-                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice1))),
-                             minHeight: 20, fontSize: 16),
-                PracticeItem(title: "Práctica 2 – Preguntas fáciles",
-                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice2))),
-                             minHeight: 25, fontSize: 18),
-                PracticeItem(title: "Práctica 3 – Preguntas intermedias",
-                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice3))),
-                             minHeight: 30, fontSize: 20),
-                PracticeItem(title: "Práctica 4 – Preguntas difíciles",
-                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice4))),
-                             minHeight: 35, fontSize: 22),
-                PracticeItem(title: "Práctica 5 – Preguntas muy difíciles",
-                             view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice5))),
-                             minHeight: 40, fontSize: 24)
+                PracticeItem(
+                    title: "Práctica 1 – Preguntas fáciles",
+                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice1), level: 1)),
+                    minHeight: 20,
+                    fontSize: 16,
+                    level: 1
+                ),
+                PracticeItem(
+                    title: "Práctica 2 – Preguntas fáciles",
+                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice2), level: 2)),
+                    minHeight: 25,
+                    fontSize: 18,
+                    level: 2
+                ),
+                PracticeItem(
+                    title: "Práctica 3 – Preguntas intermedias",
+                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice3), level: 3)),
+                    minHeight: 30,
+                    fontSize: 20,
+                    level: 3
+                ),
+                PracticeItem(
+                    title: "Práctica 4 – Preguntas difíciles",
+                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice4), level: 4)),
+                    minHeight: 35,
+                    fontSize: 22,
+                    level: 4
+                ),
+                PracticeItem(
+                    title: "Práctica 5 – Preguntas muy difíciles",
+                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice5), level: 5)),
+                    minHeight: 40,
+                    fontSize: 24,
+                    level: 5
+                )
             ]
 
         case .chinese:
             return [
-                PracticeItem(title: "练习 1 – 简单问题",
-                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice1))),
-                             minHeight: 20, fontSize: 16),
-                PracticeItem(title: "练习 2 – 简单问题",
-                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice2))),
-                             minHeight: 25, fontSize: 18),
-                PracticeItem(title: "练习 3 – 中等问题",
-                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice3))),
-                             minHeight: 30, fontSize: 20),
-                PracticeItem(title: "练习 4 – 困难问题",
-                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice4))),
-                             minHeight: 35, fontSize: 22),
-                PracticeItem(title: "练习 5 – 最难问题",
-                             view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice5))),
-                             minHeight: 40, fontSize: 24)
+                PracticeItem(
+                    title: "练习 1 – 简单问题",
+                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice1), level: 1)),
+                    minHeight: 20,
+                    fontSize: 16,
+                    level: 1
+                ),
+                PracticeItem(
+                    title: "练习 2 – 简单问题",
+                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice2), level: 2)),
+                    minHeight: 25,
+                    fontSize: 18,
+                    level: 2
+                ),
+                PracticeItem(
+                    title: "练习 3 – 中等问题",
+                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice3), level: 3)),
+                    minHeight: 30,
+                    fontSize: 20,
+                    level: 3
+                ),
+                PracticeItem(
+                    title: "练习 4 – 困难问题",
+                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice4), level: 4)),
+                    minHeight: 35,
+                    fontSize: 22,
+                    level: 4
+                ),
+                PracticeItem(
+                    title: "练习 5 – 最难问题",
+                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice5), level: 5)),
+                    minHeight: 40,
+                    fontSize: 24,
+                    level: 5
+                )
             ]
         }
     }
 
-    // MARK: – Language‐specific UI
+    // MARK: - Language-specific UI
 
     private var pageTitle: String {
         switch language {
@@ -116,50 +202,465 @@ struct PracticeSelectionView: View {
         }
     }
 
-    private var backgroundAsset: String {
-        language == .chinese ? "USAChina" : "BackgroundImage"
+    private func levelMeta(_ level: Int) -> (label: String, color: Color, icon: String) {
+        switch level {
+        case 1: return ("Easy", .green, "1.circle.fill")
+        case 2: return ("Medium", .cyan, "2.circle.fill")
+        case 3: return ("Hard", .orange, "3.circle.fill")
+        case 4: return ("Advanced", .pink, "4.circle.fill")
+        case 5: return ("Expert", .red, "5.circle.fill")
+        default: return ("", .gray, "circle")
+        }
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.0, green: 0.12, blue: 0.35),
+                    Color(red: 0.0, green: 0.06, blue: 0.2),
+                    Color.black
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                // Header
-                Text(pageTitle)
-                    .multilineTextAlignment(.center)
-                    .font(.title).bold()
-                    .foregroundColor(.white)
-                    .padding(.top, 20)
-
-                // Buttons
-                ForEach(items) { item in
-                    NavigationLink(
-                            destination:
-                                item.view
-                                    .navigationTitle(item.title)                   // ← Dynamic title here
-                                    .navigationBarTitleDisplayMode(.inline)
-                        )  {
-                        Text(item.title)
-                            .font(.system(size: item.fontSize, weight: .bold))
-                            .frame(maxWidth: .infinity, minHeight: item.minHeight)
+            ScrollView {
+                VStack(spacing: 14) {
+                    VStack(spacing: 6) {
+                        Text(pageTitle)
+                            .font(.title2.bold())
                             .foregroundColor(.white)
-                            .padding()
-                            .background(Color.green)
-                            .cornerRadius(10)
+                            .multilineTextAlignment(.center)
                     }
-                }
+                    .padding(.top, 12)
 
-                Spacer().frame(height: 50)
+                    // Language selector
+                    Menu {
+                        ForEach(AppLanguage.allCases) { lang in
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) { language = lang }
+                                Analytics.track(.languageSelected(language: lang.rawValue))
+                            } label: {
+                                HStack {
+                                    Text("\(lang.flag) \(lang.displayName)")
+                                    if language == lang {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text("\(language.flag) \(language.displayName)")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                            Image(systemName: "chevron.down")
+                                .font(.caption.bold())
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.white.opacity(0.08))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        )
+                    }
+
+                    // Mock Interview card
+                    Group {
+                        let canAccess = store.isPro || ProgressManager.shared.canAccessFreeMockInterview
+                        if canAccess {
+                            NavigationLink(
+                                destination: MockInterviewView(language: language)
+                                    .navigationTitle("Mock Interview")
+                                    .navigationBarTitleDisplayMode(.inline)
+                            ) {
+                                mockCard(
+                                    locked: false,
+                                    subtitle: store.isPro
+                                        ? "Simulate the real USCIS test"
+                                        : "Try your first mock interview free"
+                                )
+                            }
+                        } else {
+                            Button {
+                                paywallTrigger = "mock_interview"
+                                showPaywall = true
+                            } label: {
+                                mockCard(locked: true, subtitle: "Unlock unlimited mock interviews")
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+
+                    // Interview countdown banner
+                    if let date = ProgressManager.shared.interviewDate, date > Date() {
+                        let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0)
+                        NavigationLink(destination: InterviewChecklistView().navigationTitle("Interview Checklist")) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "calendar.badge.clock")
+                                    .font(.system(size: 22))
+                                    .foregroundColor(.blue)
+                                Text("\(days) days until your interview")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.white.opacity(0.4))
+                            }
+                            .padding(14)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue.opacity(0.15)))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.blue.opacity(0.3), lineWidth: 1))
+                        }
+                        .padding(.horizontal, 20)
+                    }
+
+                    // Exam Readiness card
+                    NavigationLink(
+                        destination: ReadinessView(language: language)
+                            .navigationTitle("Exam Readiness")
+                            .navigationBarTitleDisplayMode(.inline)
+                    ) {
+                        readinessCard
+                    }
+                    .padding(.horizontal, 20)
+
+                    // Review Mistakes card
+                    reviewMistakesCard
+                        .padding(.horizontal, 20)
+
+                    // Section label
+                    HStack {
+                        Text("Practice Levels")
+                            .font(.caption.bold())
+                            .foregroundColor(.white.opacity(0.35))
+                            .textCase(.uppercase)
+                            .tracking(1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 6)
+
+                    // Level cards
+                    ForEach(items) { item in
+                        let locked = item.level >= 4 && !store.isPro
+                        let meta = levelMeta(item.level)
+
+                        if locked {
+                            Button {
+                                paywallTrigger = "locked_level"
+                                showPaywall = true
+                            } label: { levelRow(item: item, meta: meta, locked: true) }
+                        } else {
+                            NavigationLink(
+                                destination: item.view
+                                    .navigationTitle(item.title)
+                                    .navigationBarTitleDisplayMode(.inline)
+                            ) { levelRow(item: item, meta: meta, locked: false) }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+
+                    // Reading & Writing section
+                    HStack {
+                        Text("Reading & Writing")
+                            .font(.caption.bold())
+                            .foregroundColor(.white.opacity(0.35))
+                            .textCase(.uppercase)
+                            .tracking(1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+
+                    Group {
+                        if store.isPro {
+                            NavigationLink(destination: ReadingPracticeView()) {
+                                featureCard(icon: "book.fill", title: "Reading Practice",
+                                            subtitle: "Practice USCIS reading vocabulary", color: .purple)
+                            }
+                            NavigationLink(destination: WritingPracticeView()) {
+                                featureCard(icon: "pencil.line", title: "Writing Practice",
+                                            subtitle: "Listen and type USCIS sentences", color: .indigo)
+                            }
+                        } else {
+                            Button {
+                                paywallTrigger = "locked_level"
+                                showPaywall = true
+                            } label: {
+                                featureCard(icon: "book.fill", title: "Reading Practice",
+                                            subtitle: "Unlock with Pro", color: .purple, locked: true)
+                            }
+                            Button {
+                                paywallTrigger = "locked_level"
+                                showPaywall = true
+                            } label: {
+                                featureCard(icon: "pencil.line", title: "Writing Practice",
+                                            subtitle: "Unlock with Pro", color: .indigo, locked: true)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+
+                    // Audio-Only mode
+                    HStack {
+                        Text("Hands-Free")
+                            .font(.caption.bold())
+                            .foregroundColor(.white.opacity(0.35))
+                            .textCase(.uppercase)
+                            .tracking(1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+
+                    NavigationLink(
+                        destination: AudioOnlyView(language: language)
+                            .navigationTitle("Audio-Only")
+                            .navigationBarTitleDisplayMode(.inline)
+                    ) {
+                        featureCard(icon: "headphones.circle.fill", title: "Audio-Only Mode",
+                                    subtitle: "Study hands-free with voice", color: .teal)
+                    }
+                    .padding(.horizontal, 20)
+
+                    Spacer().frame(height: 40)
+                }
             }
-            .padding(.horizontal, 20)
         }
         .navigationTitle(navTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink(destination: SettingsView()) {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundColor(.white.opacity(0.6))
+                }
+            }
+        }
+        .onAppear {
+            // Force SwiftUI to re-read tracker data when returning from a quiz.
+            // NavigationView doesn't always re-render parent views on pop.
+            tracker.objectWillChange.send()
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(trigger: paywallTrigger)
+        }
+    }
+
+    // MARK: - Sub-views
+
+    private func mockCard(locked: Bool, subtitle: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "mic.badge.plus")
+                .font(.system(size: 26))
+                .foregroundColor(locked ? .white.opacity(0.4) : .white)
+                .frame(width: 40)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Mock Interview")
+                    .font(.headline)
+                    .foregroundColor(locked ? .white.opacity(0.5) : .white)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(locked ? .white.opacity(0.3) : .white.opacity(0.6))
+            }
+            Spacer()
+            Image(systemName: locked ? "lock.fill" : "chevron.right")
+                .foregroundColor(.white.opacity(locked ? 0.3 : 0.4))
+        }
+        .padding(16)
         .background(
-            Image(backgroundAsset)
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-                .overlay(Color.black.opacity(0.8))
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+                .opacity(locked ? 1 : 0)
         )
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(LinearGradient(colors: [.blue.opacity(0.6), .blue.opacity(0.3)],
+                                     startPoint: .leading, endPoint: .trailing))
+                .opacity(locked ? 0 : 1)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(locked ? Color.white.opacity(0.08) : Color.blue.opacity(0.4), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Readiness Card
+
+    private var readinessCard: some View {
+        let tracker = tracker
+        let total = 75 // questions per language
+        let mastered = tracker.masteredCount
+        let pct = total > 0 ? (mastered * 100) / total : 0
+
+        return HStack(spacing: 14) {
+            Image(systemName: "chart.bar.fill")
+                .font(.system(size: 26))
+                .foregroundColor(.cyan)
+                .frame(width: 40)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Exam Readiness")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text("\(mastered)/\(total) mastered · \(pct)% ready")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.white.opacity(0.4))
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(LinearGradient(colors: [.cyan.opacity(0.4), .cyan.opacity(0.15)],
+                                     startPoint: .leading, endPoint: .trailing))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.cyan.opacity(0.3), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Review Mistakes Card
+
+    @ViewBuilder
+    private var reviewMistakesCard: some View {
+        let pool = QuestionPool.allQuestions(for: language)
+        let records = tracker.records
+        let dueCount = SpacedRepetitionEngine.dueCount(from: pool, records: records)
+
+        if dueCount > 0 {
+            NavigationLink(
+                destination: QuizView(
+                    config: .reviewMistakes(
+                        questions: SpacedRepetitionEngine.dueQuestions(from: pool, records: records),
+                        language: language
+                    ),
+                    level: 0
+                )
+                .navigationTitle("Review Mistakes")
+                .navigationBarTitleDisplayMode(.inline)
+            ) {
+                HStack(spacing: 14) {
+                    Image(systemName: "arrow.counterclockwise.circle.fill")
+                        .font(.system(size: 26))
+                        .foregroundColor(.orange)
+                        .frame(width: 40)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Review Mistakes")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text("\(dueCount) questions due for review")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    Spacer()
+                    Text("\(dueCount)")
+                        .font(.caption.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.orange))
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.4))
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(LinearGradient(colors: [.orange.opacity(0.4), .orange.opacity(0.15)],
+                                             startPoint: .leading, endPoint: .trailing))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
+            }
+        } else {
+            HStack(spacing: 14) {
+                Image(systemName: "arrow.counterclockwise.circle")
+                    .font(.system(size: 26))
+                    .foregroundColor(.white.opacity(0.3))
+                    .frame(width: 40)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Review Mistakes")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.4))
+                    Text("Complete some practice first")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.3))
+                }
+                Spacer()
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.white.opacity(0.03))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+        }
+    }
+
+    // MARK: - Feature Card (Reading/Writing/Audio)
+
+    private func featureCard(icon: String, title: String, subtitle: String, color: Color, locked: Bool = false) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundColor(locked ? color.opacity(0.3) : color)
+                .frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundColor(locked ? .white.opacity(0.4) : .white)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(locked ? .white.opacity(0.3) : .white.opacity(0.6))
+            }
+            Spacer()
+            Image(systemName: locked ? "lock.fill" : "chevron.right")
+                .font(.caption)
+                .foregroundColor(.white.opacity(locked ? 0.25 : 0.3))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(locked ? 0.03 : 0.07)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(locked ? 0.05 : 0.1), lineWidth: 1))
+    }
+
+    private func levelRow(item: PracticeItem, meta: (label: String, color: Color, icon: String), locked: Bool) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: meta.icon)
+                .font(.system(size: 24))
+                .foregroundColor(locked ? meta.color.opacity(0.3) : meta.color)
+                .frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.title)
+                    .font(.subheadline.bold())
+                    .foregroundColor(locked ? .white.opacity(0.4) : .white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Text(meta.label)
+                    .font(.caption2)
+                    .foregroundColor(locked ? meta.color.opacity(0.3) : meta.color)
+            }
+            Spacer()
+            Image(systemName: locked ? "lock.fill" : "chevron.right")
+                .font(.caption)
+                .foregroundColor(.white.opacity(locked ? 0.25 : 0.3))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(locked ? 0.03 : 0.07)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(locked ? 0.05 : 0.1), lineWidth: 1))
     }
 }

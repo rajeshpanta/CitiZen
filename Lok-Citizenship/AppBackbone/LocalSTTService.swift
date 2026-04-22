@@ -84,14 +84,26 @@ final class LocalSTTService: NSObject, SpeechToTextService {
 
         expectedLC = options.map { $0.lowercased() }
 
-        // audio session
+        // audio session — only reconfigure if needed
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.record, mode: .measurement, options: .duckOthers)
-        try? session.setActive(true, options: .notifyOthersOnDeactivation)
+        if session.category != .record {
+            try? session.setCategory(.record, mode: .measurement, options: .duckOthers)
+        }
+        do {
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            #if DEBUG
+            print("[STT] Audio session activation failed: \(error)")
+            #endif
+            rec.send(false); return
+        }
 
         // mic → recognition buffer
         let node = engine.inputNode
         let fmt  = node.outputFormat(forBus: 0)
+        guard fmt.sampleRate > 0 else {          // no mic / invalid format
+            rec.send(false); return
+        }
         node.removeTap(onBus: 0)
         node.installTap(onBus: 0, bufferSize: 1024, format: fmt) { [weak self] buf, _ in
             self?.request?.append(buf)
@@ -100,7 +112,8 @@ final class LocalSTTService: NSObject, SpeechToTextService {
         try? engine.start()
         rec.send(true)
 
-        task = recognizer.recognitionTask(with: request!) { [weak self] res, err in
+        guard let request else { rec.send(false); return }
+        task = recognizer.recognitionTask(with: request) { [weak self] res, err in
             guard let self else { return }
 
             if let res {
@@ -129,6 +142,11 @@ final class LocalSTTService: NSObject, SpeechToTextService {
         task?.cancel()
         request = nil; task = nil
         rec.send(false)
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+
+        // Deactivate audio session so the orange mic indicator turns off
+        // and other apps can reclaim audio. The .notifyOthersOnDeactivation
+        // flag lets Music/Podcasts resume playback.
+        try? AVAudioSession.sharedInstance()
+            .setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

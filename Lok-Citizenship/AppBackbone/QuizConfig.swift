@@ -69,7 +69,7 @@ extension QuizConfig {
             ],
             defaultVariantIndex:    1,
             stringsForVariant:      { $0 == 0 ? .englishBilingual : .nepali },
-            localeForVariant:       { $0 == 0 ? "en-US" : "hi-IN" },
+            localeForVariant:       { $0 == 0 ? "en-US" : "ne-NP" },
             offlineForVariant:      { $0 == 0 },          // offline only for English
             questionToOptionsDelay: 1.5
         )
@@ -92,11 +92,21 @@ extension QuizConfig {
         )
     }
 
+    /// Review Mistakes quiz using the same config style as the given language.
+    static func reviewMistakes(questions: [UnifiedQuestion], language: AppLanguage) -> QuizConfig {
+        switch language {
+        case .english: return .english(questions: questions)
+        case .nepali:  return .nepali(questions: questions)
+        case .spanish: return .spanish(questions: questions)
+        case .chinese: return .chinese(questions: questions)
+        }
+    }
+
     /// English + Chinese Simplified + Chinese Traditional trilingual quiz.
     static func chinese(questions: [UnifiedQuestion]) -> QuizConfig {
         QuizConfig(
             questions:              questions,
-            backgroundImage:        "USAChina",
+            backgroundImage:        "BackgroundImage",
             languageToggles: [
                 LanguageToggle(label: "🇺🇸 English", variantIndex: 0),
                 LanguageToggle(label: "🇨🇳 简体",     variantIndex: 1),
