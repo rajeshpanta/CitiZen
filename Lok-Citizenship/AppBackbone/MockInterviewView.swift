@@ -48,39 +48,75 @@ struct MockInterviewView: View {
     init(language: AppLanguage) {
         self.language = language
         let logic = UnifiedQuizLogic()
+        let vc = VoiceQuizController(quizLogic: logic)
+        vc.requireContinueOnWrong = true
         _quizLogic = StateObject(wrappedValue: logic)
-        _voice = StateObject(wrappedValue: VoiceQuizController(quizLogic: logic))
+        _voice = StateObject(wrappedValue: vc)
+    }
+
+    @State private var mockRecorded = false
+    @State private var pulseRing = false
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
+
+    private var endLabel: String {
+        switch language {
+        case .english: return "End"
+        case .spanish: return "Terminar"
+        case .nepali:  return "समाप्त"
+        case .chinese: return "结束"
+        }
+    }
+
+    private var backLabel: String {
+        switch language {
+        case .english: return "Back"
+        case .spanish: return "Atrás"
+        case .nepali:  return "पछाडि"
+        case .chinese: return "返回"
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
     // MARK: - BODY
     // ─────────────────────────────────────────────────────────────
 
-    @State private var mockRecorded = false
-
     var body: some View {
-        VStack(spacing: 0) {
-            if quizLogic.isFinished {
-                resultScreen
-            } else if voice.phase == .idle {
-                readyScreen
-            } else {
-                interviewScreen
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.0, green: 0.10, blue: 0.30),
+                    Color(red: 0.0, green: 0.05, blue: 0.18),
+                    Color.black
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            Group {
+                if quizLogic.isFinished {
+                    resultScreen
+                } else if voice.phase == .idle {
+                    readyScreen
+                } else {
+                    interviewScreen
+                }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.ignoresSafeArea())
         .onChange(of: quizLogic.isFinished) { finished in
             if finished && !mockRecorded {
                 mockRecorded = true
                 ProgressManager.shared.recordMockInterviewCompleted()
             }
         }
+        .onChange(of: voice.isRecording) { recording in
+            pulseRing = recording
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 if !quizLogic.isFinished && voice.phase != .idle {
-                    Button("End", role: .destructive) {
+                    Button(endLabel, role: .destructive) {
                         voice.stop()
                         quizLogic.forceEnd()
                     }
@@ -89,7 +125,7 @@ struct MockInterviewView: View {
             }
             ToolbarItem(placement: .navigationBarLeading) {
                 if voice.phase == .idle || quizLogic.isFinished {
-                    Button("Back") {
+                    Button(backLabel) {
                         voice.stop()
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -100,6 +136,13 @@ struct MockInterviewView: View {
         .onAppear {
             voice.requestAuthorization()
         }
+        .onDisappear {
+            // Defensive cleanup. End/Back buttons already call voice.stop(),
+            // but the interactive swipe-back gesture and programmatic dismissal
+            // can bypass those paths and leave TTS/STT running in the background.
+            // voice.stop() is idempotent so the double-call on explicit paths is a no-op.
+            voice.stop()
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -107,43 +150,117 @@ struct MockInterviewView: View {
     // ─────────────────────────────────────────────────────────────
 
     private var readyScreen: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 22) {
+                Spacer(minLength: 30)
 
-            Image(systemName: "person.fill.questionmark")
-                .font(.system(size: 60))
-                .foregroundColor(.blue)
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [.blue.opacity(0.35), .blue.opacity(0.05)],
+                            startPoint: .top, endPoint: .bottom))
+                        .frame(width: 130, height: 130)
+                    Image(systemName: "person.fill.questionmark")
+                        .font(.system(size: 54))
+                        .foregroundColor(.blue)
+                }
 
-            Text("Mock Interview")
-                .font(.largeTitle).bold()
-                .foregroundColor(.white)
-
-            Text("\(interviewQuestionCount) questions from the real USCIS civics test.\nYou need \(requiredCorrect) correct to pass.\nAnswer out loud using your voice.")
-                .font(.body)
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            Button {
-                quizLogic.startMockInterview(
-                    from: QuestionPool.allQuestions(for: language),
-                    questionCount: interviewQuestionCount,
-                    requiredCorrect: requiredCorrect
-                )
-                voice.start()
-            } label: {
-                Text("Start Interview")
-                    .font(.title3).bold()
+                Text(s.mockHeadline)
+                    .font(.largeTitle).bold()
                     .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-            }
-            .padding(.horizontal, 40)
 
+                Text(s.mockTagline)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
+
+                VStack(spacing: 10) {
+                    readyRow(icon: "list.number",
+                             title: String(format: s.mockRowQuestionsFormat, interviewQuestionCount),
+                             subtitle: s.mockRowQuestionsSub)
+                    readyRow(icon: "checkmark.circle.fill",
+                             title: String(format: s.mockRowPassFormat, requiredCorrect),
+                             subtitle: s.mockRowPassSub)
+                    readyRow(icon: "mic.fill",
+                             title: s.mockRowVoice,
+                             subtitle: s.mockRowVoiceSub)
+                }
+                .padding(.horizontal, 16)
+
+                // English-only disclaimer. Shown in the user's app language so
+                // non-English users understand why questions will be read in English
+                // (mock interview intentionally mirrors the real USCIS test).
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.footnote)
+                        .foregroundColor(.yellow.opacity(0.8))
+                    Text(s.mockInterviewEnglishDisclaimer)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.65))
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow.opacity(0.2), lineWidth: 1))
+                .padding(.horizontal, 16)
+
+                Button {
+                    quizLogic.startMockInterview(
+                        from: QuestionPool.allQuestions(for: language),
+                        questionCount: interviewQuestionCount,
+                        requiredCorrect: requiredCorrect
+                    )
+                    voice.start()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "play.fill")
+                        Text(s.startInterview)
+                    }
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(LinearGradient(
+                                colors: [.blue, .blue.opacity(0.75)],
+                                startPoint: .leading, endPoint: .trailing))
+                    )
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 6)
+
+                Spacer(minLength: 20)
+            }
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func readyRow(icon: String, title: String, subtitle: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(.blue)
+                .frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.55))
+            }
             Spacer()
         }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -151,135 +268,491 @@ struct MockInterviewView: View {
     // ─────────────────────────────────────────────────────────────
 
     private var interviewScreen: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
+            progressSection
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
 
-            // Progress
-            HStack {
-                Text("Question \(quizLogic.currentQuestionIndex + 1) of \(quizLogic.totalQuestions)")
-                    .font(.headline).foregroundColor(.white)
-                Spacer()
-                HStack(spacing: 8) {
-                    Text("\(quizLogic.correctAnswers)")
-                        .foregroundColor(.green).bold()
-                    Text("\(quizLogic.incorrectAnswers)")
-                        .foregroundColor(.red).bold()
+            ScrollView {
+                VStack(spacing: 16) {
+                    questionCard
+                    statusPill
+                    if voice.didTimeout {
+                        didntHearBanner
+                    }
+                    if !voice.transcription.isEmpty {
+                        transcriptionCard
+                    }
+                    if let correct = voice.lastAnswerCorrect {
+                        answerFeedback(correct: correct)
+                    }
+                    fallbackOptions
+                    if awaitingWrongContinue {
+                        nextQuestionButton
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+            }
+            .scrollIndicators(.hidden)
+
+            micDock
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+        }
+        .onChange(of: voice.lastAnswerCorrect) { correct in
+            guard let correct = correct else { return }
+            let gen = UINotificationFeedbackGenerator()
+            gen.notificationOccurred(correct ? .success : .error)
+        }
+    }
+
+    private var awaitingWrongContinue: Bool {
+        voice.phase == .awaitingContinue && voice.lastAnswerCorrect == false
+    }
+
+    // MARK: Progress
+
+    private var progressSection: some View {
+        VStack(spacing: 10) {
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.12))
+                    .frame(height: 8)
+                GeometryReader { geo in
+                    Capsule()
+                        .fill(LinearGradient(
+                            colors: [.blue, .cyan],
+                            startPoint: .leading, endPoint: .trailing))
+                        .frame(width: progressFraction * geo.size.width, height: 8)
+                }
+                .frame(height: 8)
+            }
+
+            // Listening countdown bar (only while listening).
+            if voice.phase == .listening, let start = voice.listeningStartedAt {
+                TimelineView(.periodic(from: start, by: 0.08)) { context in
+                    let elapsed = context.date.timeIntervalSince(start)
+                    let remaining = max(0, 1 - (elapsed / 10.0))
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.08))
+                            .frame(height: 3)
+                        GeometryReader { geo in
+                            Capsule()
+                                .fill(Color.red.opacity(0.7))
+                                .frame(width: remaining * geo.size.width, height: 3)
+                        }
+                        .frame(height: 3)
+                    }
                 }
             }
-            .padding(.horizontal)
-            .padding(.top, 16)
 
-            ProgressView(
-                value: Double(quizLogic.currentQuestionIndex),
-                total: Double(max(quizLogic.totalQuestions, 1))
-            )
-            .accentColor(.blue)
-            .padding(.horizontal)
+            HStack(spacing: 10) {
+                Label("\(quizLogic.currentQuestionIndex + 1)/\(quizLogic.totalQuestions)",
+                      systemImage: "list.bullet")
+                    .font(.caption.bold())
+                    .foregroundColor(.white.opacity(0.75))
 
-            Spacer()
+                Spacer()
 
-            // Question text
-            Text(quizLogic.currentQuestion.variants.first?.text ?? "")
-                .font(.title2).bold()
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+                scorePill(value: quizLogic.correctAnswers,
+                          icon: "checkmark.circle.fill",
+                          color: .green)
+                scorePill(value: quizLogic.incorrectAnswers,
+                          icon: "xmark.circle.fill",
+                          color: .red)
 
-            // Status indicator
-            statusIndicator
-
-            // Transcription
-            if !voice.transcription.isEmpty {
-                Text(voice.transcription)
-                    .font(.body)
+                Text(String(format: s.interviewNeedFormat, requiredCorrect))
+                    .font(.caption.bold())
                     .foregroundColor(.yellow)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.yellow.opacity(0.15)))
+            }
+        }
+    }
+
+    private var progressFraction: CGFloat {
+        guard quizLogic.totalQuestions > 0 else { return 0 }
+        return CGFloat(quizLogic.currentQuestionIndex) / CGFloat(quizLogic.totalQuestions)
+    }
+
+    private func scorePill(value: Int, icon: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2.bold())
+            Text("\(value)")
+                .font(.caption.bold())
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(color.opacity(0.15)))
+    }
+
+    // MARK: Question card
+
+    private var questionCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("\(s.interviewQuestionLabel) \(quizLogic.currentQuestionIndex + 1)")
+                .font(.caption.bold())
+                .foregroundColor(.white.opacity(0.5))
+                .tracking(1)
+                .textCase(.uppercase)
+
+            Text(quizLogic.currentQuestion.variants.first?.text ?? "")
+                .font(.title2.bold())
+                .foregroundColor(.white)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if quizLogic.currentQuestion.isTimeSensitive {
+                // Correct answer depends on current officeholder; point the user
+                // to uscis.gov/citizenship. Localized to user's app language.
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.caption2)
+                        .foregroundColor(.yellow.opacity(0.85))
+                        .padding(.top, 2)
+                    Text(s.questionTimeSensitiveNote)
+                        .font(.caption2)
+                        .foregroundColor(.yellow.opacity(0.75))
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    // MARK: Status pill
+
+    @ViewBuilder
+    private var statusPill: some View {
+        switch voice.phase {
+        case .speakingQuestion:
+            statusLabel(icon: "speaker.wave.2.fill", text: s.interviewStatusReading, color: .blue)
+        case .listening:
+            statusLabel(icon: "waveform", text: s.interviewStatusListening, color: .red)
+        case .matching:
+            statusLabel(icon: "sparkles", text: s.interviewMatching, color: .purple)
+        case .processingAnswer:
+            statusLabel(icon: "hourglass", text: s.interviewStatusNext, color: .yellow)
+        default:
+            EmptyView()
+        }
+    }
+
+    // MARK: Didn't-hear banner (after timeout)
+
+    private var didntHearBanner: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "ear.trianglebadge.exclamationmark")
+                    .font(.headline)
+                    .foregroundColor(.orange)
+                Text(s.interviewDidntHear)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            HStack(spacing: 10) {
+                Button {
+                    let gen = UIImpactFeedbackGenerator(style: .light); gen.impactOccurred()
+                    voice.replayQuestion()
+                } label: {
+                    Label(s.interviewReplay, systemImage: "speaker.wave.2.fill")
+                        .font(.caption.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Capsule().fill(Color.blue.opacity(0.8)))
+                }
+                Button {
+                    let gen = UIImpactFeedbackGenerator(style: .light); gen.impactOccurred()
+                    voice.toggleMic()
+                } label: {
+                    Label(s.interviewRetry, systemImage: "arrow.clockwise")
+                        .font(.caption.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.8)))
+                }
+                Spacer()
+                Button {
+                    let gen = UIImpactFeedbackGenerator(style: .light); gen.impactOccurred()
+                    voice.skipCurrent()
+                } label: {
+                    Text(s.interviewSkip)
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Capsule().fill(Color.white.opacity(0.15)))
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12).fill(Color.orange.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.4), lineWidth: 1)
+        )
+    }
+
+    // MARK: Next-question button (shown after a wrong answer)
+
+    private var nextQuestionButton: some View {
+        Button {
+            let gen = UIImpactFeedbackGenerator(style: .medium); gen.impactOccurred()
+            voice.continueAfterWrong()
+        } label: {
+            HStack {
+                Text(s.interviewNextQuestion)
+                    .font(.headline.bold())
+                Image(systemName: "arrow.right")
+                    .font(.subheadline.bold())
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(LinearGradient(
+                        colors: [.orange, .orange.opacity(0.85)],
+                        startPoint: .leading, endPoint: .trailing))
+            )
+        }
+    }
+
+    private func statusLabel(icon: String, text: String, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.subheadline.bold())
+            Text(text)
+                .font(.subheadline.bold())
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Capsule().fill(color.opacity(0.15)))
+        .overlay(Capsule().stroke(color.opacity(0.4), lineWidth: 1))
+    }
+
+    // MARK: Transcription card
+
+    private var transcriptionCard: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "quote.opening")
+                .font(.caption)
+                .foregroundColor(.yellow.opacity(0.7))
+            Text(voice.transcription)
+                .font(.body)
+                .foregroundColor(.yellow)
+                .multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.yellow.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.yellow.opacity(0.25), lineWidth: 1)
+        )
+    }
+
+    // MARK: Answer feedback flash
+
+    private func answerFeedback(correct: Bool) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: correct ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.title3)
+                Text(correct ? s.interviewCorrect : s.interviewWrong)
+                    .font(.headline.bold())
+            }
+            .foregroundColor(correct ? .green : .red)
+
+            if !correct && !voice.lastAnswerExplanation.isEmpty {
+                Text(voice.lastAnswerExplanation)
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.75))
                     .multilineTextAlignment(.center)
             }
-
-            // Answer feedback flash
-            if let correct = voice.lastAnswerCorrect {
-                Text(correct ? "Correct!" : "Wrong")
-                    .font(.title3).bold()
-                    .foregroundColor(correct ? .green : .red)
-
-                if !correct && !voice.lastAnswerExplanation.isEmpty {
-                    Text(voice.lastAnswerExplanation)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                }
-            }
-
-            Spacer()
-
-            // Fallback: tap-to-answer options
-            fallbackOptions
-
-            // Manual mic toggle
-            if voice.phase == .listening || voice.phase == .speakingQuestion {
-                micToggleButton
-                    .padding(.bottom, 20)
-            }
         }
+        .frame(maxWidth: .infinity)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill((correct ? Color.green : Color.red).opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke((correct ? Color.green : Color.red).opacity(0.4), lineWidth: 1)
+        )
     }
 
-    private var statusIndicator: some View {
-        HStack(spacing: 8) {
-            switch voice.phase {
-            case .speakingQuestion:
-                Image(systemName: "speaker.wave.2.fill")
-                    .foregroundColor(.blue)
-                Text("Reading question...")
-                    .foregroundColor(.gray)
-            case .listening:
-                Image(systemName: "mic.fill")
-                    .foregroundColor(.red)
-                Text("Listening...")
-                    .foregroundColor(.gray)
-            case .processingAnswer:
-                Image(systemName: "checkmark.circle")
-                    .foregroundColor(.yellow)
-                Text("Next question...")
-                    .foregroundColor(.gray)
-            default:
-                EmptyView()
-            }
-        }
-        .font(.subheadline)
-    }
-
-    private var micToggleButton: some View {
-        Button {
-            voice.toggleMic()
-        } label: {
-            Image(systemName: voice.isRecording ? "mic.circle.fill" : "mic.circle")
-                .font(.system(size: 50))
-                .foregroundColor(voice.isRecording ? .red : .blue)
-        }
-    }
+    // MARK: Fallback options
 
     private var fallbackOptions: some View {
         let options = quizLogic.currentQuestion.variants.first?.options ?? []
-        return VStack(spacing: 6) {
-            Text("or tap your answer:")
-                .font(.caption).foregroundColor(.gray)
+        let correctIdx = voice.lastCorrectIndex
+        let showingAnswer = voice.phase == .awaitingContinue && voice.lastAnswerCorrect == false
+        let disabled = voice.phase == .processingAnswer
+                    || voice.phase == .speakingQuestion
+                    || voice.phase == .matching
+                    || voice.phase == .awaitingContinue
+        return VStack(spacing: 8) {
+            HStack {
+                Text(showingAnswer ? s.interviewCorrectAnswerLabel.uppercased() : s.interviewOrTap)
+                    .font(.caption2.bold())
+                    .tracking(1)
+                    .foregroundColor(showingAnswer ? .green.opacity(0.8) : .white.opacity(0.4))
+                Spacer()
+            }
+            .padding(.top, 4)
+
             ForEach(options.indices, id: \.self) { idx in
                 Button {
+                    let gen = UISelectionFeedbackGenerator(); gen.selectionChanged()
                     voice.submitTapAnswer(idx)
                 } label: {
-                    Text(options[idx])
-                        .font(.footnote)
-                        .foregroundColor(.white.opacity(0.8))
-                        .frame(maxWidth: .infinity)
-                        .padding(8)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(8)
+                    optionRow(idx: idx,
+                              text: options[idx],
+                              isCorrect: showingAnswer && correctIdx == idx)
                 }
-                .disabled(voice.phase == .processingAnswer || voice.phase == .speakingQuestion)
+                .buttonStyle(.plain)
+                .disabled(disabled)
+                .opacity(disabled && !(showingAnswer && correctIdx == idx) ? 0.5 : 1)
             }
         }
-        .padding(.horizontal, 24)
+    }
+
+    private func optionRow(idx: Int, text: String, isCorrect: Bool) -> some View {
+        HStack(spacing: 12) {
+            Text(optionLetter(idx))
+                .font(.subheadline.bold())
+                .foregroundColor(.white)
+                .frame(width: 26, height: 26)
+                .background(
+                    Circle().fill(isCorrect
+                                  ? Color.green.opacity(0.85)
+                                  : Color.white.opacity(0.12))
+                )
+
+            Text(text)
+                .font(.body)
+                .foregroundColor(isCorrect ? .green : .white.opacity(0.9))
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if isCorrect {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isCorrect ? Color.green.opacity(0.15) : Color.white.opacity(0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isCorrect ? Color.green.opacity(0.6) : Color.white.opacity(0.1),
+                        lineWidth: isCorrect ? 1.5 : 1)
+        )
+    }
+
+    private func optionLetter(_ idx: Int) -> String {
+        ["A", "B", "C", "D", "E", "F"][min(idx, 5)]
+    }
+
+    // MARK: Mic dock
+
+    private var micDock: some View {
+        let micDisabled = voice.phase == .speakingQuestion
+                       || voice.phase == .processingAnswer
+                       || voice.phase == .matching
+                       || voice.phase == .awaitingContinue
+        return HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .stroke(Color.red.opacity(0.4), lineWidth: 2)
+                    .frame(width: pulseRing ? 80 : 62, height: pulseRing ? 80 : 62)
+                    .opacity(pulseRing ? 0 : 1)
+                    .animation(voice.isRecording
+                               ? .easeOut(duration: 1.2).repeatForever(autoreverses: false)
+                               : .default,
+                               value: pulseRing)
+
+                Button {
+                    let gen = UIImpactFeedbackGenerator(style: .light); gen.impactOccurred()
+                    voice.toggleMic()
+                } label: {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 58, height: 58)
+                        .background(
+                            Circle().fill(voice.isRecording ? Color.red : Color.blue)
+                        )
+                        .overlay(
+                            Circle().stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                }
+                .disabled(micDisabled)
+                .opacity(micDisabled ? 0.5 : 1)
+                .accessibilityLabel(voice.isRecording ? s.a11yStopRecording : s.a11yStartRecording)
+            }
+            .frame(width: 80, height: 80)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(voice.isRecording ? s.interviewListening : s.interviewTapMic)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Text(voice.isRecording
+                     ? s.interviewTapAgain
+                     : s.interviewAnswerOutLoud)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.55))
+            }
+
+            Spacer()
+
+            Button {
+                let gen = UIImpactFeedbackGenerator(style: .light); gen.impactOccurred()
+                voice.replayQuestion()
+            } label: {
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(Color.white.opacity(0.12)))
+            }
+            .disabled(voice.phase == .speakingQuestion || voice.phase == .matching)
+            .accessibilityLabel(s.interviewReplay)
+            .opacity(voice.phase == .speakingQuestion || voice.phase == .matching ? 0.4 : 1)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -287,115 +760,234 @@ struct MockInterviewView: View {
     // ─────────────────────────────────────────────────────────────
 
     private var resultScreen: some View {
-        VStack(spacing: 20) {
-            Spacer()
+        let passed = quizLogic.status == .passed
 
-            if quizLogic.status == .passed {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 70))
-                    .foregroundColor(.green)
-                Text("PASSED")
+        return ScrollView {
+            VStack(spacing: 18) {
+                Spacer(minLength: 20)
+
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [(passed ? Color.green : Color.red).opacity(0.4),
+                                     (passed ? Color.green : Color.red).opacity(0.05)],
+                            startPoint: .top, endPoint: .bottom))
+                        .frame(width: 130, height: 130)
+                    Image(systemName: passed ? "checkmark.seal.fill" : "xmark.seal.fill")
+                        .font(.system(size: 56))
+                        .foregroundColor(passed ? .green : .red)
+                }
+
+                Text(passed ? s.resultPassed : s.resultFailed)
                     .font(.largeTitle).bold()
-                    .foregroundColor(.green)
-            } else {
-                Image(systemName: "xmark.seal.fill")
-                    .font(.system(size: 70))
-                    .foregroundColor(.red)
-                Text("FAILED")
-                    .font(.largeTitle).bold()
-                    .foregroundColor(.red)
-            }
+                    .foregroundColor(passed ? .green : .red)
 
-            Text("\(quizLogic.correctAnswers) / \(quizLogic.attemptedQuestions)")
-                .font(.title).foregroundColor(.white)
+                Text(String(format: s.resultOfCorrectFormat,
+                            quizLogic.correctAnswers,
+                            quizLogic.attemptedQuestions))
+                    .font(.title3)
+                    .foregroundColor(.white.opacity(0.8))
 
-            Text("Score: \(quizLogic.scorePercentage)%")
-                .font(.headline).foregroundColor(.yellow)
+                HStack(spacing: 12) {
+                    statCard(value: "\(quizLogic.correctAnswers)",
+                             label: s.resultCorrect, color: .green)
+                    statCard(value: "\(quizLogic.incorrectAnswers)",
+                             label: s.resultWrong, color: .red)
+                    statCard(value: "\(quizLogic.scorePercentage)%",
+                             label: s.resultScore, color: .yellow)
+                }
+                .padding(.horizontal, 16)
 
-            VStack(spacing: 8) {
                 HStack {
-                    Text("Correct").foregroundColor(.gray)
+                    Text(s.resultRequiredToPass)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.6))
                     Spacer()
-                    Text("\(quizLogic.correctAnswers)").foregroundColor(.green).bold()
+                    Text("\(requiredCorrect) / \(interviewQuestionCount)")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
                 }
-                HStack {
-                    Text("Wrong").foregroundColor(.gray)
-                    Spacer()
-                    Text("\(quizLogic.incorrectAnswers)").foregroundColor(.red).bold()
-                }
-                HStack {
-                    Text("Required to pass").foregroundColor(.gray)
-                    Spacer()
-                    Text("\(requiredCorrect)").foregroundColor(.white)
-                }
-            }
-            .padding(.horizontal, 40)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.06))
+                )
+                .padding(.horizontal, 16)
 
-            // Lifetime stats
-            let pm = ProgressManager.shared
-            VStack(spacing: 4) {
-                Divider().background(Color.white.opacity(0.3))
-                Text("Lifetime Stats")
-                    .font(.caption).foregroundColor(.gray)
-                HStack(spacing: 16) {
-                    VStack {
-                        Text("\(pm.totalQuestionsAnswered)")
-                            .font(.headline).foregroundColor(.white)
-                        Text("Answered").font(.caption2).foregroundColor(.gray)
+                lifetimeStats
+                    .padding(.horizontal, 16)
+
+                if !quizLogic.answerLog.isEmpty {
+                    reviewList
+                        .padding(.horizontal, 16)
+                }
+
+                shareResultButton
+                    .padding(.top, 2)
+
+                HStack(spacing: 12) {
+                    Button {
+                        quizLogic.startMockInterview(
+                            from: QuestionPool.allQuestions(for: language),
+                            questionCount: interviewQuestionCount,
+                            requiredCorrect: requiredCorrect
+                        )
+                        voice.restart()
+                    } label: {
+                        Label(s.resultTryAgain, systemImage: "arrow.clockwise")
+                            .font(.headline.bold())
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.blue)
+                            )
                     }
-                    VStack {
-                        Text("\(pm.accuracyPercentage)%")
-                            .font(.headline).foregroundColor(.white)
-                        Text("Accuracy").font(.caption2).foregroundColor(.gray)
-                    }
-                    VStack {
-                        Text("\(pm.currentStreak)")
-                            .font(.headline).foregroundColor(.orange)
-                        Text("Streak").font(.caption2).foregroundColor(.gray)
+
+                    Button {
+                        presentationMode.wrappedValue.dismiss()
+                    } label: {
+                        Text(s.resultDone)
+                            .font(.headline.bold())
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.white.opacity(0.15))
+                            )
                     }
                 }
+                .padding(.horizontal, 16)
                 .padding(.top, 4)
+
+                Spacer(minLength: 20)
             }
-            .padding(.vertical, 8)
-
-            // Share result
-            shareResultButton
-
-            Spacer()
-
-            HStack(spacing: 16) {
-                Button {
-                    quizLogic.startMockInterview(
-                        from: QuestionPool.allQuestions(for: language),
-                        questionCount: interviewQuestionCount,
-                        requiredCorrect: requiredCorrect
-                    )
-                    voice.restart()
-                } label: {
-                    Text("Try Again")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
-                }
-
-                Button {
-                    presentationMode.wrappedValue.dismiss()
-                } label: {
-                    Text("Done")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.gray)
-                        .cornerRadius(12)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 20)
         }
+        .scrollIndicators(.hidden)
+    }
+
+    private func statCard(value: String, label: String, color: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.title3.bold())
+                .foregroundColor(color)
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.6))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.12))
+        )
+    }
+
+    // MARK: Review list
+
+    private var reviewList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(s.resultReviewHeader.uppercased())
+                    .font(.caption2.bold())
+                    .tracking(1)
+                    .foregroundColor(.white.opacity(0.4))
+                Spacer()
+            }
+            ForEach(Array(quizLogic.answerLog.enumerated()), id: \.element.id) { (index, entry) in
+                reviewRow(number: index + 1, entry: entry)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.05))
+        )
+    }
+
+    private func reviewRow(number: Int, entry: UnifiedQuizLogic.AnswerLogEntry) -> some View {
+        let variant = entry.question.variants.first
+        let options = variant?.options ?? []
+        let correctText = options[safe: entry.question.correctAnswer] ?? ""
+        let userText: String = {
+            if let ua = entry.userAnswer, let opt = options[safe: ua] {
+                return opt
+            }
+            return s.resultReviewNoAnswer
+        }()
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: entry.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundColor(entry.isCorrect ? .green : .red)
+                    .font(.subheadline.bold())
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(number). \(variant?.text ?? "")")
+                        .font(.footnote.bold())
+                        .foregroundColor(.white)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 6) {
+                        Text(s.resultReviewYouAnswered)
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.5))
+                        Text(userText)
+                            .font(.caption2.bold())
+                            .foregroundColor(entry.isCorrect ? .green : .red)
+                    }
+                    if !entry.isCorrect {
+                        HStack(spacing: 6) {
+                            Text(s.resultReviewCorrectAnswer)
+                                .font(.caption2)
+                                .foregroundColor(.white.opacity(0.5))
+                            Text(correctText)
+                                .font(.caption2.bold())
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            if number < quizLogic.answerLog.count {
+                Divider().background(Color.white.opacity(0.08))
+            }
+        }
+    }
+
+    private var lifetimeStats: some View {
+        let pm = ProgressManager.shared
+        return VStack(spacing: 8) {
+            HStack {
+                Text(s.resultLifetimeStats)
+                    .font(.caption2.bold())
+                    .tracking(1)
+                    .foregroundColor(.white.opacity(0.4))
+                Spacer()
+            }
+            HStack(spacing: 20) {
+                VStack {
+                    Text("\(pm.totalQuestionsAnswered)")
+                        .font(.headline).foregroundColor(.white)
+                    Text(s.resultAnswered).font(.caption2).foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity)
+                VStack {
+                    Text("\(pm.accuracyPercentage)%")
+                        .font(.headline).foregroundColor(.white)
+                    Text(s.resultAccuracy).font(.caption2).foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity)
+                VStack {
+                    Text("\(pm.currentStreak)")
+                        .font(.headline).foregroundColor(.orange)
+                    Text(s.resultStreak).font(.caption2).foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.05))
+        )
     }
 
     // MARK: - Share
@@ -419,7 +1011,7 @@ struct MockInterviewView: View {
             }
             root.present(av, animated: true)
         } label: {
-            Label("Share Result", systemImage: "square.and.arrow.up")
+            Label(s.resultShareResult, systemImage: "square.and.arrow.up")
                 .font(.subheadline.bold())
                 .foregroundColor(.blue)
         }

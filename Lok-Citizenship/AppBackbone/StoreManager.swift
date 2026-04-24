@@ -16,9 +16,14 @@ final class StoreManager: ObservableObject {
 
     @Published private(set) var products: [Product] = []
     @Published private(set) var isPro = false
-    @Published private(set) var productLoadError: String?
+    /// True when the most recent product-load attempt failed (network error, zero products
+    /// returned, etc). Paywall renders a localized "pricing unavailable" message when set.
+    /// The specific internal reason isn't exposed — Paywall shows the same user-facing text.
+    @Published private(set) var productLoadFailed: Bool = false
     @Published private(set) var isLoadingProducts = false
-    @Published private(set) var entitlementError: String?
+    /// True when receipt verification failed for any entitlement. Paywall shows a
+    /// localized "verification issue" alert when set.
+    @Published private(set) var entitlementVerificationFailed: Bool = false
 
     // MARK: - Private
 
@@ -27,10 +32,31 @@ final class StoreManager: ObservableObject {
     private init() {
         transactionListener = listenForTransactions()
 
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "dev_force_pro") {
+            isPro = true
+        }
+        #endif
+
         Task {
             await refreshEntitlements()
         }
     }
+
+    #if DEBUG
+    /// Debug-only override: unlocks Pro without a real purchase. Persists across launches.
+    func setDevForcePro(_ on: Bool) {
+        UserDefaults.standard.set(on, forKey: "dev_force_pro")
+        isPro = on ? true : isPro  // don't revoke real entitlements
+        if !on {
+            Task { await refreshEntitlements() }
+        }
+    }
+
+    var isDevForcePro: Bool {
+        UserDefaults.standard.bool(forKey: "dev_force_pro")
+    }
+    #endif
 
     deinit {
         transactionListener?.cancel()
@@ -43,7 +69,7 @@ final class StoreManager: ObservableObject {
         if !forceReload && !products.isEmpty { return }
 
         isLoadingProducts = true
-        productLoadError = nil
+        productLoadFailed = false
 
         let ids: Set<String> = [Self.monthlyID, Self.lifetimeID]
 
@@ -56,19 +82,13 @@ final class StoreManager: ObservableObject {
             #endif
 
             products = loadedProducts
-
-            if loadedProducts.isEmpty {
-                productLoadError = """
-                Could not load pricing.
-                Check your product IDs, App Store Connect setup, or StoreKit test configuration.
-                """
-            }
+            productLoadFailed = loadedProducts.isEmpty
         } catch {
             #if DEBUG
             print("[StoreManager] Failed to load products: \(error)")
             #endif
             products = []
-            productLoadError = "Could not load pricing. Please try again."
+            productLoadFailed = true
         }
 
         isLoadingProducts = false
@@ -124,7 +144,7 @@ final class StoreManager: ObservableObject {
 
     func refreshEntitlements() async {
         var hasPro = false
-        var verifyError: String?
+        var verifyFailed = false
 
         for await result in Transaction.currentEntitlements {
             do {
@@ -138,12 +158,18 @@ final class StoreManager: ObservableObject {
                 #if DEBUG
                 print("[StoreManager] Entitlement verification failed: \(error)")
                 #endif
-                verifyError = "Purchase could not be verified. Please try restoring purchases."
+                verifyFailed = true
             }
         }
 
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "dev_force_pro") {
+            hasPro = true
+        }
+        #endif
+
         isPro = hasPro
-        entitlementError = hasPro ? nil : verifyError
+        entitlementVerificationFailed = hasPro ? false : verifyFailed
     }
 
     // MARK: - Transaction listener
@@ -162,7 +188,7 @@ final class StoreManager: ObservableObject {
                     print("[StoreManager] Transaction update verification failed: \(error)")
                     #endif
                     await MainActor.run {
-                        self.entitlementError = "Purchase could not be verified. Please try restoring purchases."
+                        self.entitlementVerificationFailed = true
                     }
                 }
             }
@@ -170,7 +196,7 @@ final class StoreManager: ObservableObject {
     }
 
     func clearEntitlementError() {
-        entitlementError = nil
+        entitlementVerificationFailed = false
     }
 
     // MARK: - Verification

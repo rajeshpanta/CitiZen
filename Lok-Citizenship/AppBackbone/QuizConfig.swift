@@ -70,7 +70,10 @@ extension QuizConfig {
             defaultVariantIndex:    1,
             stringsForVariant:      { $0 == 0 ? .englishBilingual : .nepali },
             localeForVariant:       { $0 == 0 ? "en-US" : "ne-NP" },
-            offlineForVariant:      { $0 == 0 },          // offline only for English
+            // Prefer on-device STT for both variants. Nepali falls back to Hindi
+            // inside LocalSTTService. If the user hasn't downloaded the on-device
+            // pack, iOS gracefully degrades to streaming (see LocalSTTService:79).
+            offlineForVariant:      { _ in true },
             questionToOptionsDelay: 1.5
         )
     }
@@ -87,7 +90,9 @@ extension QuizConfig {
             defaultVariantIndex:    1,
             stringsForVariant:      { $0 == 0 ? .englishBilingual : .spanish },
             localeForVariant:       { $0 == 0 ? "en-US" : "es-ES" },
-            offlineForVariant:      { $0 == 0 },          // offline only for English
+            // Prefer on-device STT for both variants. Safe fallback to streaming
+            // if the user hasn't downloaded the Spanish on-device pack.
+            offlineForVariant:      { _ in true },
             questionToOptionsDelay: 1.5
         )
     }

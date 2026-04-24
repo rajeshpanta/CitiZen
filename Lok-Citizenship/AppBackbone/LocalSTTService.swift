@@ -70,7 +70,14 @@ final class LocalSTTService: NSObject, SpeechToTextService {
     {
         stopRecording()                                      // clean slate
 
-        recognizer = SFSpeechRecognizer(locale: Locale(identifier: localeCode))
+        // Apple's SFSpeechRecognizer does not support Nepali (ne-NP). Nepali and
+        // Hindi share the Devanagari script and roughly 60% of vocabulary, so
+        // the Hindi recognizer is used as a best-effort fallback for Nepali
+        // speakers. TTS still uses ne-NP for speaking — this substitution is
+        // scoped to the STT layer only.
+        let effectiveLocale = (localeCode == "ne-NP") ? "hi-IN" : localeCode
+
+        recognizer = SFSpeechRecognizer(locale: Locale(identifier: effectiveLocale))
         guard let recognizer, recognizer.isAvailable else {
             auth.send(.restricted); return
         }

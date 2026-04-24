@@ -6,7 +6,7 @@ final class ServiceLocator {
     static let shared = ServiceLocator()
 
     // 2) Lazily created TTS and STT services
-    private(set) lazy var ttsService: TextToSpeechService = LocalTTSService()
+    private(set) lazy var ttsService: TextToSpeechService = TTSRouter()
     private(set) lazy var sttService: SpeechToTextService = LocalSTTService()
 
     // 3) Make the initializer private so nobody else can create another locator.

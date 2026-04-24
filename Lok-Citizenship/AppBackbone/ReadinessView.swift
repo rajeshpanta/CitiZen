@@ -12,6 +12,8 @@ struct ReadinessView: View {
 
     private var totalQuestions: Int { totalPerLevel * levelCount }
 
+    private var s: UIStrings { UIStrings.forLanguage(language) }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -30,7 +32,7 @@ struct ReadinessView: View {
 
                 // Per-level breakdown
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Progress by Level")
+                    Text(s.readinessProgressByLevel)
                         .font(.caption.bold())
                         .foregroundColor(.white.opacity(0.4))
                         .textCase(.uppercase)
@@ -41,6 +43,10 @@ struct ReadinessView: View {
                     }
                 }
                 .padding(.horizontal, 20)
+
+                // F6: English reading & writing test pass-rate section.
+                englishSkillsSection
+                    .padding(.horizontal, 20)
 
                 // Streak section
                 streakSection
@@ -78,13 +84,13 @@ struct ReadinessView: View {
                     Text("\(Int(pct * 100))%")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
-                    Text("Ready")
+                    Text(s.readinessReadyLabel)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.5))
                 }
             }
 
-            Text("\(mastered) of \(totalQuestions) questions mastered")
+            Text(String(format: s.readinessMasteredFormat, mastered, totalQuestions))
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.6))
         }
@@ -94,12 +100,12 @@ struct ReadinessView: View {
 
     private var statsRow: some View {
         HStack(spacing: 0) {
-            statItem(value: "\(tracker.masteredCount)", label: "Mastered", color: .green)
+            statItem(value: "\(tracker.masteredCount)", label: s.readinessStatMastered, color: .green)
             Divider().frame(height: 36).background(Color.white.opacity(0.2))
-            statItem(value: "\(tracker.learningCount)", label: "Learning", color: .yellow)
+            statItem(value: "\(tracker.learningCount)", label: s.readinessStatLearning, color: .yellow)
             Divider().frame(height: 36).background(Color.white.opacity(0.2))
             let notStarted = max(0, totalQuestions - tracker.masteredCount - tracker.learningCount)
-            statItem(value: "\(notStarted)", label: "New", color: .white.opacity(0.5))
+            statItem(value: "\(notStarted)", label: s.readinessStatNew, color: .white.opacity(0.5))
         }
         .padding(.vertical, 14)
         .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.06)))
@@ -126,7 +132,7 @@ struct ReadinessView: View {
             (tracker.record(for: q.id)?.consecutiveCorrect ?? 0) >= 3
         }.count
         let pct = Double(masteredInLevel) / Double(totalPerLevel)
-        let labels = ["", "Very Easy", "Easy", "Medium", "Hard", "Expert"]
+        let labels = ["", s.levelEasy, s.levelMedium, s.levelHard, s.levelAdvanced, s.levelExpert]
         let colors: [Color] = [.clear, .green, .green, .yellow, .orange, .red]
 
         return HStack(spacing: 12) {
@@ -170,7 +176,7 @@ struct ReadinessView: View {
                 .font(.system(size: 28))
                 .foregroundColor(.blue)
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(days) days until your interview")
+                Text(String(format: s.daysUntilInterviewFormat, days))
                     .font(.headline)
                     .foregroundColor(.white)
                 Text(date, style: .date)
@@ -193,7 +199,7 @@ struct ReadinessView: View {
                 Text("\(progress.currentStreak)")
                     .font(.title.bold())
                     .foregroundColor(.orange)
-                Text("Current Streak")
+                Text(s.readinessCurrentStreak)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.5))
             }
@@ -203,7 +209,7 @@ struct ReadinessView: View {
                 Text("\(progress.longestStreak)")
                     .font(.title.bold())
                     .foregroundColor(.yellow)
-                Text("Best Streak")
+                Text(s.readinessBestStreak)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.5))
             }
@@ -213,7 +219,7 @@ struct ReadinessView: View {
                 Text("\(progress.accuracyPercentage)%")
                     .font(.title.bold())
                     .foregroundColor(.green)
-                Text("Accuracy")
+                Text(s.readinessAccuracy)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.5))
             }
@@ -249,5 +255,94 @@ struct ReadinessView: View {
             return [ChineseQuestions.practice1, ChineseQuestions.practice2, ChineseQuestions.practice3,
                     ChineseQuestions.practice4, ChineseQuestions.practice5][level - 1]
         }
+    }
+
+    // MARK: - English Reading & Writing Skills (F6)
+
+    /// Renders a pair of rows showing pass rate for Reading Test and Writing Test,
+    /// reusing the existing "Reading & Writing" section label and the same progress-bar
+    /// styling as the per-level breakdown above it. Empty state when no sessions taken.
+    private var englishSkillsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(s.readingWriting)
+                .font(.caption.bold())
+                .foregroundColor(.white.opacity(0.4))
+                .textCase(.uppercase)
+                .tracking(1)
+
+            englishTestRow(
+                icon: "book.fill",
+                color: .purple,
+                title: s.readinessReadingTitle,
+                taken: progress.readingTestsTaken,
+                passed: progress.readingTestsPassed,
+                passRate: progress.readingTestPassRatePercent
+            )
+
+            englishTestRow(
+                icon: "pencil.line",
+                color: .indigo,
+                title: s.readinessWritingTitle,
+                taken: progress.writingTestsTaken,
+                passed: progress.writingTestsPassed,
+                passRate: progress.writingTestPassRatePercent
+            )
+        }
+    }
+
+    private func englishTestRow(
+        icon: String,
+        color: Color,
+        title: String,
+        taken: Int,
+        passed: Int,
+        passRate: Int?
+    ) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.subheadline.bold())
+                .foregroundColor(color)
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(color.opacity(0.15)))
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(title)
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.85))
+                    Spacer()
+                    if passRate != nil {
+                        Text("\(passed)/\(taken)")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+
+                if let rate = passRate {
+                    // Matches levelProgressRow's bar styling exactly.
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white.opacity(0.1))
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(readinessColor(Double(rate) / 100.0))
+                                .frame(width: geo.size.width * Double(rate) / 100.0)
+                        }
+                    }
+                    .frame(height: 6)
+
+                    Text(String(format: s.readinessSessionsFormat, passed, taken, rate))
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.5))
+                } else {
+                    // Empty state — user hasn't taken a session yet.
+                    Text(s.readinessNotStarted)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.4))
+                        .padding(.top, 2)
+                }
+            }
+        }
+        .padding(.vertical, 4)
     }
 }

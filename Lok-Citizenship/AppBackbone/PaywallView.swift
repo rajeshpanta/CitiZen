@@ -5,6 +5,9 @@ import StoreKit
 struct PaywallView: View {
 
     var trigger: String = "unknown"
+    /// Language the paywall should render in. Callers pass the current app language.
+    /// Defaults to English if the user somehow opens the paywall before picking a language.
+    var language: AppLanguage = .english
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var store = StoreManager.shared
@@ -14,6 +17,8 @@ struct PaywallView: View {
     @State private var showPrivacy = false
     @State private var showTerms = false
     @State private var selectedProductID: String = StoreManager.lifetimeID
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
         ZStack {
@@ -37,6 +42,7 @@ struct PaywallView: View {
                                 .foregroundColor(.white.opacity(0.4))
                         }
                         .disabled(purchasing)
+                        .accessibilityLabel(s.a11yClose)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
@@ -93,7 +99,7 @@ struct PaywallView: View {
 
                     // Restore + Legal
                     VStack(spacing: 8) {
-                        Button("Restore Purchases") {
+                        Button(s.paywallRestore) {
                             Task {
                                 await store.restorePurchases()
                                 if store.isPro { dismiss() }
@@ -103,9 +109,9 @@ struct PaywallView: View {
                         .foregroundColor(.white.opacity(0.5))
 
                         HStack(spacing: 12) {
-                            Button("Privacy Policy") { showPrivacy = true }
+                            Button(s.paywallPrivacy) { showPrivacy = true }
                             Text("·").foregroundColor(.white.opacity(0.3))
-                            Button("Terms of Use") { showTerms = true }
+                            Button(s.paywallTerms) { showTerms = true }
                         }
                         .font(.caption2)
                         .foregroundColor(.white.opacity(0.35))
@@ -125,18 +131,18 @@ struct PaywallView: View {
         .interactiveDismissDisabled(purchasing)
         .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
         .sheet(isPresented: $showTerms) { TermsOfUseView() }
-        .alert("Verification Issue",
+        .alert(s.paywallVerificationIssue,
                isPresented: Binding(
-                   get: { store.entitlementError != nil },
+                   get: { store.entitlementVerificationFailed },
                    set: { if !$0 { store.clearEntitlementError() } }
                )
         ) {
-            Button("Restore Purchases") {
+            Button(s.paywallRestore) {
                 Task { await store.restorePurchases() }
             }
-            Button("Dismiss", role: .cancel) { }
+            Button(s.paywallDismiss, role: .cancel) { }
         } message: {
-            Text(store.entitlementError ?? "")
+            Text(s.paywallErrorVerificationFailed)
         }
     }
 
@@ -152,20 +158,20 @@ struct PaywallView: View {
                 if let lifetime = store.products.first(where: { $0.id == StoreManager.lifetimeID }) {
                     planCard(
                         id: StoreManager.lifetimeID,
-                        title: "Lifetime",
-                        subtitle: "One payment, forever yours",
+                        title: s.paywallLifetime,
+                        subtitle: s.paywallLifetimeSubtitle,
                         price: lifetime.displayPrice,
-                        badge: "BEST VALUE"
+                        badge: s.paywallBestValue
                     )
                 }
 
                 if let monthly = store.products.first(where: { $0.id == StoreManager.monthlyID }) {
                     planCard(
                         id: StoreManager.monthlyID,
-                        title: "Monthly",
-                        subtitle: "3-day free trial, then \(monthly.displayPrice)/mo",
-                        price: "FREE",
-                        badge: "3 DAYS FREE"
+                        title: s.paywallMonthly,
+                        subtitle: String(format: s.paywallMonthlySubtitleFormat, monthly.displayPrice),
+                        price: s.paywallFree,
+                        badge: s.paywall3DaysFree
                     )
                 }
 
@@ -176,9 +182,7 @@ struct PaywallView: View {
                         await purchase(product)
                     }
                 } label: {
-                    Text(purchasing ? "Processing..."
-                         : selectedProductID == StoreManager.monthlyID ? "Start Free Trial"
-                         : "Continue")
+                    Text(ctaButtonLabel)
                         .font(.title3.bold())
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -197,7 +201,7 @@ struct PaywallView: View {
                 // Subscription disclosure (Apple Guideline 3.1.2(c))
                 if selectedProductID == StoreManager.monthlyID,
                    let monthly = store.products.first(where: { $0.id == StoreManager.monthlyID }) {
-                    Text("A \(monthly.displayPrice)/month subscription after 3-day free trial. Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. You can manage and cancel your subscription in your Apple ID Account Settings.")
+                    Text(String(format: s.paywallDisclosureFormat, monthly.displayPrice))
                         .font(.system(size: 10))
                         .foregroundColor(.white.opacity(0.35))
                         .multilineTextAlignment(.center)
@@ -208,20 +212,26 @@ struct PaywallView: View {
         } else if store.isLoadingProducts {
             VStack(spacing: 8) {
                 ProgressView().tint(.white)
-                Text("Loading pricing...")
+                Text(s.paywallLoadingPricing)
                     .font(.footnote).foregroundColor(.gray)
             }
         } else {
             VStack(spacing: 12) {
-                Text(store.productLoadError ?? "Pricing is temporarily unavailable.")
+                Text(s.paywallPricingUnavailable)
                     .font(.footnote).foregroundColor(.red)
                     .multilineTextAlignment(.center)
-                Button("Try Again") {
+                Button(s.paywallTryAgain) {
                     Task { await store.loadProducts(forceReload: true) }
                 }
                 .font(.footnote).foregroundColor(.blue)
             }
         }
+    }
+
+    private var ctaButtonLabel: String {
+        if purchasing { return s.paywallProcessing }
+        if selectedProductID == StoreManager.monthlyID { return s.paywallStartFreeTrial }
+        return s.paywallContinue
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -231,7 +241,7 @@ struct PaywallView: View {
     private var costComparison: some View {
         VStack(spacing: 6) {
             HStack {
-                Text("USCIS filing fee")
+                Text(s.paywallCostFilingFee)
                     .foregroundColor(.white.opacity(0.4))
                 Spacer()
                 Text("$710")
@@ -239,7 +249,7 @@ struct PaywallView: View {
                     .strikethrough(color: .red.opacity(0.6))
             }
             HStack {
-                Text("Immigration attorney")
+                Text(s.paywallCostAttorney)
                     .foregroundColor(.white.opacity(0.4))
                 Spacer()
                 Text("$1,500+")
@@ -247,7 +257,7 @@ struct PaywallView: View {
                     .strikethrough(color: .red.opacity(0.6))
             }
             HStack {
-                Text("CitiZen Pro")
+                Text(s.paywallCostAppBrand)
                     .foregroundColor(.green)
                     .bold()
                 Spacer()
@@ -278,43 +288,25 @@ struct PaywallView: View {
 
     private var headline: String {
         switch trigger {
-        case "locked_level":   return "Ready for Harder\nQuestions?"
-        case "mock_interview": return "Simulate the Real\nUSCIS Interview"
-        default:               return "Pass Your Citizenship\nInterview"
+        case "locked_level":   return s.paywallHeadlineLockedLevel
+        case "mock_interview": return s.paywallHeadlineMockInterview
+        default:               return s.paywallHeadlineDefault
         }
     }
 
     private var subheadline: String {
         switch trigger {
-        case "locked_level":   return "Harder questions prepare you for the real test. Unlock all 5 levels."
-        case "mock_interview": return "You've tried your free interview. Unlock unlimited attempts to keep improving."
-        default:               return "Get full access to every feature and pass with confidence."
+        case "locked_level":   return s.paywallSubheadlineLockedLevel
+        case "mock_interview": return s.paywallSubheadlineMockInterview
+        default:               return s.paywallSubheadlineDefault
         }
     }
 
     private var paywallFeatures: [String] {
         switch trigger {
-        case "mock_interview":
-            return [
-                "Unlimited mock interview attempts",
-                "Advanced & Expert practice levels",
-                "Voice-powered interview simulation",
-                "Track scores, streaks, and progress"
-            ]
-        case "locked_level":
-            return [
-                "Advanced & Expert difficulty levels",
-                "Unlimited mock interview practice",
-                "Master the hardest questions first",
-                "Track your improvement over time"
-            ]
-        default:
-            return [
-                "All 5 practice levels",
-                "Unlimited mock interviews",
-                "Master hard & expert questions",
-                "Full progress tracking"
-            ]
+        case "mock_interview": return s.paywallFeaturesMockInterview
+        case "locked_level":   return s.paywallFeaturesLockedLevel
+        default:               return s.paywallFeaturesDefault
         }
     }
 
@@ -330,10 +322,10 @@ struct PaywallView: View {
             if success {
                 dismiss()
             } else {
-                errorMessage = "Purchase was not completed."
+                errorMessage = s.paywallPurchaseIncomplete
             }
         } catch {
-            errorMessage = "Purchase failed. Please try again."
+            errorMessage = s.paywallPurchaseFailed
         }
         purchasing = false
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 // ═════════════════════════════════════════════════════════════════
 // MARK: - Onboarding Flow
@@ -11,21 +12,41 @@ struct OnboardingView: View {
 
     // MARK: - State
 
-    enum Step { case language, interviewDate, quiz, results }
+    enum Step: Int, CaseIterable {
+        case intro, language, interviewDate, notifications, quiz, results
+        /// Step dot index. Intro and results don't get a dot.
+        var dotIndex: Int? {
+            switch self {
+            case .intro, .results: return nil
+            case .language:        return 0
+            case .interviewDate:   return 1
+            case .notifications:   return 2
+            case .quiz:            return 3
+            }
+        }
+    }
 
-    @State private var step: Step = .language
+    enum DateChoice { case notChosen, picked, notScheduled, exploring }
+
+    @State private var step: Step = .intro
     @State private var selectedLanguage: AppLanguage?
     @State private var interviewDate = Date()
     @State private var dateChoice: DateChoice = .notChosen
-
-    enum DateChoice { case notChosen, picked, notScheduled, exploring }
 
     // Quiz state
     @StateObject private var quizLogic = UnifiedQuizLogic()
     @State private var selectedAnswer: Int?
     @State private var isAnswered = false
     @State private var isAnswerCorrect = false
-    @State private var showFeedback = false
+
+    // Voice demo state (intro screen)
+    @ObservedObject private var notifications = NotificationManager.shared
+    @State private var isDemoPlaying = false
+    @State private var demoSubscription: AnyCancellable?
+
+    // MARK: - Derived
+
+    private var s: UIStrings { UIStrings.forLanguage(selectedLanguage ?? .english) }
 
     // ─────────────────────────────────────────────────────────────
     // MARK: - Body
@@ -35,8 +56,8 @@ struct OnboardingView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 0.0, green: 0.15, blue: 0.4),
-                    Color(red: 0.0, green: 0.08, blue: 0.25),
+                    Color(red: 0.0, green: 0.10, blue: 0.30),
+                    Color(red: 0.0, green: 0.05, blue: 0.18),
                     Color.black
                 ],
                 startPoint: .top, endPoint: .bottom
@@ -44,13 +65,166 @@ struct OnboardingView: View {
             .ignoresSafeArea()
 
             switch step {
+            case .intro:         introScreen
             case .language:      languageScreen
             case .interviewDate: dateScreen
+            case .notifications: notificationScreen
             case .quiz:          quizScreen
             case .results:       resultsScreen
             }
         }
         .animation(.easeInOut(duration: 0.3), value: step)
+    }
+
+    // ═════════════════════════════════════════════════════════════
+    // MARK: - Screen 0: Intro
+    // ═════════════════════════════════════════════════════════════
+
+    private var introScreen: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                Spacer(minLength: 40)
+
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [.cyan.opacity(0.35), .cyan.opacity(0.05)],
+                            startPoint: .top, endPoint: .bottom))
+                        .frame(width: 120, height: 120)
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.cyan)
+                }
+
+                Text(s.onboardingIntroHeadline)
+                    .font(.largeTitle.bold())
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+
+                Text(s.onboardingIntroTagline)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+
+                VStack(spacing: 10) {
+                    featureRow(icon: "mic.fill",
+                               title: s.onboardingFeatureVoice,
+                               subtitle: s.onboardingFeatureVoiceSub,
+                               color: .cyan)
+                    featureRow(icon: "globe",
+                               title: s.onboardingFeatureLanguage,
+                               subtitle: s.onboardingFeatureLanguageSub,
+                               color: .blue)
+                    featureRow(icon: "checkmark.seal.fill",
+                               title: s.onboardingFeatureMock,
+                               subtitle: s.onboardingFeatureMockSub,
+                               color: .green)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+
+                voiceDemoButton
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+
+                Spacer(minLength: 12)
+
+                Button {
+                    let gen = UIImpactFeedbackGenerator(style: .medium); gen.impactOccurred()
+                    stopDemo()
+                    withAnimation { step = .language }
+                } label: {
+                    Text(s.onboardingContinue)
+                        .font(.headline.bold())
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(LinearGradient(
+                                    colors: [.blue, .blue.opacity(0.75)],
+                                    startPoint: .leading, endPoint: .trailing))
+                        )
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 30)
+            }
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func featureRow(icon: String, title: String, subtitle: String, color: Color) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(color)
+                .frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.55))
+            }
+            Spacer()
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private var voiceDemoButton: some View {
+        Button {
+            let gen = UIImpactFeedbackGenerator(style: .light); gen.impactOccurred()
+            if isDemoPlaying {
+                stopDemo()
+            } else {
+                playDemo()
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: isDemoPlaying ? "stop.fill" : "speaker.wave.2.fill")
+                    .font(.caption.bold())
+                Text(s.onboardingHearSample)
+                    .font(.caption.bold())
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                Capsule().fill(isDemoPlaying
+                               ? Color.red.opacity(0.85)
+                               : Color.white.opacity(0.12))
+            )
+            .overlay(
+                Capsule().stroke(Color.white.opacity(0.15), lineWidth: 1)
+            )
+        }
+    }
+
+    private func playDemo() {
+        let tts = ServiceLocator.shared.ttsService
+        let text = s.onboardingSampleText
+        let locale = (selectedLanguage ?? .english).rawValue
+        isDemoPlaying = true
+        demoSubscription = tts.speak(text, languageCode: locale)
+            .receive(on: DispatchQueue.main)
+            .sink { _ in self.isDemoPlaying = false }
+    }
+
+    private func stopDemo() {
+        ServiceLocator.shared.ttsService.stopSpeaking()
+        demoSubscription?.cancel()
+        demoSubscription = nil
+        isDemoPlaying = false
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -65,21 +239,21 @@ struct OnboardingView: View {
                 .font(.system(size: 46))
                 .foregroundColor(.cyan)
 
-            Text("What language\ndo you speak?")
+            Text(languageHeadline)
                 .font(.title.bold())
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
 
-            Text("We'll show questions in your language")
+            Text(languageSubtitle)
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.5))
 
             Spacer().frame(height: 8)
 
-            // Language cards
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 14)], spacing: 14) {
                 ForEach(AppLanguage.allCases) { lang in
                     Button {
+                        let gen = UISelectionFeedbackGenerator(); gen.selectionChanged()
                         withAnimation { selectedLanguage = lang; step = .interviewDate }
                     } label: {
                         VStack(spacing: 8) {
@@ -97,8 +271,7 @@ struct OnboardingView: View {
 
             Spacer()
 
-            // Step indicator
-            stepDots(current: 0)
+            stepDots()
                 .padding(.bottom, 30)
         }
     }
@@ -124,7 +297,6 @@ struct OnboardingView: View {
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.5))
 
-            // Date picker
             DatePicker("", selection: $interviewDate, in: Date()..., displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .labelsHidden()
@@ -132,18 +304,20 @@ struct OnboardingView: View {
                 .padding(.horizontal, 40)
                 .padding(.vertical, 8)
 
-            // Primary: set date
             Button {
                 dateChoice = .picked
-                startQuiz()
+                withAnimation { step = .notifications }
             } label: {
                 Text(dateSetButton)
-                    .font(.headline)
+                    .font(.headline.bold())
                     .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(14)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(LinearGradient(
+                                colors: [.blue, .blue.opacity(0.75)],
+                                startPoint: .leading, endPoint: .trailing))
+                    )
             }
             .padding(.horizontal, 32)
 
@@ -152,73 +326,137 @@ struct OnboardingView: View {
                 .foregroundColor(.white.opacity(0.3))
                 .padding(.top, 4)
 
-            // Alternative options — styled as visible cards
             VStack(spacing: 10) {
                 Button {
                     dateChoice = .notScheduled
-                    startQuiz()
+                    withAnimation { step = .notifications }
                 } label: {
-                    HStack {
-                        Image(systemName: "clock")
-                            .foregroundColor(.cyan)
-                        Text(dateNotScheduled)
-                            .foregroundColor(.white.opacity(0.8))
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                    .font(.subheadline)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.07)))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    dateAltRow(icon: "clock", text: dateNotScheduled)
                 }
 
                 Button {
                     dateChoice = .exploring
-                    startQuiz()
+                    withAnimation { step = .notifications }
                 } label: {
-                    HStack {
-                        Image(systemName: "eyes")
-                            .foregroundColor(.cyan)
-                        Text(dateExploring)
-                            .foregroundColor(.white.opacity(0.8))
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                    .font(.subheadline)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.07)))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    dateAltRow(icon: "eyes", text: dateExploring)
                 }
             }
             .padding(.horizontal, 32)
 
             Spacer()
 
-            stepDots(current: 1)
+            stepDots()
+                .padding(.bottom, 30)
+        }
+    }
+
+    private func dateAltRow(icon: String, text: String) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.cyan)
+            Text(text)
+                .foregroundColor(.white.opacity(0.8))
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.3))
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.07)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+    }
+
+    // ═════════════════════════════════════════════════════════════
+    // MARK: - Screen 3: Notifications
+    // ═════════════════════════════════════════════════════════════
+
+    private var notificationScreen: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(
+                        colors: [.orange.opacity(0.35), .orange.opacity(0.05)],
+                        startPoint: .top, endPoint: .bottom))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "bell.badge.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(.orange)
+            }
+
+            Text(s.notificationsTitle)
+                .font(.title.bold())
+                .foregroundColor(.white)
+
+            Text(s.notificationsSubtitle)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            Spacer()
+
+            VStack(spacing: 10) {
+                Button {
+                    let gen = UIImpactFeedbackGenerator(style: .medium); gen.impactOccurred()
+                    notifications.requestPermission()
+                    // Give permission prompt a moment to be dismissed, then continue.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        startQuiz()
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bell.fill")
+                        Text(s.notificationsEnable)
+                    }
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(LinearGradient(
+                                colors: [.orange, .orange.opacity(0.8)],
+                                startPoint: .leading, endPoint: .trailing))
+                    )
+                }
+
+                Button {
+                    startQuiz()
+                } label: {
+                    Text(s.notificationsSkip)
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.08))
+                        )
+                }
+            }
+            .padding(.horizontal, 24)
+
+            stepDots()
+                .padding(.top, 8)
                 .padding(.bottom, 30)
         }
     }
 
     // ═════════════════════════════════════════════════════════════
-    // MARK: - Screen 3: Placement Quiz
+    // MARK: - Screen 4: Placement Quiz
     // ═════════════════════════════════════════════════════════════
 
     private var quizScreen: some View {
         VStack(spacing: 16) {
 
-            // Header
             HStack {
                 Text(quizHeader)
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.6))
                 Spacer()
-                Text("\(quizLogic.attemptedQuestions + (isAnswered ? 0 : 0))/\(quizLogic.totalQuestions)")
+                Text("\(quizLogic.attemptedQuestions)/\(quizLogic.totalQuestions)")
                     .font(.subheadline.bold())
                     .foregroundColor(.cyan)
             }
@@ -232,29 +470,27 @@ struct OnboardingView: View {
             .accentColor(.cyan)
             .padding(.horizontal, 24)
 
-            Spacer().frame(height: 30)
+            Spacer().frame(height: 24)
 
-            // Question
             Text(currentQuestionText)
                 .font(.title3.bold())
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
+                .fixedSize(horizontal: false, vertical: true)
 
-            Spacer().frame(height: 24)
+            Spacer().frame(height: 16)
 
-            // Answer options
             VStack(spacing: 10) {
                 ForEach(currentOptions.indices, id: \.self) { idx in
                     Button {
                         guard !isAnswered else { return }
+                        let gen = UISelectionFeedbackGenerator(); gen.selectionChanged()
                         selectedAnswer = idx
                         isAnswerCorrect = quizLogic.answerQuestion(idx)
                         isAnswered = true
-                        showFeedback = true
 
-                        // Auto-advance after brief delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
                             if quizLogic.isFinished {
                                 withAnimation { step = .results }
                             } else {
@@ -289,20 +525,19 @@ struct OnboardingView: View {
 
             Spacer()
 
-            stepDots(current: 2)
+            stepDots()
                 .padding(.bottom, 30)
         }
     }
 
     // ═════════════════════════════════════════════════════════════
-    // MARK: - Screen 4: Results
+    // MARK: - Screen 5: Results
     // ═════════════════════════════════════════════════════════════
 
     private var resultsScreen: some View {
         VStack(spacing: 20) {
             Spacer()
 
-            // Score circle
             ZStack {
                 Circle()
                     .stroke(Color.white.opacity(0.1), lineWidth: 8)
@@ -336,16 +571,16 @@ struct OnboardingView: View {
             Spacer()
 
             Button {
+                let gen = UIImpactFeedbackGenerator(style: .medium); gen.impactOccurred()
                 completeOnboarding()
             } label: {
-                Text(startStudying)
+                Text(String(format: s.onboardingStartAtLevelFormat, recommendedLevel))
                     .font(.title3.bold())
                     .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(maxWidth: .infinity, minHeight: 54)
                     .background(
                         LinearGradient(
-                            colors: [.blue, .blue.opacity(0.7)],
+                            colors: [.blue, .blue.opacity(0.75)],
                             startPoint: .leading, endPoint: .trailing
                         )
                     )
@@ -367,14 +602,24 @@ struct OnboardingView: View {
         let maxVariant = pool.first?.variants.count ?? 1
         quizLogic.selectedVariantIndex = min(desiredVariant, maxVariant - 1)
         quizLogic.languageTag = lang.rawValue
+        quizLogic.tracksProgress = false  // placement must not pollute lifetime stats
         quizLogic.startMockInterview(from: pool, questionCount: 5, requiredCorrect: 3)
         withAnimation { step = .quiz }
+    }
+
+    private var recommendedLevel: Int {
+        switch quizLogic.correctAnswers {
+        case 0...1: return 1
+        case 2...3: return 2
+        default:    return 3
+        }
     }
 
     private func completeOnboarding() {
         guard let lang = selectedLanguage else { return }
         ProgressManager.shared.preferredLanguage = lang.rawValue
         ProgressManager.shared.interviewDate = dateChoice == .picked ? interviewDate : nil
+        ProgressManager.shared.recommendedLevel = recommendedLevel
         ProgressManager.shared.hasCompletedOnboarding = true
         onComplete(lang)
     }
@@ -383,10 +628,8 @@ struct OnboardingView: View {
         selectedAnswer = nil
         isAnswered = false
         isAnswerCorrect = false
-        showFeedback = false
     }
 
-    // Question text in user's language
     private var currentQuestionText: String {
         let q = quizLogic.currentQuestion
         guard !q.variants.isEmpty else { return "" }
@@ -403,7 +646,6 @@ struct OnboardingView: View {
         return q.variants[safeIdx].options
     }
 
-    // Score helpers
     private var scoreRatio: CGFloat {
         guard quizLogic.attemptedQuestions > 0 else { return 0 }
         return CGFloat(quizLogic.correctAnswers) / CGFloat(quizLogic.attemptedQuestions)
@@ -508,22 +750,40 @@ struct OnboardingView: View {
         }
     }
 
-    // Step indicator dots
-    private func stepDots(current: Int) -> some View {
+    // Step indicator dots (4 steps: language, date, notifications, quiz)
+    private func stepDots() -> some View {
         HStack(spacing: 8) {
-            ForEach(0..<3, id: \.self) { i in
+            ForEach(0..<4, id: \.self) { i in
                 Circle()
-                    .fill(i == current ? Color.cyan : Color.white.opacity(0.2))
+                    .fill(i == (step.dotIndex ?? -1) ? Color.cyan : Color.white.opacity(0.2))
                     .frame(width: 8, height: 8)
             }
         }
     }
 
     // ═════════════════════════════════════════════════════════════
-    // MARK: - Localized Onboarding Strings
+    // MARK: - Localized copy (still inline for the few strings specific to onboarding screens)
     // ═════════════════════════════════════════════════════════════
 
     private var lang: AppLanguage { selectedLanguage ?? .english }
+
+    private var languageHeadline: String {
+        switch lang {
+        case .english: return "What language\ndo you speak?"
+        case .nepali:  return "तपाईं कुन\nभाषा बोल्नुहुन्छ?"
+        case .spanish: return "¿Qué idioma\nhablas?"
+        case .chinese: return "你说哪种\n语言？"
+        }
+    }
+
+    private var languageSubtitle: String {
+        switch lang {
+        case .english: return "We'll show questions in your language"
+        case .nepali:  return "हामी तपाईंको भाषामा प्रश्न देखाउनेछौं"
+        case .spanish: return "Te mostraremos las preguntas en tu idioma"
+        case .chinese: return "我们会用你的语言显示问题"
+        }
+    }
 
     private var dateTitle: String {
         switch lang {
@@ -576,15 +836,6 @@ struct OnboardingView: View {
         case .nepali:  return "छोटो मूल्याङ्कन"
         case .spanish: return "Evaluación rápida"
         case .chinese: return "快速评估"
-        }
-    }
-
-    private var startStudying: String {
-        switch lang {
-        case .english: return "Start Studying"
-        case .nepali:  return "अध्ययन सुरु गर्नुहोस्"
-        case .spanish: return "Empezar a estudiar"
-        case .chinese: return "开始学习"
         }
     }
 

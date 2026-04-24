@@ -31,10 +31,7 @@ final class NotificationManager: ObservableObject {
     }
 
     var reminderHour: Int {
-        get {
-            let h = defaults.integer(forKey: hourKey)
-            return h == 0 && !defaults.bool(forKey: enabledKey) ? 9 : h // default 9 AM
-        }
+        get { defaults.integer(forKey: hourKey) }
         set {
             defaults.set(newValue, forKey: hourKey)
             objectWillChange.send()
@@ -69,6 +66,14 @@ final class NotificationManager: ObservableObject {
     // MARK: - Init
 
     private init() {
+        // First-run defaults: daily reminder ON at 6:00 PM.
+        // `register(defaults:)` only applies when the user hasn't explicitly set a value,
+        // so toggling off / changing the time still persists.
+        UserDefaults.standard.register(defaults: [
+            enabledKey: true,
+            hourKey: 18,
+            minuteKey: 0
+        ])
         checkAuthorization()
     }
 

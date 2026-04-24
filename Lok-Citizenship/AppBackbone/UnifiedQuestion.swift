@@ -30,4 +30,14 @@ struct UnifiedQuestion {
             self.explanation = explanation
         }
     }
+
+    /// Question IDs whose correct answer can change as real-world officeholders
+    /// change (President, Vice President, Speaker of the House, Chief Justice).
+    /// Views use `isTimeSensitive` to render a small disclaimer pointing users
+    /// to uscis.gov/citizenship for the current answer. Kept as a central set
+    /// so question data files stay untouched.
+    static let timeSensitiveIDs: Set<String> = ["q_1_08", "q_1_09", "q_3_05", "q_4_10"]
+
+    /// True when the correct answer depends on current officeholders.
+    var isTimeSensitive: Bool { Self.timeSensitiveIDs.contains(id) }
 }

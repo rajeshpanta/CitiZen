@@ -11,7 +11,9 @@ enum VoiceFlowPhase: Equatable {
     case idle              // not started or between sessions
     case speakingQuestion  // TTS reading (question, or question+options chain)
     case listening         // STT recording user's answer
-    case processingAnswer  // brief pause showing feedback before next question
+    case matching          // STT stopped; evaluating transcription (may include GPT round-trip)
+    case awaitingContinue  // answer recorded; waiting (auto for correct, manual for wrong)
+    case processingAnswer  // generic "moving to next" state
     case finished          // quiz ended
 }
 
@@ -39,9 +41,17 @@ final class VoiceQuizController: ObservableObject {
     @Published private(set) var transcription = ""
     @Published private(set) var lastAnswerCorrect: Bool?
     @Published private(set) var lastAnswerExplanation: String = ""
+    @Published private(set) var lastCorrectIndex: Int?
     @Published private(set) var isRecording = false
     @Published private(set) var isSpeaking = false
     @Published var authorizationStatus: SFSpeechRecognizerAuthorizationStatus = .notDetermined
+
+    /// True if the last listening session ended without a recognized answer (silence/timeout).
+    /// View should show a "didn't hear you" banner. Reset on next listen / new question.
+    @Published private(set) var didTimeout = false
+
+    /// Timestamp when listening started. View uses this to animate a countdown bar.
+    @Published private(set) var listeningStartedAt: Date?
 
     /// Set when a voice match is found in manual mode. View reads this to handle the answer.
     /// Cleared on `resetMatch()` or when a new question starts speaking.
@@ -82,6 +92,10 @@ final class VoiceQuizController: ObservableObject {
     /// Used in audio-only mode for hands-free feedback.
     var speakAnswerFeedback = false
 
+    /// When true (mock interview), wrong answers hold at `.awaitingContinue` until the view
+    /// calls `continueAfterWrong()`. When false (audio-only), wrong answers auto-advance.
+    var requireContinueOnWrong = false
+
     // MARK: - Private
 
     private var ttsChain: AnyCancellable?
@@ -120,6 +134,12 @@ final class VoiceQuizController: ObservableObject {
         matchedAnswerIndex = nil
     }
 
+    /// Clear the displayed transcription. Views call this when advancing to a new
+    /// question so the previous answer's text doesn't linger in the mic panel.
+    func clearTranscription() {
+        transcription = ""
+    }
+
     // ═════════════════════════════════════════════════════════════
     // MARK: - Auto-advance API (mock interview)
     // ═════════════════════════════════════════════════════════════
@@ -132,15 +152,38 @@ final class VoiceQuizController: ObservableObject {
     /// Submit a tap answer in auto-advance mode (fallback buttons).
     func submitTapAnswer(_ answerIndex: Int) {
         guard autoAdvance else { return }
-        guard phase != .processingAnswer, phase != .speakingQuestion else { return }
+        guard phase != .processingAnswer, phase != .speakingQuestion, phase != .awaitingContinue else { return }
         stopAudio()
-        recordAnswerAndAdvance(answerIndex)
+        recordAnswer(answerIndex)
+    }
+
+    /// Replay the current question's TTS. Can be called during listening or after a timeout.
+    func replayQuestion() {
+        guard autoAdvance else { return }
+        stopAudio()
+        didTimeout = false
+        speakCurrentQuestion()
+    }
+
+    /// Skip the current question (counts as wrong/unanswered). Used when user can't / won't answer.
+    func skipCurrent() {
+        guard autoAdvance else { return }
+        stopAudio()
+        recordAnswer(Int.max)
+    }
+
+    /// After a wrong answer, the view calls this when the user taps "Next Question".
+    func continueAfterWrong() {
+        advanceToNextQuestion()
     }
 
     /// Reset for a new auto-advance session (e.g. "Try Again").
     func restart() {
         stopAudio()
         lastAnswerCorrect = nil
+        lastAnswerExplanation = ""
+        lastCorrectIndex = nil
+        didTimeout = false
         transcription = ""
         matchedAnswerIndex = nil
         speakCurrentQuestion()
@@ -180,6 +223,10 @@ final class VoiceQuizController: ObservableObject {
     /// Start listening for a voice answer. Used by the mic button in practice mode.
     func startManualListening() {
         stopAudio()
+        // Clear any stale transcription from a previous question before the
+        // mic panel opens — otherwise old text shows until the new STT result
+        // arrives (visible even after the user has tapped Next).
+        transcription = ""
         phase = .listening
         let options = currentVariant().options
         stt.startRecording(
@@ -195,7 +242,12 @@ final class VoiceQuizController: ObservableObject {
         if isRecording {
             stt.stopRecording()
         } else if phase == .listening || phase == .idle {
-            startManualListening()
+            didTimeout = false
+            if autoAdvance {
+                autoStartListening()
+            } else {
+                startManualListening()
+            }
         }
     }
 
@@ -208,7 +260,9 @@ final class VoiceQuizController: ObservableObject {
         transcription = ""
         lastAnswerCorrect = nil
         lastAnswerExplanation = ""
+        lastCorrectIndex = nil
         matchedAnswerIndex = nil
+        didTimeout = false
 
         let text = currentVariant().text
         guard !text.isEmpty else { return }
@@ -244,7 +298,12 @@ final class VoiceQuizController: ObservableObject {
             phase = .finished
             return
         }
+        // Clear any stale transcription from the previous question before the
+        // new listen starts (mock-interview auto-advance path).
+        transcription = ""
         phase = .listening
+        listeningStartedAt = Date()
+        didTimeout = false
         let options = currentVariant().options
         stt.startRecording(
             withOptions: options,
@@ -262,38 +321,50 @@ final class VoiceQuizController: ObservableObject {
 
     private func evaluateTranscription() {
         let spoken = transcription
-            .lowercased()
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !spoken.isEmpty else {
-            phase = .listening
+            // User didn't say anything audible. Stay in listening with timeout running,
+            // or surface "didn't hear" if timeout already fired.
             return
         }
 
+        phase = .matching
         let options = currentVariant().options
-        if let idx = options.firstIndex(where: {
-            let lc = $0.lowercased()
-            return spoken == lc || spoken.contains(lc) || lc.contains(spoken)
-        }) {
-            if autoAdvance {
-                recordAnswerAndAdvance(idx)
-            } else {
-                stopAudio()
-                matchedAnswerIndex = idx
-                phase = .idle
+        let question = currentVariant().text
+
+        Task { [weak self] in
+            let match = await AnswerMatcher.match(spoken: spoken, options: options, question: question)
+            await MainActor.run {
+                guard let self, self.phase == .matching else { return }
+                if let idx = match {
+                    if self.autoAdvance {
+                        self.recordAnswer(idx)
+                    } else {
+                        self.stopAudio()
+                        self.matchedAnswerIndex = idx
+                        self.phase = .idle
+                    }
+                } else {
+                    Analytics.track(.voiceMatchFailed(language: self.localeCode))
+                    self.didTimeout = true  // show "didn't hear you" banner
+                    self.phase = .idle
+                }
             }
-        } else {
-            Analytics.track(.voiceMatchFailed(language: localeCode))
-            phase = .listening
         }
     }
 
-    private func recordAnswerAndAdvance(_ answerIndex: Int) {
+    /// Record an answer on the current question, but don't advance yet.
+    /// - Correct: auto-advance after a short delay.
+    /// - Wrong: stay on the question so the view can show the correct answer; the view
+    ///   must call `continueAfterWrong()` to proceed.
+    private func recordAnswer(_ answerIndex: Int) {
         stopAudio()
 
-        // Capture data from the CURRENT question BEFORE advancing
+        // Snapshot data about the CURRENT question before mutating state.
         let answeredQuestion = quizLogic.currentQuestion
         lastAnswerExplanation = answeredQuestion.variants.first?.explanation ?? ""
+        lastCorrectIndex = answeredQuestion.correctAnswer
         let correctOptionText = currentVariant().options[safe: answeredQuestion.correctAnswer] ?? ""
 
         let correct = quizLogic.answerQuestion(answerIndex)
@@ -304,40 +375,65 @@ final class VoiceQuizController: ObservableObject {
             return
         }
 
-        quizLogic.moveToNextQuestion()
+        phase = .awaitingContinue
 
+        let strings = UIStrings.forLocaleCode(localeCode)
+
+        if correct {
+            // Auto-advance after short pause.
+            if speakAnswerFeedback {
+                ttsChain = tts.speak(strings.audioFeedbackCorrect, languageCode: localeCode)
+                    .flatMap { [weak self] _ -> AnyPublisher<Void, Never> in
+                        guard let self else { return Just(()).eraseToAnyPublisher() }
+                        return Just(()).delay(for: .seconds(self.postAnswerDelay),
+                                              scheduler: DispatchQueue.main)
+                            .eraseToAnyPublisher()
+                    }
+                    .sink { [weak self] _ in self?.advanceToNextQuestion() }
+            } else {
+                delayTask = Just(())
+                    .delay(for: .seconds(postAnswerDelay), scheduler: DispatchQueue.main)
+                    .sink { [weak self] _ in self?.advanceToNextQuestion() }
+            }
+        } else {
+            // Wrong branch: either hold for tap-to-continue (mock interview) or
+            // auto-advance after spoken feedback (audio-only).
+            let wrongPhrase = String(format: strings.audioFeedbackTheAnswerIsFormat, correctOptionText)
+            if requireContinueOnWrong {
+                if speakAnswerFeedback {
+                    ttsChain = tts.speak(wrongPhrase, languageCode: localeCode)
+                        .sink { _ in }
+                }
+            } else if speakAnswerFeedback {
+                ttsChain = tts.speak(wrongPhrase, languageCode: localeCode)
+                    .flatMap { [weak self] _ -> AnyPublisher<Void, Never> in
+                        guard let self else { return Just(()).eraseToAnyPublisher() }
+                        return Just(()).delay(for: .seconds(self.postAnswerDelay),
+                                              scheduler: DispatchQueue.main)
+                            .eraseToAnyPublisher()
+                    }
+                    .sink { [weak self] _ in self?.advanceToNextQuestion() }
+            } else {
+                delayTask = Just(())
+                    .delay(for: .seconds(postAnswerDelay), scheduler: DispatchQueue.main)
+                    .sink { [weak self] _ in self?.advanceToNextQuestion() }
+            }
+        }
+    }
+
+    /// Move to the next question and speak it.
+    private func advanceToNextQuestion() {
+        guard !quizLogic.isFinished else {
+            phase = .finished
+            return
+        }
+        quizLogic.moveToNextQuestion()
         if quizLogic.isFinished {
             phase = .finished
             return
         }
-
         phase = .processingAnswer
-
-        if speakAnswerFeedback {
-            // Speak "Correct" or "The answer is X" before advancing
-            let feedbackText: String
-            if correct {
-                feedbackText = "Correct"
-            } else {
-                feedbackText = "The answer is \(correctOptionText)"
-            }
-            ttsChain = tts.speak(feedbackText, languageCode: localeCode)
-                .flatMap { [weak self] _ -> AnyPublisher<Void, Never> in
-                    guard let self else { return Just(()).eraseToAnyPublisher() }
-                    return Just(())
-                        .delay(for: .seconds(self.postAnswerDelay), scheduler: DispatchQueue.main)
-                        .eraseToAnyPublisher()
-                }
-                .sink { [weak self] _ in
-                    self?.speakCurrentQuestion()
-                }
-        } else {
-            delayTask = Just(())
-                .delay(for: .seconds(postAnswerDelay), scheduler: DispatchQueue.main)
-                .sink { [weak self] _ in
-                    self?.speakCurrentQuestion()
-                }
-        }
+        speakCurrentQuestion()
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -351,6 +447,9 @@ final class VoiceQuizController: ObservableObject {
     }
 
     /// Start a timer that fires if no valid answer is captured within `listeningTimeout`.
+    /// On timeout, we stop recording and surface `didTimeout = true` to the view so it can
+    /// show a "didn't hear you" banner. We do NOT auto-mark the question as wrong —
+    /// user picks whether to retry (tap replay/mic) or skip.
     private func startListeningTimer() {
         timeoutTask?.cancel()
         guard listeningTimeout > 0 else { return }
@@ -360,12 +459,9 @@ final class VoiceQuizController: ObservableObject {
                 guard let self, self.phase == .listening else { return }
                 Analytics.track(.voiceTimeout(language: self.localeCode))
                 self.stt.stopRecording()
-                if self.autoAdvance {
-                    // Timeout: record as wrong (use an out-of-range index so no option matches correctAnswer)
-                    self.recordAnswerAndAdvance(Int.max)
-                } else {
-                    self.phase = .idle
-                }
+                self.didTimeout = true
+                self.listeningStartedAt = nil
+                self.phase = .idle
             }
     }
 
@@ -409,7 +505,13 @@ final class VoiceQuizController: ObservableObject {
         stt.transcriptionPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] text in
-                self?.transcription = text
+                guard let self else { return }
+                // Drop late STT callbacks that fire after listening has ended
+                // (SFSpeechRecognizer can emit a final result via endAudio()
+                // even after stopRecording has been called — without this guard
+                // stale transcription reappears on the next question).
+                guard self.phase == .listening || self.phase == .matching else { return }
+                self.transcription = text
             }
             .store(in: &subscribers)
 

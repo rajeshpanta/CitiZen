@@ -20,11 +20,17 @@ struct AudioOnlyView: View {
         vc.autoAdvance = true
         vc.speakAnswerFeedback = true
         vc.localeCode = language.rawValue
-        vc.offlineSTT = language == .english
+        // Prefer on-device STT for all languages. If the user hasn't downloaded
+        // the on-device pack for their language, LocalSTTService gracefully falls
+        // back to streaming via `wantOnDevice = offlineOnly && supportsOnDeviceRecognition`.
+        // Matches the QuizConfig.offlineForVariant pattern used by the practice quiz.
+        vc.offlineSTT = true
         vc.variantIndex = language == .english ? 0 : 1
         _quizLogic = StateObject(wrappedValue: logic)
         _voice = StateObject(wrappedValue: vc)
     }
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
         VStack(spacing: 32) {
@@ -44,7 +50,10 @@ struct AudioOnlyView: View {
                     .accentColor(.blue)
                     .padding(.horizontal, 40)
 
-                    Text("\(quizLogic.attemptedQuestions)/\(quizLogic.totalQuestions)  ·  \(quizLogic.correctAnswers) correct")
+                    Text(String(format: s.audioOnlyProgressFormat,
+                                quizLogic.attemptedQuestions,
+                                quizLogic.totalQuestions,
+                                quizLogic.correctAnswers))
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -61,7 +70,7 @@ struct AudioOnlyView: View {
 
             // Answer feedback
             if let correct = voice.lastAnswerCorrect {
-                Text(correct ? "Correct" : "Wrong")
+                Text(correct ? s.interviewCorrect : s.interviewWrong)
                     .font(.title2.bold())
                     .foregroundColor(correct ? .green : .red)
             }
@@ -85,7 +94,7 @@ struct AudioOnlyView: View {
                     voice.stop()
                     quizLogic.forceEnd()
                 } label: {
-                    Text("Stop")
+                    Text(s.audioOnlyStopBtn)
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -98,16 +107,19 @@ struct AudioOnlyView: View {
             } else {
                 // Finished
                 VStack(spacing: 12) {
-                    Text("Session Complete")
+                    Text(s.audioOnlySessionComplete)
                         .font(.title2.bold())
                         .foregroundColor(.white)
-                    Text("\(quizLogic.correctAnswers) of \(quizLogic.attemptedQuestions) correct (\(quizLogic.scorePercentage)%)")
+                    Text(String(format: s.audioOnlyFinalScoreFormat,
+                                quizLogic.correctAnswers,
+                                quizLogic.attemptedQuestions,
+                                quizLogic.scorePercentage))
                         .foregroundColor(.white.opacity(0.7))
 
                     Button {
                         presentationMode.wrappedValue.dismiss()
                     } label: {
-                        Text("Done")
+                        Text(s.resultDone)
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -126,7 +138,7 @@ struct AudioOnlyView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 if quizLogic.isFinished || voice.phase == .idle {
-                    Button("Back") {
+                    Button(s.a11yBack) {
                         voice.stop()
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -142,7 +154,14 @@ struct AudioOnlyView: View {
             voice.start()
         }
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
-        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+            // Defensive cleanup: Stop/Back buttons already call voice.stop(),
+            // but back-swipe / programmatic dismissal can bypass those paths
+            // and leave TTS/STT running in the background. voice.stop() is
+            // idempotent so the double-call on explicit-dismiss paths is a no-op.
+            voice.stop()
+        }
     }
 
     // MARK: - Phase Indicator
@@ -154,28 +173,28 @@ struct AudioOnlyView: View {
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.system(size: 50))
                     .foregroundColor(.blue)
-                Text("Listening to question...")
+                Text(s.audioOnlyStatusListeningToQuestion)
                     .foregroundColor(.white.opacity(0.6))
 
             case .listening:
                 Image(systemName: "mic.fill")
                     .font(.system(size: 50))
                     .foregroundColor(.red)
-                Text("Speak your answer")
+                Text(s.audioOnlyStatusSpeakYourAnswer)
                     .foregroundColor(.white.opacity(0.6))
 
-            case .processingAnswer:
+            case .processingAnswer, .matching, .awaitingContinue:
                 Image(systemName: "checkmark.circle")
                     .font(.system(size: 50))
                     .foregroundColor(.yellow)
-                Text("Processing...")
+                Text(s.audioOnlyStatusProcessing)
                     .foregroundColor(.white.opacity(0.6))
 
             case .idle:
                 Image(systemName: "headphones.circle.fill")
                     .font(.system(size: 50))
                     .foregroundColor(.white.opacity(0.4))
-                Text("Audio-Only Mode")
+                Text(s.audioOnly)
                     .foregroundColor(.white.opacity(0.6))
 
             case .finished:

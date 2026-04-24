@@ -30,7 +30,13 @@ final class LocalTTSService: NSObject, TextToSpeechService {
         stopSpeaking()
         finished = PassthroughSubject<Void, Never>()
 
+        // iOS does not ship a Nepali (ne-NP) voice pack, so a raw lookup returns
+        // nil and the chain falls through to an English voice that garbles the
+        // Devanagari text. Hindi (hi-IN) uses the same script and pronounces
+        // Nepali text intelligibly, so it's a better first fallback for Nepali
+        // than English. Mirrors the STT fallback in LocalSTTService.
         let voice = AVSpeechSynthesisVoice(language: languageCode)
+                    ?? (languageCode == "ne-NP" ? AVSpeechSynthesisVoice(language: "hi-IN") : nil)
                     ?? AVSpeechSynthesisVoice(language: "en-US")
                     ?? AVSpeechSynthesisVoice.speechVoices().first
 

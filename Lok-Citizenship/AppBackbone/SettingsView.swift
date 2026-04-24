@@ -2,6 +2,10 @@ import SwiftUI
 
 struct SettingsView: View {
 
+    /// Picked by the parent (PracticeSelectionView). Drives all section labels so
+    /// the Settings screen matches the user's selected app language.
+    let language: AppLanguage
+
     @ObservedObject private var notifications = NotificationManager.shared
     @ObservedObject private var store = StoreManager.shared
     private let progress = ProgressManager.shared
@@ -10,20 +14,23 @@ struct SettingsView: View {
     @State private var showTerms = false
     @State private var interviewDate: Date = ProgressManager.shared.interviewDate ?? Date()
     @State private var hasInterview: Bool = ProgressManager.shared.interviewDate != nil
+    @State private var openAIKey: String = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
         Form {
             // MARK: - Study Reminders
             Section {
                 if notifications.isAuthorized {
-                    Toggle("Daily Reminder", isOn: Binding(
+                    Toggle(s.settingsDailyReminder, isOn: Binding(
                         get: { notifications.isEnabled },
                         set: { notifications.isEnabled = $0 }
                     ))
 
                     if notifications.isEnabled {
                         DatePicker(
-                            "Reminder Time",
+                            s.settingsReminderTime,
                             selection: Binding(
                                 get: { notifications.reminderTime },
                                 set: { notifications.reminderTime = $0 }
@@ -32,21 +39,21 @@ struct SettingsView: View {
                         )
                     }
                 } else {
-                    Button("Enable Notifications") {
+                    Button(s.settingsEnableNotifications) {
                         notifications.requestPermission()
                     }
 
-                    Text("Get daily reminders to study and streak alerts.")
+                    Text(s.settingsRemindersCaption)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             } header: {
-                Text("Study Reminders")
+                Text(s.settingsRemindersHeader)
             }
 
             // MARK: - Interview Date
             Section {
-                Toggle("I have a scheduled interview", isOn: $hasInterview)
+                Toggle(s.settingsHasScheduledInterview, isOn: $hasInterview)
                     .onChange(of: hasInterview) { enabled in
                         if enabled {
                             progress.interviewDate = interviewDate
@@ -57,7 +64,7 @@ struct SettingsView: View {
 
                 if hasInterview {
                     DatePicker(
-                        "Interview Date",
+                        s.settingsInterviewDate,
                         selection: $interviewDate,
                         in: Date()...,
                         displayedComponents: .date
@@ -67,7 +74,7 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Interview")
+                Text(s.settingsInterviewHeader)
             }
 
             // MARK: - Purchases
@@ -76,44 +83,101 @@ struct SettingsView: View {
                     HStack {
                         Text("CitiZen Pro")
                         Spacer()
-                        Text("Active")
+                        Text(s.settingsProActive)
                             .foregroundColor(.green)
                             .bold()
                     }
                 } else {
-                    Button("Restore Purchases") {
+                    Button(s.settingsRestorePurchases) {
                         Task { await store.restorePurchases() }
                     }
                 }
             } header: {
-                Text("Subscription")
+                Text(s.settingsSubscriptionHeader)
             }
 
             // MARK: - Legal
             Section {
-                Button("Privacy Policy") { showPrivacy = true }
-                Button("Terms of Use") { showTerms = true }
+                Button(s.settingsPrivacyPolicy) { showPrivacy = true }
+                Button(s.settingsTermsOfUse) { showTerms = true }
             } header: {
-                Text("Legal")
+                Text(s.settingsLegalHeader)
             }
 
             // MARK: - About
             Section {
                 HStack {
-                    Text("Version")
+                    Text(s.settingsVersionLabel)
                     Spacer()
                     Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
                         .foregroundColor(.secondary)
                 }
             } header: {
-                Text("About")
+                Text(s.settingsAboutHeader)
             }
+
+            #if DEBUG
+            // MARK: - Developer
+            Section {
+                Toggle("Force Pro (dev only)", isOn: Binding(
+                    get: { store.isDevForcePro },
+                    set: { store.setDevForcePro($0) }
+                ))
+                Button("Reset Onboarding") {
+                    progress.hasCompletedOnboarding = false
+                }
+                .foregroundColor(.orange)
+            } header: {
+                Text("Developer")
+            } footer: {
+                Text("DEBUG builds only. Unlocks all Pro features without a real purchase.")
+                    .font(.caption2)
+            }
+
+            // MARK: - Voice (OpenAI TTS)
+            Section {
+                SecureField("sk-…", text: $openAIKey)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .font(.system(.footnote, design: .monospaced))
+                HStack {
+                    Button("Save") {
+                        let trimmed = openAIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+                        UserDefaults.standard.set(trimmed, forKey: "openai_api_key")
+                    }
+                    Spacer()
+                    if !openAIKey.isEmpty {
+                        Button("Clear", role: .destructive) {
+                            openAIKey = ""
+                            UserDefaults.standard.removeObject(forKey: "openai_api_key")
+                        }
+                    }
+                }
+                HStack {
+                    Text("Status")
+                    Spacer()
+                    Text(savedKeyPresent ? "Using OpenAI voice (nova)" : "Using on-device voice")
+                        .font(.caption)
+                        .foregroundColor(savedKeyPresent ? .green : .secondary)
+                }
+            } header: {
+                Text("Voice")
+            } footer: {
+                Text("Paste an OpenAI API key to use the 'nova' voice. Leave empty to use the on-device voice. Audio is cached per question so each key is charged once.")
+                    .font(.caption2)
+            }
+            #endif
         }
-        .navigationTitle("Settings")
+        .navigationTitle(s.navSettings)
         .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
         .sheet(isPresented: $showTerms) { TermsOfUseView() }
         .onAppear {
             notifications.checkAuthorization()
         }
+    }
+
+    private var savedKeyPresent: Bool {
+        let k = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
+        return !k.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

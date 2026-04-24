@@ -6,7 +6,7 @@ import SwiftUI
 
 // MARK: - Helper struct to bundle each destination
 private struct PracticeItem: Identifiable {
-    let id = UUID()
+    var id: Int { level }
     let title: String
     let view: AnyView
     let minHeight: CGFloat
@@ -21,6 +21,21 @@ struct PracticeSelectionView: View {
     @ObservedObject private var tracker = QuestionTracker.shared
     @State private var showPaywall = false
     @State private var paywallTrigger = "locked_level"
+
+    /// Per-language dismissal flag for the "voice pack missing" banner. Reading
+    /// from UserDefaults on every eval is cheap enough; setting when dismissed.
+    @State private var voicePackBannerBump = 0  // invalidates the computed property on dismiss
+
+    private var voicePackBannerDismissedKey: String {
+        "pm_voicePackWarningDismissed_\(language.rawValue)"
+    }
+
+    private var shouldShowVoicePackBanner: Bool {
+        _ = voicePackBannerBump  // depend on state so SwiftUI re-evaluates after dismiss
+        guard language != .english else { return false }
+        guard !VoiceAvailability.hasUsableVoice(for: language.rawValue) else { return false }
+        return !UserDefaults.standard.bool(forKey: voicePackBannerDismissedKey)
+    }
 
     private var items: [PracticeItem] {
         switch language {
@@ -184,33 +199,47 @@ struct PracticeSelectionView: View {
 
     // MARK: - Language-specific UI
 
-    private var pageTitle: String {
-        switch language {
-        case .english: return "Pick A Practice Set 👇🏻"
-        case .nepali:  return "आफ्नो अभ्यास छान्नुहोस् 👇🏻"
-        case .spanish: return "Elige tu práctica 👇🏻"
-        case .chinese: return "选择你的练习👇🏻"
-        }
-    }
-
-    private var navTitle: String {
-        switch language {
-        case .english: return "Practice Selection"
-        case .nepali:  return "अभ्यास छनोट"
-        case .spanish: return "Selección de práctica"
-        case .chinese: return "选择你的练习"
-        }
-    }
+    private var s: UIStrings { UIStrings.forLanguage(language) }
 
     private func levelMeta(_ level: Int) -> (label: String, color: Color, icon: String) {
         switch level {
-        case 1: return ("Easy", .green, "1.circle.fill")
-        case 2: return ("Medium", .cyan, "2.circle.fill")
-        case 3: return ("Hard", .orange, "3.circle.fill")
-        case 4: return ("Advanced", .pink, "4.circle.fill")
-        case 5: return ("Expert", .red, "5.circle.fill")
+        case 1: return (s.levelEasy,     .green,  "1.circle.fill")
+        case 2: return (s.levelMedium,   .cyan,   "2.circle.fill")
+        case 3: return (s.levelHard,     .orange, "3.circle.fill")
+        case 4: return (s.levelAdvanced, .pink,   "4.circle.fill")
+        case 5: return (s.levelExpert,   .red,    "5.circle.fill")
         default: return ("", .gray, "circle")
         }
+    }
+
+    /// Warns the user when iOS has no voice pack for their selected language.
+    /// Without this, TTS silently falls back to an English voice that garbles
+    /// non-English text. Dismissable per-language; flag persists in UserDefaults.
+    private var voicePackBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "speaker.slash.fill")
+                .font(.footnote)
+                .foregroundColor(.orange)
+                .padding(.top, 2)
+            Text(s.voicePackMissingMessage)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.85))
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 6)
+            Button {
+                UserDefaults.standard.set(true, forKey: voicePackBannerDismissedKey)
+                withAnimation { voicePackBannerBump &+= 1 }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            .accessibilityLabel(s.a11yClose)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.1)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.orange.opacity(0.35), lineWidth: 1))
     }
 
     var body: some View {
@@ -228,7 +257,7 @@ struct PracticeSelectionView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     VStack(spacing: 6) {
-                        Text(pageTitle)
+                        Text(s.pickPractice)
                             .font(.title2.bold())
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
@@ -271,20 +300,22 @@ struct PracticeSelectionView: View {
                         )
                     }
 
+                    if shouldShowVoicePackBanner {
+                        voicePackBanner
+                    }
+
                     // Mock Interview card
                     Group {
                         let canAccess = store.isPro || ProgressManager.shared.canAccessFreeMockInterview
                         if canAccess {
                             NavigationLink(
                                 destination: MockInterviewView(language: language)
-                                    .navigationTitle("Mock Interview")
+                                    .navigationTitle(s.navMockInterview)
                                     .navigationBarTitleDisplayMode(.inline)
                             ) {
                                 mockCard(
                                     locked: false,
-                                    subtitle: store.isPro
-                                        ? "Simulate the real USCIS test"
-                                        : "Try your first mock interview free"
+                                    subtitle: store.isPro ? s.mockSubtitlePro : s.mockSubtitleFree
                                 )
                             }
                         } else {
@@ -292,7 +323,7 @@ struct PracticeSelectionView: View {
                                 paywallTrigger = "mock_interview"
                                 showPaywall = true
                             } label: {
-                                mockCard(locked: true, subtitle: "Unlock unlimited mock interviews")
+                                mockCard(locked: true, subtitle: s.mockSubtitleLocked)
                             }
                         }
                     }
@@ -301,12 +332,12 @@ struct PracticeSelectionView: View {
                     // Interview countdown banner
                     if let date = ProgressManager.shared.interviewDate, date > Date() {
                         let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0)
-                        NavigationLink(destination: InterviewChecklistView().navigationTitle("Interview Checklist")) {
+                        NavigationLink(destination: InterviewChecklistView().navigationTitle(s.navInterviewChecklist)) {
                             HStack(spacing: 12) {
                                 Image(systemName: "calendar.badge.clock")
                                     .font(.system(size: 22))
                                     .foregroundColor(.blue)
-                                Text("\(days) days until your interview")
+                                Text(String(format: s.daysUntilInterviewFormat, days))
                                     .font(.subheadline.bold())
                                     .foregroundColor(.white)
                                 Spacer()
@@ -323,7 +354,7 @@ struct PracticeSelectionView: View {
                     // Exam Readiness card
                     NavigationLink(
                         destination: ReadinessView(language: language)
-                            .navigationTitle("Exam Readiness")
+                            .navigationTitle(s.navExamReadiness)
                             .navigationBarTitleDisplayMode(.inline)
                     ) {
                         readinessCard
@@ -336,7 +367,7 @@ struct PracticeSelectionView: View {
 
                     // Section label
                     HStack {
-                        Text("Practice Levels")
+                        Text(s.practiceLevels)
                             .font(.caption.bold())
                             .foregroundColor(.white.opacity(0.35))
                             .textCase(.uppercase)
@@ -368,7 +399,7 @@ struct PracticeSelectionView: View {
 
                     // Reading & Writing section
                     HStack {
-                        Text("Reading & Writing")
+                        Text(s.readingWriting)
                             .font(.caption.bold())
                             .foregroundColor(.white.opacity(0.35))
                             .textCase(.uppercase)
@@ -380,28 +411,28 @@ struct PracticeSelectionView: View {
 
                     Group {
                         if store.isPro {
-                            NavigationLink(destination: ReadingPracticeView()) {
-                                featureCard(icon: "book.fill", title: "Reading Practice",
-                                            subtitle: "Practice USCIS reading vocabulary", color: .purple)
+                            NavigationLink(destination: ReadingPracticeView(language: language)) {
+                                featureCard(icon: "book.fill", title: s.readingPractice,
+                                            subtitle: s.readingPracticeSubtitle, color: .purple)
                             }
-                            NavigationLink(destination: WritingPracticeView()) {
-                                featureCard(icon: "pencil.line", title: "Writing Practice",
-                                            subtitle: "Listen and type USCIS sentences", color: .indigo)
+                            NavigationLink(destination: WritingPracticeView(language: language)) {
+                                featureCard(icon: "pencil.line", title: s.writingPractice,
+                                            subtitle: s.writingPracticeSubtitle, color: .indigo)
                             }
                         } else {
                             Button {
                                 paywallTrigger = "locked_level"
                                 showPaywall = true
                             } label: {
-                                featureCard(icon: "book.fill", title: "Reading Practice",
-                                            subtitle: "Unlock with Pro", color: .purple, locked: true)
+                                featureCard(icon: "book.fill", title: s.readingPractice,
+                                            subtitle: s.unlockWithPro, color: .purple, locked: true)
                             }
                             Button {
                                 paywallTrigger = "locked_level"
                                 showPaywall = true
                             } label: {
-                                featureCard(icon: "pencil.line", title: "Writing Practice",
-                                            subtitle: "Unlock with Pro", color: .indigo, locked: true)
+                                featureCard(icon: "pencil.line", title: s.writingPractice,
+                                            subtitle: s.unlockWithPro, color: .indigo, locked: true)
                             }
                         }
                     }
@@ -409,7 +440,7 @@ struct PracticeSelectionView: View {
 
                     // Audio-Only mode
                     HStack {
-                        Text("Hands-Free")
+                        Text(s.handsFree)
                             .font(.caption.bold())
                             .foregroundColor(.white.opacity(0.35))
                             .textCase(.uppercase)
@@ -421,11 +452,11 @@ struct PracticeSelectionView: View {
 
                     NavigationLink(
                         destination: AudioOnlyView(language: language)
-                            .navigationTitle("Audio-Only")
+                            .navigationTitle(s.navAudioOnly)
                             .navigationBarTitleDisplayMode(.inline)
                     ) {
-                        featureCard(icon: "headphones.circle.fill", title: "Audio-Only Mode",
-                                    subtitle: "Study hands-free with voice", color: .teal)
+                        featureCard(icon: "headphones.circle.fill", title: s.audioOnly,
+                                    subtitle: s.audioOnlySubtitle, color: .teal)
                     }
                     .padding(.horizontal, 20)
 
@@ -433,14 +464,15 @@ struct PracticeSelectionView: View {
                 }
             }
         }
-        .navigationTitle(navTitle)
+        .navigationTitle(s.navPracticeSelection)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                NavigationLink(destination: SettingsView()) {
+                NavigationLink(destination: SettingsView(language: language)) {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.white.opacity(0.6))
                 }
+                .accessibilityLabel(s.navSettings)
             }
         }
         .onAppear {
@@ -449,7 +481,7 @@ struct PracticeSelectionView: View {
             tracker.objectWillChange.send()
         }
         .sheet(isPresented: $showPaywall) {
-            PaywallView(trigger: paywallTrigger)
+            PaywallView(trigger: paywallTrigger, language: language)
         }
     }
 
@@ -462,7 +494,7 @@ struct PracticeSelectionView: View {
                 .foregroundColor(locked ? .white.opacity(0.4) : .white)
                 .frame(width: 40)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Mock Interview")
+                Text(s.mockInterview)
                     .font(.headline)
                     .foregroundColor(locked ? .white.opacity(0.5) : .white)
                 Text(subtitle)
@@ -505,10 +537,10 @@ struct PracticeSelectionView: View {
                 .foregroundColor(.cyan)
                 .frame(width: 40)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Exam Readiness")
+                Text(s.examReadiness)
                     .font(.headline)
                     .foregroundColor(.white)
-                Text("\(mastered)/\(total) mastered · \(pct)% ready")
+                Text(String(format: s.examReadinessSubtitleFormat, mastered, total, pct))
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
             }
@@ -545,7 +577,7 @@ struct PracticeSelectionView: View {
                     ),
                     level: 0
                 )
-                .navigationTitle("Review Mistakes")
+                .navigationTitle(s.navReviewMistakes)
                 .navigationBarTitleDisplayMode(.inline)
             ) {
                 HStack(spacing: 14) {
@@ -554,10 +586,10 @@ struct PracticeSelectionView: View {
                         .foregroundColor(.orange)
                         .frame(width: 40)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Review Mistakes")
+                        Text(s.reviewMistakes)
                             .font(.headline)
                             .foregroundColor(.white)
-                        Text("\(dueCount) questions due for review")
+                        Text(String(format: s.reviewMistakesSubtitleFormat, dueCount))
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.6))
                     }
@@ -589,10 +621,10 @@ struct PracticeSelectionView: View {
                     .foregroundColor(.white.opacity(0.3))
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Review Mistakes")
+                    Text(s.reviewMistakes)
                         .font(.headline)
                         .foregroundColor(.white.opacity(0.4))
-                    Text("Complete some practice first")
+                    Text(s.reviewMistakesEmpty)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.3))
                 }
@@ -638,17 +670,29 @@ struct PracticeSelectionView: View {
     }
 
     private func levelRow(item: PracticeItem, meta: (label: String, color: Color, icon: String), locked: Bool) -> some View {
-        HStack(spacing: 14) {
+        let isRecommended = ProgressManager.shared.recommendedLevel == item.level && !locked
+        return HStack(spacing: 14) {
             Image(systemName: meta.icon)
                 .font(.system(size: 24))
                 .foregroundColor(locked ? meta.color.opacity(0.3) : meta.color)
                 .frame(width: 32)
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.title)
-                    .font(.subheadline.bold())
-                    .foregroundColor(locked ? .white.opacity(0.4) : .white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
+                HStack(spacing: 6) {
+                    Text(item.title)
+                        .font(.subheadline.bold())
+                        .foregroundColor(locked ? .white.opacity(0.4) : .white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    if isRecommended {
+                        Text(s.recommendedBadge.uppercased())
+                            .font(.caption2.bold())
+                            .tracking(0.5)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.cyan))
+                    }
+                }
                 Text(meta.label)
                     .font(.caption2)
                     .foregroundColor(locked ? meta.color.opacity(0.3) : meta.color)
@@ -660,7 +704,18 @@ struct PracticeSelectionView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(locked ? 0.03 : 0.07)))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(locked ? 0.05 : 0.1), lineWidth: 1))
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isRecommended
+                      ? Color.cyan.opacity(0.12)
+                      : Color.white.opacity(locked ? 0.03 : 0.07))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isRecommended
+                        ? Color.cyan.opacity(0.45)
+                        : Color.white.opacity(locked ? 0.05 : 0.1),
+                        lineWidth: isRecommended ? 1.5 : 1)
+        )
     }
 }

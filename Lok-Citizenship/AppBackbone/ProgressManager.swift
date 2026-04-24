@@ -145,6 +145,102 @@ final class ProgressManager {
         set { defaults.set(newValue, forKey: "pm_preferredLanguage") }
     }
 
+    /// Level (1–5) recommended to the user based on onboarding placement quiz.
+    /// PracticeSelectionView highlights this level with a "Recommended" badge.
+    /// Nil when no recommendation has been saved.
+    var recommendedLevel: Int? {
+        get {
+            let stored = defaults.integer(forKey: "pm_recommendedLevel")
+            return stored > 0 ? stored : nil
+        }
+        set { defaults.set(newValue ?? 0, forKey: "pm_recommendedLevel") }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: - Recently-used test sentences (M4: dedup across sessions)
+    // ─────────────────────────────────────────────────────────────
+
+    /// Keeps the last `capacity` sentence IDs used in a reading/writing test session.
+    /// Used to avoid immediately repeating the same sentences across back-to-back
+    /// sessions. Capped so the pool can't get fully exhausted.
+    private static let recentSentenceHistoryCapacity = 10
+
+    var recentReadingSentenceIDs: [String] {
+        get { defaults.stringArray(forKey: "pm_recentReadingSentenceIDs") ?? [] }
+        set {
+            let trimmed = Array(newValue.suffix(Self.recentSentenceHistoryCapacity))
+            defaults.set(trimmed, forKey: "pm_recentReadingSentenceIDs")
+        }
+    }
+
+    var recentWritingSentenceIDs: [String] {
+        get { defaults.stringArray(forKey: "pm_recentWritingSentenceIDs") ?? [] }
+        set {
+            let trimmed = Array(newValue.suffix(Self.recentSentenceHistoryCapacity))
+            defaults.set(trimmed, forKey: "pm_recentWritingSentenceIDs")
+        }
+    }
+
+    func rememberReadingSentences(_ ids: [String]) {
+        recentReadingSentenceIDs = recentReadingSentenceIDs + ids
+    }
+
+    func rememberWritingSentences(_ ids: [String]) {
+        recentWritingSentenceIDs = recentWritingSentenceIDs + ids
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: - Reading & Writing test progress (F6)
+    //
+    // Session-level counters: one increment per completed 3-sentence session.
+    // Pass/fail follows USCIS rules (session passes if ≥ 1 of 3 sentences correct).
+    // Shown on ReadinessView to give users a sense of their R/W readiness over time.
+    // ─────────────────────────────────────────────────────────────
+
+    var readingTestsTaken: Int {
+        get { defaults.integer(forKey: "pm_readingTestsTaken") }
+        set { defaults.set(newValue, forKey: "pm_readingTestsTaken") }
+    }
+
+    var readingTestsPassed: Int {
+        get { defaults.integer(forKey: "pm_readingTestsPassed") }
+        set { defaults.set(newValue, forKey: "pm_readingTestsPassed") }
+    }
+
+    var writingTestsTaken: Int {
+        get { defaults.integer(forKey: "pm_writingTestsTaken") }
+        set { defaults.set(newValue, forKey: "pm_writingTestsTaken") }
+    }
+
+    var writingTestsPassed: Int {
+        get { defaults.integer(forKey: "pm_writingTestsPassed") }
+        set { defaults.set(newValue, forKey: "pm_writingTestsPassed") }
+    }
+
+    /// Record the outcome of one completed Reading Test session.
+    /// Safe to call exactly once per session — view callers guard with a flag.
+    func recordReadingTestSession(passed: Bool) {
+        readingTestsTaken += 1
+        if passed { readingTestsPassed += 1 }
+    }
+
+    /// Record the outcome of one completed Writing Test session.
+    func recordWritingTestSession(passed: Bool) {
+        writingTestsTaken += 1
+        if passed { writingTestsPassed += 1 }
+    }
+
+    /// Pass rate as a 0–100 integer percentage; `nil` if no sessions taken yet.
+    var readingTestPassRatePercent: Int? {
+        guard readingTestsTaken > 0 else { return nil }
+        return (readingTestsPassed * 100) / readingTestsTaken
+    }
+
+    var writingTestPassRatePercent: Int? {
+        guard writingTestsTaken > 0 else { return nil }
+        return (writingTestsPassed * 100) / writingTestsTaken
+    }
+
     // ─────────────────────────────────────────────────────────────
     // MARK: - Computed Helpers
     // ─────────────────────────────────────────────────────────────

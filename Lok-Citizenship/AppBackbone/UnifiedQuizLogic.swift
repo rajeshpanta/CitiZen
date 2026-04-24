@@ -96,6 +96,17 @@ final class UnifiedQuizLogic: ObservableObject {
     @Published var incorrectAnswers     = 0
     @Published var status: QuizStatus   = .inProgress
 
+    /// Per-question log for end-of-quiz review (mock interview result screen).
+    @Published var answerLog: [AnswerLogEntry] = []
+
+    struct AnswerLogEntry: Identifiable {
+        let id = UUID()
+        let question: UnifiedQuestion
+        /// Selected option index, or nil if skipped / no valid answer.
+        let userAnswer: Int?
+        let isCorrect: Bool
+    }
+
     /// Which language variant is currently displayed.
     @Published var selectedVariantIndex = 0
 
@@ -104,6 +115,11 @@ final class UnifiedQuizLogic: ObservableObject {
     private(set) var mode = QuizMode.practice
     private let progress: ProgressTracking
     private var completionRecorded = false
+
+    /// When false, `answerQuestion` and `finish` skip writing to `ProgressTracking`,
+    /// `QuestionTracker.shared`, and Analytics. Used by the onboarding placement quiz
+    /// so the user's lifetime stats aren't polluted by the pre-onboarding assessment.
+    var tracksProgress = true
 
     // MARK: - Init
 
@@ -159,15 +175,26 @@ final class UnifiedQuizLogic: ObservableObject {
     func answerQuestion(_ answerIndex: Int) -> Bool {
         guard currentQuestionIndex < questions.count, !isFinished else { return false }
 
-        let isCorrect = answerIndex == currentQuestion.correctAnswer
+        let q = currentQuestion
+        let optionCount = q.variants.first?.options.count ?? 0
+        let validIndex: Int? = (answerIndex >= 0 && answerIndex < optionCount) ? answerIndex : nil
+        let isCorrect = answerIndex == q.correctAnswer
         if isCorrect {
             correctAnswers += 1
         } else {
             incorrectAnswers += 1
         }
 
-        progress.recordAnswer(correct: isCorrect)
-        QuestionTracker.shared.recordAnswer(questionID: currentQuestion.id, correct: isCorrect)
+        answerLog.append(AnswerLogEntry(
+            question: q,
+            userAnswer: validIndex,
+            isCorrect: isCorrect
+        ))
+
+        if tracksProgress {
+            progress.recordAnswer(correct: isCorrect)
+            QuestionTracker.shared.recordAnswer(questionID: currentQuestion.id, correct: isCorrect)
+        }
 
         // Ask the mode if we've hit a terminal condition
         if let terminal = mode.checkTermination(
@@ -217,7 +244,9 @@ final class UnifiedQuizLogic: ObservableObject {
     func startQuiz() {
         mode = .practice
         resetWith(adaptiveShuffle(questions))
-        Analytics.track(.quizStarted(mode: "practice", language: languageTag, level: levelTag))
+        if tracksProgress {
+            Analytics.track(.quizStarted(mode: "practice", language: languageTag, level: levelTag))
+        }
     }
 
     /// Start a mock interview, picking questions from the pool.
@@ -229,7 +258,9 @@ final class UnifiedQuizLogic: ObservableObject {
                               requiredCorrect: requiredCorrect)
         let selected = Array(pool.shuffled().prefix(min(questionCount, pool.count)))
         resetWith(selected)
-        Analytics.track(.quizStarted(mode: "mock_interview", language: languageTag, level: 0))
+        if tracksProgress {
+            Analytics.track(.quizStarted(mode: "mock_interview", language: languageTag, level: 0))
+        }
     }
 
     /// Start an audio-only session. No failure limit — runs through all questions.
@@ -267,18 +298,23 @@ final class UnifiedQuizLogic: ObservableObject {
 
     private func resetWith(_ pool: [UnifiedQuestion]) {
         guard !pool.isEmpty else { return }
-        questions            = pool.shuffled()
+        // Callers are responsible for ordering: startQuiz passes adaptive-weighted
+        // order, mock/audio pass a shuffled random subset. Don't re-shuffle here
+        // or the adaptive ordering gets destroyed.
+        questions            = pool
         currentQuestionIndex = 0
         correctAnswers       = 0
         incorrectAnswers     = 0
         status               = .inProgress
         completionRecorded   = false
+        answerLog            = []
     }
 
     private func finish(_ terminal: QuizStatus) {
         status = terminal
         guard !completionRecorded else { return }
         completionRecorded = true
+        guard tracksProgress else { return }
         let passed = terminal == .passed || terminal == .completed
         progress.recordQuizCompletion(passed: passed)
 
