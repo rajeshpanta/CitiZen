@@ -31,6 +31,26 @@ final class SlowSpeechHelper {
                rateMultiplier: Float = 0.85,
                languageCode: String = "en-US") {
         synthesizer.stopSpeaking(at: .immediate)
+
+        // Self-heal the audio session before speaking. LocalSTTService deactivates
+        // the session with `setActive(false, .notifyOthersOnDeactivation)` after
+        // any STT usage (Mock Interview voice, Practice Quiz voice, Audio-Only,
+        // Reading Test), leaving category `.record` + inactive. Without this block
+        // the synthesizer queues onto a dead session → silent failure, only fixed
+        // by an app restart. `.playback` also ignores the ringer switch, which
+        // `.soloAmbient` (iOS default) does not. Mirrors `LocalTTSService.speak`.
+        let session = AVAudioSession.sharedInstance()
+        do {
+            if session.category != .playback {
+                try session.setCategory(.playback, mode: .spokenAudio, options: .duckOthers)
+            }
+            try session.setActive(true)
+        } catch {
+            #if DEBUG
+            print("[SlowSpeech] Audio session setup failed: \(error)")
+            #endif
+        }
+
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: languageCode)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * rateMultiplier
