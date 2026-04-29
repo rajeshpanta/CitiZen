@@ -77,8 +77,13 @@ protocol ProgressTracking {
     func recordQuizCompletion(passed: Bool)
 }
 
-/// ProgressManager conforms by default.
-extension ProgressManager: ProgressTracking {}
+/// ProgressManager conforms by default. The conformance is isolated to
+/// the main actor because `ProgressManager` itself is `@MainActor`-isolated;
+/// without this, Swift 6 strict concurrency flags the conformance as
+/// crossing actor boundaries and can-cause-data-races. Practically, the
+/// only consumer is `UnifiedQuizLogic` (also `@MainActor`), so this is the
+/// honest declaration of where the work happens — no runtime change.
+extension ProgressManager: @MainActor ProgressTracking {}
 
 // ═════════════════════════════════════════════════════════════════
 // MARK: - Unified Quiz Logic
@@ -86,6 +91,15 @@ extension ProgressManager: ProgressTracking {}
 
 /// Reusable quiz engine for both Practice and Mock Interview modes.
 /// Owns quiz state and business rules. Does not own UI flow or timing.
+///
+/// `@MainActor` because every consumer is a SwiftUI view (`QuizView`,
+/// `MockInterviewView`, `AudioOnlyView`) that already runs on main, and
+/// because the engine writes `@Published` state that SwiftUI requires from
+/// main. Annotating explicitly is what unblocks the default-argument
+/// reference to `@MainActor`-isolated `ProgressManager.shared` in the
+/// initializer below — under Swift 6 strict concurrency, that reference
+/// from a nonisolated context would otherwise be an error.
+@MainActor
 final class UnifiedQuizLogic: ObservableObject {
 
     // MARK: - Published state
@@ -123,10 +137,18 @@ final class UnifiedQuizLogic: ObservableObject {
 
     // MARK: - Init
 
+    /// Default `progress` is `nil`, resolved to `ProgressManager.shared`
+    /// inside the body. The shared instance is `@MainActor`-isolated, and
+    /// Swift 6 evaluates default-argument expressions in a nonisolated
+    /// context independent of the init's own isolation — referencing
+    /// `ProgressManager.shared` directly as a default would be a
+    /// strict-concurrency violation. Resolving inside the init body, which
+    /// inherits the class's `@MainActor` isolation, is the diagnostic-free
+    /// way to keep the convenient parameterless `UnifiedQuizLogic()` form.
     init(defaultVariantIndex: Int = 0,
-         progress: ProgressTracking = ProgressManager.shared) {
+         progress: (any ProgressTracking)? = nil) {
         self.selectedVariantIndex = defaultVariantIndex
-        self.progress = progress
+        self.progress = progress ?? ProgressManager.shared
     }
 
     // MARK: - Current question (safe access)

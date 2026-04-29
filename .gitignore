@@ -11,3 +11,6 @@ DerivedData/
 .DS_Store
 *.swp
 *~
+
+## Supabase CLI cache
+supabase/.temp/

@@ -14,8 +14,7 @@ struct SettingsView: View {
     @State private var showTerms = false
     @State private var interviewDate: Date = ProgressManager.shared.interviewDate ?? Date()
     @State private var hasInterview: Bool = ProgressManager.shared.interviewDate != nil
-    @State private var openAIKey: String = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
-
+    @Environment(\.scenePhase) private var scenePhase
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
@@ -133,39 +132,6 @@ struct SettingsView: View {
                 Text("DEBUG builds only. Unlocks all Pro features without a real purchase.")
                     .font(.caption2)
             }
-
-            // MARK: - Voice (OpenAI TTS)
-            Section {
-                SecureField("sk-…", text: $openAIKey)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                    .font(.system(.footnote, design: .monospaced))
-                HStack {
-                    Button("Save") {
-                        let trimmed = openAIKey.trimmingCharacters(in: .whitespacesAndNewlines)
-                        UserDefaults.standard.set(trimmed, forKey: "openai_api_key")
-                    }
-                    Spacer()
-                    if !openAIKey.isEmpty {
-                        Button("Clear", role: .destructive) {
-                            openAIKey = ""
-                            UserDefaults.standard.removeObject(forKey: "openai_api_key")
-                        }
-                    }
-                }
-                HStack {
-                    Text("Status")
-                    Spacer()
-                    Text(savedKeyPresent ? "Using OpenAI voice (nova)" : "Using on-device voice")
-                        .font(.caption)
-                        .foregroundColor(savedKeyPresent ? .green : .secondary)
-                }
-            } header: {
-                Text("Voice")
-            } footer: {
-                Text("Paste an OpenAI API key to use the 'nova' voice. Leave empty to use the on-device voice. Audio is cached per question so each key is charged once.")
-                    .font(.caption2)
-            }
             #endif
         }
         .navigationTitle(s.navSettings)
@@ -173,11 +139,30 @@ struct SettingsView: View {
         .sheet(isPresented: $showTerms) { TermsOfUseView() }
         .onAppear {
             notifications.checkAuthorization()
+            // Refresh local @State from persisted state. The @State init
+            // expressions only run once per view identity, so a freshly
+            // mounted Settings (e.g. user popped to PracticeSelection then
+            // re-pushed Settings, or another flow wrote to `interviewDate`
+            // in between) would otherwise display stale local copies.
+            // Toggle-off keeps the locally-shown date untouched so the
+            // picker remembers the user's last pick within the session.
+            if let saved = progress.interviewDate {
+                interviewDate = saved
+                hasInterview = true
+            } else {
+                hasInterview = false
+            }
+        }
+        // Re-query notification permission when the user comes back from
+        // the OS Settings app. Without this, tapping "Enable Notifications"
+        // → opening Settings → toggling permission → returning leaves the
+        // toggle in its old state until the user navigates away and back.
+        // Mirrors the scenePhase pattern in MockInterviewView / AudioOnlyView.
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                notifications.checkAuthorization()
+            }
         }
     }
 
-    private var savedKeyPresent: Bool {
-        let k = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
-        return !k.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
 }

@@ -1,0 +1,19 @@
+# Minimal Supabase config — only the bits relevant to the transcribe function.
+# Run `supabase link --project-ref <your-ref>` to bind this folder to your project.
+
+project_id = "citizen"
+
+[functions.transcribe]
+# No user auth — the app is no-login. Supabase still requires the anon key in
+# the Authorization header to route the request, and we rate-limit per device
+# via the X-Device-Id header inside the function.
+verify_jwt = false
+
+[functions.tts]
+# Same model as /transcribe — no user auth, rate-limited per device.
+verify_jwt = false
+
+[functions.match]
+# Semantic answer matching via gpt-4o-mini — used as fallback when the
+# on-device Jaccard match fails to recognize an ESL paraphrase.
+verify_jwt = false

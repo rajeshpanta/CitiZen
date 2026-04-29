@@ -44,6 +44,14 @@ struct ReadingPracticeView: View {
                 Text(s.testModeTest).tag(Mode.test)
             }
             .pickerStyle(.segmented)
+            // Disable mid-test so the user can't silently abandon a
+            // session by switching to Learn — that path bypassed the
+            // back-button confirm-exit alert and skipped F6 progress
+            // recording (the session was destroyed before
+            // `session.isFinished` flipped). Confirm-exit alert + edge-
+            // swipe block already guard the back path; this guards
+            // the picker.
+            .disabled(testSessionActive)
             .padding(.horizontal, 20)
             .padding(.top, 12)
             .padding(.bottom, 4)

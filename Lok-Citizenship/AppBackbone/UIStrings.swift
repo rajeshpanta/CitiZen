@@ -244,6 +244,28 @@ struct UIStrings {
     /// not available — e.g. language pack missing). Distinct from mic-permission denial.
     let testModeSpeechUnavailable: String
 
+    /// Shown on Mock Interview / Audio-Only when the user has denied microphone
+    /// or speech-recognition permission. Without these the voice flow can't run.
+    let micPermissionTitle: String
+    let micPermissionBody: String
+    let micPermissionOpenSettings: String
+
+    /// Confirmation alert shown when user taps End on mock interview. Without
+    /// this, an accidental tap immediately fails the attempt and shows results
+    /// — losing in-progress score and burning the free-tier mock attempt.
+    let endInterviewTitle: String
+    let endInterviewMessage: String
+    let endInterviewKeep: String
+
+    // MARK: - Local notifications (daily + streak reminders)
+
+    /// Daily study reminder, fires at the user's chosen time.
+    let notifDailyTitle: String
+    let notifDailyBody: String
+    /// 8 PM streak reminder, fires daily.
+    let notifStreakTitle: String
+    let notifStreakBody: String
+
     // MARK: - Exam Readiness (F6: Reading + Writing test progress)
 
     let readinessReadingTitle: String
@@ -569,6 +591,17 @@ extension UIStrings {
         voicePackMissingMessage: "This language's voice pack isn't installed. For clear audio, add it in Settings → Accessibility → Spoken Content → Voices.",
         questionTimeSensitiveNote: "Answers change over time. Verify the current officeholder at uscis.gov/citizenship before your interview.",
         testModeSpeechUnavailable: "Speech recognition isn't available on this device. In iOS Settings → General → Keyboard, make sure an English keyboard is added and try again.",
+        micPermissionTitle: "Microphone Access Needed",
+        micPermissionBody: "The mock interview needs your microphone and speech recognition to score your spoken answers. Enable both in Settings to continue.",
+        micPermissionOpenSettings: "Open Settings",
+        endInterviewTitle: "End mock interview?",
+        endInterviewMessage: "This will count as a failed attempt. You'll see your results so far.",
+        endInterviewKeep: "Keep going",
+
+        notifDailyTitle: "Time to study!",
+        notifDailyBody: "A few minutes of practice keeps you on track for your citizenship test.",
+        notifStreakTitle: "Don't lose your streak!",
+        notifStreakBody: "Complete a quick quiz today to keep your study streak alive.",
 
         readinessReadingTitle: "English Reading Test",
         readinessWritingTitle: "English Writing Test",
@@ -835,6 +868,17 @@ extension UIStrings {
         voicePackMissingMessage: "No tienes instalada la voz de este idioma. Para un audio claro, agrégala en Ajustes → Accesibilidad → Contenido hablado → Voces.",
         questionTimeSensitiveNote: "Las respuestas cambian con el tiempo. Verifica al funcionario actual en uscis.gov/citizenship antes de tu entrevista.",
         testModeSpeechUnavailable: "El reconocimiento de voz no está disponible en este dispositivo. En Ajustes → General → Teclado, asegúrate de tener un teclado en inglés e inténtalo de nuevo.",
+        micPermissionTitle: "Se necesita acceso al micrófono",
+        micPermissionBody: "La entrevista simulada necesita tu micrófono y el reconocimiento de voz para evaluar tus respuestas habladas. Activa ambos en Ajustes para continuar.",
+        micPermissionOpenSettings: "Abrir Ajustes",
+        endInterviewTitle: "¿Terminar entrevista simulada?",
+        endInterviewMessage: "Esto contará como un intento fallido. Verás tus resultados hasta ahora.",
+        endInterviewKeep: "Seguir",
+
+        notifDailyTitle: "¡Hora de estudiar!",
+        notifDailyBody: "Unos minutos de práctica te mantienen encaminado hacia tu examen de ciudadanía.",
+        notifStreakTitle: "¡No pierdas tu racha!",
+        notifStreakBody: "Completa un examen rápido hoy para mantener viva tu racha de estudio.",
 
         readinessReadingTitle: "Prueba de lectura en inglés",
         readinessWritingTitle: "Prueba de escritura en inglés",
@@ -1101,6 +1145,17 @@ extension UIStrings {
         voicePackMissingMessage: "स्पष्ट नेपाली अडियोको लागि, iOS Settings → Accessibility → Spoken Content → Voices मा हिन्दी आवाज स्थापना गर्नुहोस्।",
         questionTimeSensitiveNote: "उत्तरहरू समयसँगै परिवर्तन हुन सक्छन्। अन्तर्वार्ता अघि uscis.gov/citizenship मा हालको पदाधिकारी जाँच्नुहोस्।",
         testModeSpeechUnavailable: "यस उपकरणमा वाक् पहिचान उपलब्ध छैन। iOS सेटिङ → सामान्य → किबोर्डमा अंग्रेजी किबोर्ड थपिएको छ भन्ने सुनिश्चित गरी फेरि प्रयास गर्नुहोस्।",
+        micPermissionTitle: "माइक्रोफोन पहुँच चाहिन्छ",
+        micPermissionBody: "मक इन्टरभ्यूले तपाईंको बोलिएको उत्तर मूल्याङ्कन गर्न माइक्रोफोन र वाक् पहिचान चाहिन्छ। जारी राख्न सेटिङमा दुवै सक्षम गर्नुहोस्।",
+        micPermissionOpenSettings: "सेटिङ खोल्नुहोस्",
+        endInterviewTitle: "मक इन्टरभ्यू समाप्त गर्ने?",
+        endInterviewMessage: "यो असफल प्रयासको रूपमा गनिनेछ। तपाईंले अहिलेसम्मको परिणाम देख्नुहुनेछ।",
+        endInterviewKeep: "जारी राख्नुहोस्",
+
+        notifDailyTitle: "अध्ययनको समय!",
+        notifDailyBody: "केही मिनेटको अभ्यासले तपाईंलाई नागरिकता परीक्षाको लागि तयार राख्छ।",
+        notifStreakTitle: "तपाईंको स्ट्रिक नगुमाउनुहोस्!",
+        notifStreakBody: "अध्ययन स्ट्रिक जारी राख्न आज एउटा छिटो क्विज पूरा गर्नुहोस्।",
 
         readinessReadingTitle: "अंग्रेजी पढाइ परीक्षा",
         readinessWritingTitle: "अंग्रेजी लेखाइ परीक्षा",
@@ -1367,6 +1422,17 @@ extension UIStrings {
         voicePackMissingMessage: "未安装此语言的语音包. 为获得清晰的音频, 请在 设置 → 辅助功能 → 朗读内容 → 语音 中添加.",
         questionTimeSensitiveNote: "答案会随时间变化. 面试前请在 uscis.gov/citizenship 查看当前任职官员.",
         testModeSpeechUnavailable: "此设备上语音识别不可用. 请在 iOS 设置 → 通用 → 键盘中添加英语键盘后重试.",
+        micPermissionTitle: "需要麦克风权限",
+        micPermissionBody: "模拟面试需要使用麦克风和语音识别来评分您的口述答案。请在「设置」中启用这两项后继续。",
+        micPermissionOpenSettings: "打开设置",
+        endInterviewTitle: "结束模拟面试？",
+        endInterviewMessage: "这将记录为一次失败的尝试。您将看到目前为止的结果。",
+        endInterviewKeep: "继续",
+
+        notifDailyTitle: "该学习了！",
+        notifDailyBody: "几分钟的练习能让您为公民考试做好准备。",
+        notifStreakTitle: "别中断您的连续记录！",
+        notifStreakBody: "今天完成一个快速测验，保持您的学习连续记录。",
 
         readinessReadingTitle: "英语阅读测试",
         readinessWritingTitle: "英语写作测试",

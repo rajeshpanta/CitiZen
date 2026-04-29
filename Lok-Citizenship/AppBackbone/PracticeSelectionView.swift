@@ -8,7 +8,15 @@ import SwiftUI
 private struct PracticeItem: Identifiable {
     var id: Int { level }
     let title: String
-    let view: AnyView
+    /// Builds the destination view on demand. Stored as a closure rather
+    /// than an `AnyView` so the wrapped `QuizView` (which allocates a
+    /// `UnifiedQuizLogic`, a `WhisperSTTService`, and a
+    /// `VoiceQuizController` in its `init`) is only constructed when the
+    /// user actually navigates into a level — not on every body render of
+    /// the selection screen. Combined with `LazyView` at the call site,
+    /// this keeps the 5 destination links from churning ~5 throwaway STT
+    /// services + interruption observers per re-render.
+    let buildView: () -> AnyView
     let minHeight: CGFloat
     let fontSize: CGFloat
     let level: Int   // 1-5, used for gating
@@ -43,35 +51,35 @@ struct PracticeSelectionView: View {
             return [
                 PracticeItem(
                     title: "Practice 1 – Very Easy",
-                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice1), level: 1)),
+                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice1), level: 1)) },
                     minHeight: 20,
                     fontSize: 16,
                     level: 1
                 ),
                 PracticeItem(
                     title: "Practice 2 – Easy",
-                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice2), level: 2)),
+                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice2), level: 2)) },
                     minHeight: 25,
                     fontSize: 18,
                     level: 2
                 ),
                 PracticeItem(
                     title: "Practice 3 – Medium",
-                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice3), level: 3)),
+                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice3), level: 3)) },
                     minHeight: 30,
                     fontSize: 20,
                     level: 3
                 ),
                 PracticeItem(
                     title: "Practice 4 – Hard",
-                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice4), level: 4)),
+                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice4), level: 4)) },
                     minHeight: 35,
                     fontSize: 22,
                     level: 4
                 ),
                 PracticeItem(
                     title: "Practice 5 – Expert",
-                    view: AnyView(QuizView(config: .english(questions: EnglishQuestions.practice5), level: 5)),
+                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice5), level: 5)) },
                     minHeight: 40,
                     fontSize: 24,
                     level: 5
@@ -82,35 +90,35 @@ struct PracticeSelectionView: View {
             return [
                 PracticeItem(
                     title: "पहिलो अभ्यास – सजिलो प्रश्नहरू",
-                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice1), level: 1)),
+                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice1), level: 1)) },
                     minHeight: 20,
                     fontSize: 16,
                     level: 1
                 ),
                 PracticeItem(
                     title: "दोस्रो अभ्यास – सजिलो प्रश्नहरू",
-                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice2), level: 2)),
+                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice2), level: 2)) },
                     minHeight: 25,
                     fontSize: 18,
                     level: 2
                 ),
                 PracticeItem(
                     title: "तेस्रो अभ्यास – मध्यम प्रश्नहरू",
-                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice3), level: 3)),
+                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice3), level: 3)) },
                     minHeight: 30,
                     fontSize: 20,
                     level: 3
                 ),
                 PracticeItem(
                     title: "चौथो अभ्यास – कठिन प्रश्नहरू",
-                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice4), level: 4)),
+                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice4), level: 4)) },
                     minHeight: 35,
                     fontSize: 22,
                     level: 4
                 ),
                 PracticeItem(
                     title: "पाँचौं अभ्यास – अति कठिन प्रश्नहरू",
-                    view: AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice5), level: 5)),
+                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice5), level: 5)) },
                     minHeight: 40,
                     fontSize: 24,
                     level: 5
@@ -121,35 +129,35 @@ struct PracticeSelectionView: View {
             return [
                 PracticeItem(
                     title: "Práctica 1 – Preguntas fáciles",
-                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice1), level: 1)),
+                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice1), level: 1)) },
                     minHeight: 20,
                     fontSize: 16,
                     level: 1
                 ),
                 PracticeItem(
                     title: "Práctica 2 – Preguntas fáciles",
-                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice2), level: 2)),
+                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice2), level: 2)) },
                     minHeight: 25,
                     fontSize: 18,
                     level: 2
                 ),
                 PracticeItem(
                     title: "Práctica 3 – Preguntas intermedias",
-                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice3), level: 3)),
+                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice3), level: 3)) },
                     minHeight: 30,
                     fontSize: 20,
                     level: 3
                 ),
                 PracticeItem(
                     title: "Práctica 4 – Preguntas difíciles",
-                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice4), level: 4)),
+                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice4), level: 4)) },
                     minHeight: 35,
                     fontSize: 22,
                     level: 4
                 ),
                 PracticeItem(
                     title: "Práctica 5 – Preguntas muy difíciles",
-                    view: AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice5), level: 5)),
+                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice5), level: 5)) },
                     minHeight: 40,
                     fontSize: 24,
                     level: 5
@@ -160,35 +168,35 @@ struct PracticeSelectionView: View {
             return [
                 PracticeItem(
                     title: "练习 1 – 简单问题",
-                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice1), level: 1)),
+                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice1), level: 1)) },
                     minHeight: 20,
                     fontSize: 16,
                     level: 1
                 ),
                 PracticeItem(
                     title: "练习 2 – 简单问题",
-                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice2), level: 2)),
+                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice2), level: 2)) },
                     minHeight: 25,
                     fontSize: 18,
                     level: 2
                 ),
                 PracticeItem(
                     title: "练习 3 – 中等问题",
-                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice3), level: 3)),
+                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice3), level: 3)) },
                     minHeight: 30,
                     fontSize: 20,
                     level: 3
                 ),
                 PracticeItem(
                     title: "练习 4 – 困难问题",
-                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice4), level: 4)),
+                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice4), level: 4)) },
                     minHeight: 35,
                     fontSize: 22,
                     level: 4
                 ),
                 PracticeItem(
                     title: "练习 5 – 最难问题",
-                    view: AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice5), level: 5)),
+                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice5), level: 5)) },
                     minHeight: 40,
                     fontSize: 24,
                     level: 5
@@ -269,6 +277,20 @@ struct PracticeSelectionView: View {
                         ForEach(AppLanguage.allCases) { lang in
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) { language = lang }
+                                // Persist so the choice survives relaunch.
+                                // Without this, the picker was session-only
+                                // and the next cold launch reverted to the
+                                // onboarding-set language.
+                                ProgressManager.shared.preferredLanguage = lang.rawValue
+                                // Reschedule local notifications so daily /
+                                // streak reminders fire in the new language.
+                                // `localizedStrings` in NotificationManager
+                                // reads `pm_preferredLanguage` at schedule
+                                // time, so this only works because we
+                                // persisted above.
+                                if NotificationManager.shared.isEnabled {
+                                    NotificationManager.shared.scheduleAll()
+                                }
                                 Analytics.track(.languageSelected(language: lang.rawValue))
                             } label: {
                                 HStack {
@@ -389,7 +411,7 @@ struct PracticeSelectionView: View {
                             } label: { levelRow(item: item, meta: meta, locked: true) }
                         } else {
                             NavigationLink(
-                                destination: item.view
+                                destination: LazyView { item.buildView() }
                                     .navigationTitle(item.title)
                                     .navigationBarTitleDisplayMode(.inline)
                             ) { levelRow(item: item, meta: meta, locked: false) }

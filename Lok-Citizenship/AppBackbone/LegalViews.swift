@@ -28,7 +28,7 @@ struct PrivacyPolicyView: View {
     private var privacyText: String {
         """
         Privacy Policy for CitiZen
-        Last Updated: April 9, 2026
+        Last Updated: April 27, 2026
 
         SmallPanta ("we", "our", or "us") built the CitiZen app to help users prepare for the United States citizenship test. This Privacy Policy explains how we handle your information when you use our app.
 
@@ -45,17 +45,16 @@ struct PrivacyPolicyView: View {
         We do NOT collect:
         - Your name, email, or any personal contact information
         - Your location
-        - Your voice recordings (speech is processed on-device and never stored or transmitted)
         - Any data from other apps on your device
 
         2. Microphone and Speech Recognition
 
         CitiZen uses your device's microphone and speech recognition to let you practice answering citizenship test questions out loud — simulating the real USCIS interview experience.
 
-        - Voice data is processed on-device using Apple's Speech framework
-        - We prefer on-device speech recognition when available
-        - No voice recordings are stored, saved, or transmitted to any server
-        - You can use the app without the microphone by tapping answers instead
+        - For practice quizzes and reading/writing exercises, voice is processed on your device using Apple's Speech framework. No audio leaves your device for these features.
+        - For the Mock Interview feature, your spoken answer is recorded as a short audio clip and sent over a secure connection to our backend (hosted on Supabase) which forwards it to OpenAI's Whisper service for transcription. The transcript is returned to your device and used to evaluate your answer. The audio clip is processed transiently and is not retained by us; it is subject to OpenAI's API data policy (OpenAI states API audio is not used to train their models and is retained only as needed to provide the service). You can avoid sending audio off-device by tapping answer choices instead of speaking.
+        - We log non-content metadata for each Mock Interview transcription request (timestamp, audio size in bytes, language code, and a per-install random identifier) for abuse prevention and rate limiting. We do not log or store the audio content or the resulting transcript.
+        - You can use the app without the microphone by tapping answers instead.
 
         3. In-App Purchases
 
@@ -76,30 +75,39 @@ struct PrivacyPolicyView: View {
 
         5. Data Storage
 
-        All your quiz progress, scores, and preferences are stored locally on your device using standard iOS storage. We do not operate servers that store your personal data.
+        Your quiz progress, scores, and preferences are stored locally on your device using standard iOS storage. We do not operate servers that store these.
 
-        If you delete the app, all locally stored data is permanently removed.
+        Mock Interview transcription requests pass through our backend on Supabase, which logs only the metadata listed in section 2 (no audio, no transcript). If you delete the app, locally stored data is permanently removed.
 
-        6. Children's Privacy
+        6. Third-Party Service Providers
+
+        We use the following service providers to operate the Mock Interview feature:
+        - Supabase (database and edge function hosting; receives audio in transit and metadata)
+        - OpenAI (Whisper speech-to-text; receives audio for transcription)
+
+        Both are bound by their respective privacy and data-processing terms.
+
+        7. Children's Privacy
 
         CitiZen is not directed at children under 13. We do not knowingly collect personal information from children. The app is designed for adults preparing for the U.S. citizenship test.
 
-        7. Third-Party Services
+        8. Advertising
 
         CitiZen does not integrate with third-party advertising networks. We do not share your data with advertisers.
 
-        8. Your Rights
+        9. Your Rights
 
-        Since we store data only on your device, you have full control:
-        - Delete the app to remove all data
+        You have full control over your data:
+        - Delete the app to remove all locally stored data
         - Deny microphone permission to disable voice features
+        - Use the Mock Interview by tapping answer choices instead of speaking, if you do not wish to send audio to our service providers
         - Manage your subscription through Apple ID settings
 
-        9. Changes to This Policy
+        10. Changes to This Policy
 
         We may update this Privacy Policy from time to time. Changes will be reflected in the "Last Updated" date above. Continued use of the app after changes constitutes acceptance.
 
-        10. Contact Us
+        11. Contact Us
 
         If you have questions about this Privacy Policy, contact us at:
         support@citizenapp.us

@@ -8,6 +8,10 @@
 	<string>CitiZen needs microphone access so you can practice answering citizenship test questions out loud, just like the real USCIS interview.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>CitiZen uses speech recognition to evaluate your spoken answers during practice and mock interview sessions.</string>
+	<key>SUPABASE_URL</key>
+	<string>https://usglgeosqhtxbyxsugre.supabase.co</string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzZ2xnZW9zcWh0eGJ5eHN1Z3JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzOTcyNDIsImV4cCI6MjA5MTk3MzI0Mn0.bVfbNOfWxHBiu9OC598VuJL7TDmnGdD1cBT4Uus0UxI</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

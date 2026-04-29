@@ -267,15 +267,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_ASSET_PATHS = "\"Lok-Citizenship/Preview Content\"";
 				DEVELOPMENT_TEAM = 7T9897GFKH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Citizenship-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CitiZen;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need to access your microphone for on-device speech recognition.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We need to access speech recognition for on-device transcription.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "CitiZen needs microphone access so you can practice answering citizenship test questions out loud.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CitiZen uses speech recognition to evaluate your spoken answers during practice and mock interview sessions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -285,7 +285,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.5;
+				MARKETING_VERSION = 2.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "smallpanta-icould.com.Lok-Citizenship";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -304,14 +304,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 7T9897GFKH;
 				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Citizenship-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CitiZen;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need to access your microphone for on-device speech recognition.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We need to access speech recognition for on-device transcription.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "CitiZen needs microphone access so you can practice answering citizenship test questions out loud.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CitiZen uses speech recognition to evaluate your spoken answers during practice and mock interview sessions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -321,7 +321,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.5;
+				MARKETING_VERSION = 2.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "smallpanta-icould.com.Lok-Citizenship";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

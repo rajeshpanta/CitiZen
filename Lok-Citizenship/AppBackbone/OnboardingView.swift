@@ -402,9 +402,12 @@ struct OnboardingView: View {
             VStack(spacing: 10) {
                 Button {
                     let gen = UIImpactFeedbackGenerator(style: .medium); gen.impactOccurred()
-                    notifications.requestPermission()
-                    // Give permission prompt a moment to be dismissed, then continue.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    // Wait for the OS prompt to resolve before advancing.
+                    // Without this, a slow user dismissal would land the
+                    // placement-quiz screen behind the still-presented
+                    // permission sheet (the previous fixed 0.5 s delay
+                    // was a race that occasionally failed in practice).
+                    notifications.requestPermission {
                         startQuiz()
                     }
                 } label: {

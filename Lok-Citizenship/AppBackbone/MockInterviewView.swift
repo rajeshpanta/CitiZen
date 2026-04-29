@@ -40,6 +40,7 @@ struct MockInterviewView: View {
     @StateObject private var voice: VoiceQuizController
 
     @Environment(\.presentationMode) private var presentationMode
+    @Environment(\.scenePhase) private var scenePhase
 
     private let interviewQuestionCount = 10
     private let requiredCorrect = 8
@@ -48,7 +49,13 @@ struct MockInterviewView: View {
     init(language: AppLanguage) {
         self.language = language
         let logic = UnifiedQuizLogic()
-        let vc = VoiceQuizController(quizLogic: logic)
+        // Mock interview uses cloud Whisper (better accuracy on accented
+        // English). Fall back to LocalSTTService if Supabase isn't configured
+        // so dev builds without backend creds still work end-to-end.
+        let stt: SpeechToTextService = SupabaseConfig.isConfigured
+            ? WhisperSTTService()
+            : ServiceLocator.shared.sttService
+        let vc = VoiceQuizController(quizLogic: logic, stt: stt)
         vc.requireContinueOnWrong = true
         _quizLogic = StateObject(wrappedValue: logic)
         _voice = StateObject(wrappedValue: vc)
@@ -56,6 +63,16 @@ struct MockInterviewView: View {
 
     @State private var mockRecorded = false
     @State private var pulseRing = false
+    @State private var showEndConfirm = false
+    /// True when the user tapped Start Interview before mic / speech
+    /// permission had resolved (still `.notDetermined`). Once the OS
+    /// prompt completes the `onChange` handler reads this flag and either
+    /// kicks off the interview (`.authorized`) or lets the body switch to
+    /// `permissionScreen` (`.denied` / `.restricted`). Without this gate,
+    /// a fresh-install user who taps Start before granting saw TTS read
+    /// the question into a mic that wasn't authorized yet — every
+    /// question dead-ended at the 10 s listening timeout.
+    @State private var pendingStartInterview = false
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
@@ -74,6 +91,43 @@ struct MockInterviewView: View {
         case .spanish: return "Atrás"
         case .nepali:  return "पछाडि"
         case .chinese: return "返回"
+        }
+    }
+
+    /// True when the mic / speech-recognition permission state will prevent
+    /// the voice flow from working. Covers both explicit user denial and the
+    /// `.restricted` case (no recognizer available — e.g. parental controls).
+    /// `.notDetermined` is intentionally NOT blocked: the OS prompt fires when
+    /// the user taps Start Interview, and once they answer it the state moves
+    /// to `.authorized` or `.denied` and the view re-renders.
+    private var isMicBlocked: Bool {
+        voice.authorizationStatus == .denied
+            || voice.authorizationStatus == .restricted
+    }
+
+    /// Single entry point for "user wants to start the mock interview".
+    /// Branches on the current permission status so a Start tap before the
+    /// OS prompt has resolved doesn't fire TTS into an unauthorized mic.
+    /// `.authorized` runs the full start flow; `.notDetermined` arms a
+    /// pending start that the `onChange` handler completes; `.denied` /
+    /// `.restricted` are no-ops because the body's `permissionScreen`
+    /// already takes the user there.
+    private func startInterviewIfPossible() {
+        switch voice.authorizationStatus {
+        case .authorized:
+            AudioSessionPrewarmer.prewarm {
+                quizLogic.startMockInterview(
+                    from: QuestionPool.allQuestions(for: language),
+                    questionCount: interviewQuestionCount,
+                    requiredCorrect: requiredCorrect
+                )
+                voice.start()
+            }
+        case .notDetermined:
+            pendingStartInterview = true
+            voice.requestAuthorization()
+        default:
+            break
         }
     }
 
@@ -96,15 +150,30 @@ struct MockInterviewView: View {
             Group {
                 if quizLogic.isFinished {
                     resultScreen
-                } else if voice.phase == .idle {
+                } else if isMicBlocked {
+                    permissionScreen
+                } else if quizLogic.totalQuestions == 0 {
                     readyScreen
                 } else {
+                    // Once questions are loaded, stay on the interview screen
+                    // for every phase including .idle. Phase .idle mid-quiz
+                    // happens after a listening timeout or a match failure;
+                    // the didntHearBanner inside interviewScreen is the
+                    // recovery surface for that state. Falling back to
+                    // readyScreen here would let "Start Interview" reset the
+                    // quiz from question 1 and silently discard progress.
                     interviewScreen
                 }
             }
         }
         .onChange(of: quizLogic.isFinished) { finished in
-            if finished && !mockRecorded {
+            // Only record an attempt if the user actually answered something.
+            // Without this check, a panic-tap of Start → End → confirm with
+            // zero questions answered burns a free-tier mock attempt with
+            // nothing to show for it. `attemptedQuestions` is incremented
+            // by `recordAnswer` (and skip), so it's a faithful "did this
+            // session happen?" signal.
+            if finished && !mockRecorded && quizLogic.attemptedQuestions > 0 {
                 mockRecorded = true
                 ProgressManager.shared.recordMockInterviewCompleted()
             }
@@ -112,19 +181,84 @@ struct MockInterviewView: View {
         .onChange(of: voice.isRecording) { recording in
             pulseRing = recording
         }
+        .onChange(of: voice.authorizationStatus) { status in
+            if isMicBlocked {
+                // Permission flipped to denied/restricted — either the
+                // initial OS prompt resolved with deny after the user
+                // tapped Start, or they revoked from Settings mid-quiz.
+                // Halt any in-flight TTS/STT so it doesn't keep playing
+                // underneath the permissionScreen, and drop any stale
+                // pending start.
+                voice.stop()
+                pendingStartInterview = false
+            } else if pendingStartInterview && status == .authorized {
+                // OS prompt resolved with grant after the user tapped
+                // Start while still `.notDetermined`. Run the start flow
+                // now that the mic is actually available.
+                pendingStartInterview = false
+                startInterviewIfPossible()
+            }
+        }
+        .onChange(of: scenePhase) { phase in
+            // When the user returns from Settings (or any other backgrounding),
+            // re-query permission so the permissionScreen → readyScreen
+            // transition happens automatically. AVAudioSession returns the
+            // *current* OS-level permission on each call, so this picks up
+            // changes the user made while we were backgrounded. Only refresh
+            // if we're currently blocked to avoid chatter on every foreground.
+            if phase == .active && isMicBlocked {
+                voice.requestAuthorization()
+            }
+        }
+        .alert(s.endInterviewTitle, isPresented: $showEndConfirm) {
+            Button(endLabel, role: .destructive) {
+                // Stop audio BEFORE flipping the quiz to .finished.
+                // Without voice.stop(), an in-flight TTS read continues
+                // playing onto the result screen ("speaks the question
+                // on old voice"). voice.stop() bumps OpenAITTSService's
+                // currentRequestId, which both halts the AVAudioPlayer
+                // synchronously (cached-MP3 path) and arms the
+                // re-check-id guard in fetchAndPlay so a pending
+                // network completion can't start a new player after End.
+                voice.stop()
+                quizLogic.forceEnd()
+            }
+            Button(s.endInterviewKeep, role: .cancel) {
+                // No-op: End-tap doesn't touch voice state, so cancelling
+                // leaves the user in the same phase they were in
+                // (speakingQuestion / listening / awaitingContinue).
+            }
+        } message: {
+            Text(s.endInterviewMessage)
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if !quizLogic.isFinished && voice.phase != .idle {
+                // End is shown for the entire in-progress run, including the
+                // .idle states reached via timeout/match-fail. Otherwise the
+                // user has no way to officially end the attempt and Back-ing
+                // out doesn't bump the mock-completed counter.
+                if !quizLogic.isFinished && quizLogic.totalQuestions > 0 {
                     Button(endLabel, role: .destructive) {
-                        voice.stop()
-                        quizLogic.forceEnd()
+                        // Just show the alert — DON'T touch voice state yet.
+                        // If the user cancels, they should be returned to
+                        // exactly the state they were in (listening,
+                        // awaitingContinue with "Next Question" visible,
+                        // etc.). Stopping voice on tap would force
+                        // phase=.idle and erase the next-question CTA
+                        // after a wrong answer. Audio is stopped only
+                        // when the user confirms — see the destructive
+                        // button in the .alert above.
+                        showEndConfirm = true
                     }
                     .foregroundColor(.red)
                 }
             }
             ToolbarItem(placement: .navigationBarLeading) {
-                if voice.phase == .idle || quizLogic.isFinished {
+                // Back is only on the pre-quiz ready/permission screens and
+                // the post-quiz result screen — never mid-quiz, where End is
+                // the correct exit (it records the attempt as failed).
+                if quizLogic.totalQuestions == 0 || quizLogic.isFinished {
                     Button(backLabel) {
                         voice.stop()
                         presentationMode.wrappedValue.dismiss()
@@ -135,13 +269,79 @@ struct MockInterviewView: View {
         }
         .onAppear {
             voice.requestAuthorization()
+            // Mock interview can run several minutes with long pauses while
+            // the user is speaking aloud. Keep the screen awake so the
+            // phone doesn't dim/lock mid-question and pause the mic.
+            // Mirrors AudioOnlyView. Re-enabled on disappear.
+            UIApplication.shared.isIdleTimerDisabled = true
         }
         .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
             // Defensive cleanup. End/Back buttons already call voice.stop(),
             // but the interactive swipe-back gesture and programmatic dismissal
             // can bypass those paths and leave TTS/STT running in the background.
             // voice.stop() is idempotent so the double-call on explicit paths is a no-op.
             voice.stop()
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: - Permission Screen
+    // ─────────────────────────────────────────────────────────────
+
+    /// Replaces the ready screen when mic / speech-recognition permission has
+    /// been denied or restricted. Without this, tapping "Start Interview"
+    /// would let TTS read the question but the listen step would silently no-op
+    /// — the user sits in `.listening` with nothing being captured until the
+    /// 10 s timeout fires.
+    private var permissionScreen: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(
+                        colors: [.red.opacity(0.35), .red.opacity(0.05)],
+                        startPoint: .top, endPoint: .bottom))
+                    .frame(width: 130, height: 130)
+                Image(systemName: "mic.slash.fill")
+                    .font(.system(size: 54))
+                    .foregroundColor(.red)
+            }
+
+            Text(s.micPermissionTitle)
+                .font(.title2.bold())
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Text(s.micPermissionBody)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "gear")
+                    Text(s.micPermissionOpenSettings)
+                }
+                .font(.headline.bold())
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color.blue)
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 6)
+
+            Spacer()
         }
     }
 
@@ -206,12 +406,13 @@ struct MockInterviewView: View {
                 .padding(.horizontal, 16)
 
                 Button {
-                    quizLogic.startMockInterview(
-                        from: QuestionPool.allQuestions(for: language),
-                        questionCount: interviewQuestionCount,
-                        requiredCorrect: requiredCorrect
-                    )
-                    voice.start()
+                    // Permission-aware start. `.authorized` runs the
+                    // full prewarm + startMockInterview + voice.start
+                    // flow; `.notDetermined` arms the pending flag so
+                    // the OS prompt's resolution kicks the start.
+                    // `.denied` / `.restricted` shouldn't reach this
+                    // button (the body would be on `permissionScreen`).
+                    startInterviewIfPossible()
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "play.fill")
@@ -607,9 +808,13 @@ struct MockInterviewView: View {
         let options = quizLogic.currentQuestion.variants.first?.options ?? []
         let correctIdx = voice.lastCorrectIndex
         let showingAnswer = voice.phase == .awaitingContinue && voice.lastAnswerCorrect == false
+        // Taps stay enabled during `.matching` so a slow GPT roundtrip never
+        // strands the user. First tap wins — the in-flight matcher Task in
+        // VoiceQuizController.evaluateTranscription is guarded by
+        // `phase == .matching` and discards its result once recordAnswer flips
+        // the phase to `.awaitingContinue`.
         let disabled = voice.phase == .processingAnswer
                     || voice.phase == .speakingQuestion
-                    || voice.phase == .matching
                     || voice.phase == .awaitingContinue
         return VStack(spacing: 8) {
             HStack {
@@ -739,9 +944,18 @@ struct MockInterviewView: View {
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(Color.white.opacity(0.12)))
             }
-            .disabled(voice.phase == .speakingQuestion || voice.phase == .matching)
+            // .awaitingContinue is the wrong-answer-shown state. Replaying
+            // there re-runs speakCurrentQuestion → autoStartListening, which
+            // re-records an answer for the SAME question — double-incrementing
+            // the score and adding a duplicate entry to the answer log. Disable
+            // here so the only path forward is "Next Question".
+            .disabled(voice.phase == .speakingQuestion
+                      || voice.phase == .matching
+                      || voice.phase == .awaitingContinue)
             .accessibilityLabel(s.interviewReplay)
-            .opacity(voice.phase == .speakingQuestion || voice.phase == .matching ? 0.4 : 1)
+            .opacity((voice.phase == .speakingQuestion
+                      || voice.phase == .matching
+                      || voice.phase == .awaitingContinue) ? 0.4 : 1)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -827,12 +1041,14 @@ struct MockInterviewView: View {
 
                 HStack(spacing: 12) {
                     Button {
-                        quizLogic.startMockInterview(
-                            from: QuestionPool.allQuestions(for: language),
-                            questionCount: interviewQuestionCount,
-                            requiredCorrect: requiredCorrect
-                        )
-                        voice.restart()
+                        AudioSessionPrewarmer.prewarm {
+                            quizLogic.startMockInterview(
+                                from: QuestionPool.allQuestions(for: language),
+                                questionCount: interviewQuestionCount,
+                                requiredCorrect: requiredCorrect
+                            )
+                            voice.restart()
+                        }
                     } label: {
                         Label(s.resultTryAgain, systemImage: "arrow.clockwise")
                             .font(.headline.bold())
@@ -1002,8 +1218,19 @@ struct MockInterviewView: View {
             )
             guard let image = card.renderImage() else { return }
             let av = UIActivityViewController(activityItems: [image], applicationActivities: nil)
-            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let root = scene.windows.first?.rootViewController else { return }
+            // Pick the foreground-active window scene rather than `connectedScenes.first`.
+            // On iPhone today there's typically only one scene, but iPad multi-window
+            // (and any future Stage Manager / external display setup) makes `.first`
+            // non-deterministic — we could end up presenting the share sheet onto a
+            // background scene's root and have it never appear. Filtering by
+            // `.foregroundActive` and preferring `isKeyWindow` keeps the activity
+            // sheet on the user's currently visible window.
+            guard let scene = UIApplication.shared.connectedScenes
+                    .compactMap({ $0 as? UIWindowScene })
+                    .first(where: { $0.activationState == .foregroundActive }),
+                  let root = (scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first)?
+                    .rootViewController
+            else { return }
             if let popover = av.popoverPresentationController {
                 popover.sourceView = root.view
                 popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)

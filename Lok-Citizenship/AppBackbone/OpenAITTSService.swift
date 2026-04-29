@@ -3,18 +3,17 @@ import AVFoundation
 import Combine
 import CryptoKit
 
-/// OpenAI-backed text-to-speech. Downloads MP3 from the `/v1/audio/speech` endpoint,
-/// caches it to disk, and plays it with AVAudioPlayer.
+/// Cloud text-to-speech via OpenAI's `tts-1`, routed through our Supabase
+/// edge function so the OpenAI key never ships in the iOS bundle.
 ///
-/// API key is read from `UserDefaults.standard.string(forKey: "openai_api_key")`.
-/// If no key is set, `isConfigured` is false and the router should use the local service.
+/// The on-disk MP3 cache is keyed on `model|voice|text`, so each unique
+/// question incurs a single round trip per device. After that it's free.
 final class OpenAITTSService: NSObject, TextToSpeechService {
 
     // MARK: - Config (single voice, single model for now)
 
     private static let voice = "nova"
     private static let model = "tts-1"
-    private static let endpoint = URL(string: "https://api.openai.com/v1/audio/speech")!
 
     // MARK: - Protocol output
 
@@ -27,18 +26,22 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     private var currentTask: URLSessionDataTask?
     private var player: AVAudioPlayer?
 
+    /// Identifies the in-flight speak request. Bumped on every `fetchAndPlay`
+    /// and on `stopSpeaking`. The wrapped completion checks this against its
+    /// captured id and drops late callbacks — without it, a cancelled
+    /// `URLSessionDataTask` or stale `AVAudioPlayer` delegate firing after
+    /// `stopSpeaking` would still call `completion(false)`, which makes
+    /// `TTSRouter` fall back to local TTS for the *previous* question's text
+    /// (audible as "speaks the prior question over the new one").
+    /// Read & written on the main queue only.
+    private var currentRequestId = UUID()
+
     // MARK: - Configuration check
 
-    var isConfigured: Bool {
-        let k = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
-        return !k.trimmingCharacters(in: .whitespaces).isEmpty
-    }
-
-    private var apiKey: String? {
-        let raw = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
-        let trimmed = raw.trimmingCharacters(in: .whitespaces)
-        return trimmed.isEmpty ? nil : trimmed
-    }
+    /// True when the Supabase backend is configured. The router uses this to
+    /// decide whether to attempt cloud TTS at all — without Supabase creds
+    /// (e.g. dev builds), we fall back to `LocalTTSService`.
+    var isConfigured: Bool { SupabaseConfig.isConfigured }
 
     // MARK: - Protocol speak (simple entry point)
 
@@ -52,62 +55,110 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
         return finished.eraseToAnyPublisher()
     }
 
-    /// Fetch audio (from cache or API) and play it.
-    /// Calls `completion(true)` when playback finishes, `completion(false)` if fetch or play failed
-    /// before any audio was produced. The router uses this to fall back to local TTS on failure.
+    /// Fetch audio (from cache or our edge function) and play it.
+    /// Calls `completion(true)` when playback finishes, `completion(false)` if fetch
+    /// or play failed. The router uses this to fall back to local TTS on failure.
+    ///
+    /// The completion is automatically dropped if `stopSpeaking` (or another
+    /// `fetchAndPlay`) supersedes this request — see `currentRequestId`. This
+    /// prevents stale-cancel callbacks from triggering the router's local-TTS
+    /// fallback for the previous question's text.
     func fetchAndPlay(text: String, completion: @escaping (Bool) -> Void) {
-        guard let key = apiKey, !text.isEmpty else {
+        guard isConfigured, !text.isEmpty else {
             completion(false)
             return
         }
 
+        let myId = UUID()
+        currentRequestId = myId
+
+        // Wraps the caller's completion: only fires while this request is the
+        // current one. If `stopSpeaking` was called (or a newer `fetchAndPlay`
+        // started), `currentRequestId` no longer matches and the call is
+        // silently dropped. This is the fix for the "speaks the previous
+        // question" bug — see `currentRequestId` comment.
+        //
+        // The check runs on main, so all writes/reads to `currentRequestId`
+        // are serialized — no atomics needed.
+        let guardedCompletion: (Bool) -> Void = { [weak self] success in
+            guard let self, self.currentRequestId == myId else { return }
+            completion(success)
+        }
+
         let cacheURL = cacheFileURL(for: text)
         if FileManager.default.fileExists(atPath: cacheURL.path) {
-            play(from: cacheURL, completion: completion)
+            play(from: cacheURL, completion: guardedCompletion)
             return
         }
 
-        var req = URLRequest(url: Self.endpoint)
+        let endpoint = SupabaseConfig.url
+            .appendingPathComponent("functions/v1/tts")
+        var req = URLRequest(url: endpoint)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(SupabaseConfig.anonKey)", forHTTPHeaderField: "Authorization")
+        req.setValue(DeviceID.current, forHTTPHeaderField: "X-Device-Id")
         req.timeoutInterval = 15
+
         let body: [String: Any] = [
-            "model": Self.model,
+            "text": text,
             "voice": Self.voice,
-            "input": text,
-            "response_format": "mp3"
         ]
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         currentTask = URLSession.shared.dataTask(with: req) { [weak self] data, response, error in
             guard let self else { return }
-            if let error = error as NSError?, error.code == NSURLErrorCancelled {
-                DispatchQueue.main.async { completion(false) }
-                return
+
+            // Clear our task slot now that the network round-trip is done.
+            // Without this, the previous question's `URLSessionDataTask`
+            // is held until the next `fetchAndPlay` overwrites the slot
+            // (or `stopSpeaking` runs) — small but unbounded across a
+            // long interview. The currentRequestId guard prevents a
+            // stale completion from nil-ing out a task that a fresher
+            // `fetchAndPlay` has already assigned.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.currentRequestId == myId else { return }
+                self.currentTask = nil
             }
+
+            // No special-case for NSURLErrorCancelled here. `guardedCompletion`
+            // already drops user-initiated cancels (currentRequestId mismatch).
+            // System-initiated cancels (background, low memory) leave the id
+            // unchanged, so they fall through to fallback like any other
+            // failure — which is the desired behavior.
             guard error == nil,
                   let data,
                   let http = response as? HTTPURLResponse,
                   http.statusCode == 200 else {
                 #if DEBUG
                 if let http = response as? HTTPURLResponse {
-                    print("[OpenAI TTS] HTTP \(http.statusCode): \(String(data: data ?? Data(), encoding: .utf8) ?? "")")
+                    print("[Cloud TTS] HTTP \(http.statusCode): \(String(data: data ?? Data(), encoding: .utf8) ?? "")")
                 } else if let error {
-                    print("[OpenAI TTS] error: \(error)")
+                    print("[Cloud TTS] error: \(error)")
                 }
                 #endif
-                DispatchQueue.main.async { completion(false) }
+                DispatchQueue.main.async { guardedCompletion(false) }
                 return
             }
             do {
                 try data.write(to: cacheURL, options: .atomic)
             } catch {
-                DispatchQueue.main.async { completion(false) }
+                DispatchQueue.main.async { guardedCompletion(false) }
                 return
             }
-            DispatchQueue.main.async {
-                self.play(from: cacheURL, completion: completion)
+            DispatchQueue.main.async { [weak self] in
+                // Re-check currentRequestId BEFORE creating a new player.
+                // Without this guard, a stopSpeaking() that ran between the
+                // URLSession completion and this dispatched block would be
+                // overwritten — `play()` would create a fresh AVAudioPlayer
+                // and start playback AFTER the user already tapped End/Back.
+                // The original guardedCompletion only guards the completion
+                // callback, not the play() call itself, so the player would
+                // continue speaking the (now-cancelled) question over the
+                // result screen. This guard is the actual fix.
+                guard let self, self.currentRequestId == myId else { return }
+                self.play(from: cacheURL, completion: guardedCompletion)
             }
         }
         currentTask?.resume()
@@ -119,9 +170,19 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
 
     private func play(from url: URL, completion: @escaping (Bool) -> Void) {
         do {
+            // .playAndRecord with .defaultToSpeaker is what STT uses too. Keeping
+            // both services on the same category means we never have to switch
+            // mid-interview — category transitions on a live session are flaky
+            // on real devices (works on simulator). .playAndRecord is the
+            // recommended category for VoIP-style apps that interleave speech
+            // playback and recording.
             let session = AVAudioSession.sharedInstance()
-            if session.category != .playback {
-                try session.setCategory(.playback, mode: .spokenAudio, options: .duckOthers)
+            if session.category != .playAndRecord {
+                try session.setCategory(
+                    .playAndRecord,
+                    mode: .spokenAudio,
+                    options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP]
+                )
             }
             try session.setActive(true)
 
@@ -133,8 +194,12 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
             playCompletion = completion
         } catch {
             #if DEBUG
-            print("[OpenAI TTS] Playback failed: \(error)")
+            print("[Cloud TTS] Playback failed: \(error)")
             #endif
+            // The cached file may be poisoned (truncated download, server
+            // returned non-MP3, decoder rejected it). Remove it so the next
+            // attempt re-fetches instead of looping on the same bad bytes.
+            try? FileManager.default.removeItem(at: url)
             completion(false)
         }
     }
@@ -142,6 +207,11 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     // MARK: - Stop
 
     func stopSpeaking() {
+        // Bump the request id BEFORE doing anything else. Any data-task
+        // callback or AVAudioPlayer delegate that fires after this point
+        // sees a mismatched id (via guardedCompletion in fetchAndPlay) and
+        // drops the call — that's how the stale-fallback bug is prevented.
+        currentRequestId = UUID()
         currentTask?.cancel()
         currentTask = nil
         player?.stop()
@@ -149,15 +219,18 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
         if isSpeaking.value {
             isSpeaking.send(false)
         }
-        playCompletion?(false)
+        // playCompletion (if set) is a guardedCompletion that will now drop
+        // itself thanks to the id bump above. Clearing the reference is enough.
         playCompletion = nil
     }
 
     // MARK: - Cache
 
+    private static let cacheDirName = "openai_tts"
+
     private func cacheFileURL(for text: String) -> URL {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("openai_tts", isDirectory: true)
+            .appendingPathComponent(Self.cacheDirName, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let key = "\(Self.model)|\(Self.voice)|\(text)"
         let hash = SHA256.hash(data: Data(key.utf8))
@@ -165,20 +238,72 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
             .joined()
         return dir.appendingPathComponent("\(hash).mp3")
     }
+
+    /// Trim the on-disk cache to at most `maxBytes`, evicting oldest files
+    /// first (by modification time). Call once at app launch — running
+    /// during an interview could cause file-IO stalls at the wrong moment.
+    ///
+    /// Why this exists: the cache key is `model|voice|text`, so every
+    /// unique question / answer-feedback / option string accumulates an
+    /// MP3 forever. Across four languages and ~100 question variants the
+    /// directory can grow into the hundreds of MB. iOS will purge caches
+    /// under disk pressure so we won't crash, but App Review has flagged
+    /// unbounded caches before, and low-storage users notice.
+    static func trimCache(maxBytes: Int = 100 * 1024 * 1024) {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(cacheDirName, isDirectory: true)
+
+        let keys: [URLResourceKey] = [.fileSizeKey, .contentModificationDateKey]
+        guard let urls = try? FileManager.default.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: keys,
+            options: .skipsHiddenFiles
+        ) else { return }
+
+        let entries: [(url: URL, size: Int, mtime: Date)] = urls.compactMap { url in
+            guard let values = try? url.resourceValues(forKeys: Set(keys)),
+                  let size = values.fileSize,
+                  let mtime = values.contentModificationDate else { return nil }
+            return (url, size, mtime)
+        }
+
+        var total = entries.reduce(0) { $0 + $1.size }
+        guard total > maxBytes else { return }
+
+        // Oldest first → newer files are kept (likely re-played sooner).
+        for entry in entries.sorted(by: { $0.mtime < $1.mtime }) {
+            if total <= maxBytes { break }
+            try? FileManager.default.removeItem(at: entry.url)
+            total -= entry.size
+        }
+    }
 }
 
 // MARK: - AVAudioPlayerDelegate
 
 extension OpenAITTSService: AVAudioPlayerDelegate {
+    // AVAudioPlayerDelegate callbacks are documented as fired on the
+    // thread that called `play()` — typically main here, but Apple's
+    // delivery thread has historically been inconsistent across iOS
+    // versions. `playCompletion` and `currentRequestId` are otherwise
+    // touched only on main, so we hop unconditionally to keep all
+    // mutations on a single queue and avoid a TSAN-class race with
+    // `play()` / `stopSpeaking()`.
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        isSpeaking.send(false)
-        playCompletion?(flag)
-        playCompletion = nil
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.isSpeaking.send(false)
+            self.playCompletion?(flag)
+            self.playCompletion = nil
+        }
     }
 
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        isSpeaking.send(false)
-        playCompletion?(false)
-        playCompletion = nil
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.isSpeaking.send(false)
+            self.playCompletion?(false)
+            self.playCompletion = nil
+        }
     }
 }

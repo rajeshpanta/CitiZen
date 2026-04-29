@@ -24,6 +24,14 @@ struct QuizView: View {
 
     @State private var showQuitConfirmation = false
     @State private var micPermissionDenied  = false
+    /// True when the user tapped the mic before mic/speech permission had
+    /// resolved (still `.notDetermined`). Once the OS prompt completes, the
+    /// `onChange` of `authorizationStatus` reads this flag and either
+    /// auto-starts listening (`.authorized`) or shows the Settings alert
+    /// (`.denied` / `.restricted`). Without this, a fresh-install user who
+    /// taps the mic before the OS prompt returns saw a misleading
+    /// "permission denied" alert despite never being asked.
+    @State private var pendingMicAutoStart = false
     @Environment(\.presentationMode) private var presentationMode
 
     // MARK: - Init (wire voice controller to quiz logic in manual mode)
@@ -33,7 +41,14 @@ struct QuizView: View {
         self.level = level
 
         let logic = UnifiedQuizLogic()
-        let vc = VoiceQuizController(quizLogic: logic)
+        // Practice quizzes get cloud Whisper STT when Supabase is configured —
+        // ESL accuracy gain is bigger here than anywhere else (this is where
+        // users spend most of their study time). Falls back to LocalSTTService
+        // when offline / unconfigured so dev builds still work end-to-end.
+        let stt: SpeechToTextService = SupabaseConfig.isConfigured
+            ? WhisperSTTService()
+            : ServiceLocator.shared.sttService
+        let vc = VoiceQuizController(quizLogic: logic, stt: stt)
         vc.autoAdvance = false  // practice mode: view controls answer flow
         _quizLogic = StateObject(wrappedValue: logic)
         _voice = StateObject(wrappedValue: vc)
@@ -173,6 +188,29 @@ struct QuizView: View {
         }
         .onChange(of: voice.isRecording) { recording in
             if recording { showVoicePanel = true }
+        }
+        // Resolve a pending mic tap (see `pendingMicAutoStart`). Fires when
+        // the OS permission prompt returns with the user's choice.
+        .onChange(of: voice.authorizationStatus) { status in
+            guard pendingMicAutoStart else { return }
+            pendingMicAutoStart = false
+
+            // The user might have moved on while the prompt was resolving
+            // (tapped an answer option, opened the Quit dialog). In that
+            // case the original mic intent is stale — drop it silently
+            // rather than popping the voice panel open under their feet
+            // or interrupting them with a permission alert.
+            guard !isAnswered, !showQuitConfirmation else { return }
+
+            switch status {
+            case .authorized:
+                showVoicePanel = true
+                voice.startManualListening()
+            case .denied, .restricted:
+                micPermissionDenied = true
+            default:
+                break
+            }
         }
     }
 }
@@ -333,7 +371,11 @@ private extension QuizView {
                 voice.stop()
             } else {
                 voice.stop()
-                speakQuestionAndOptions()
+                // Pre-warm the audio session so .duckOthers has time
+                // to lower any background music before TTS plays.
+                AudioSessionPrewarmer.prewarm {
+                    speakQuestionAndOptions()
+                }
             }
         } label: {
             HStack(spacing: 6) {
@@ -793,14 +835,26 @@ private extension QuizView {
     }
 
     func tryStartListening() {
-        guard voice.authorizationStatus == .authorized, !isAnswered else {
-            if voice.authorizationStatus != .authorized {
-                micPermissionDenied = true
-            }
-            return
+        guard !isAnswered else { return }
+
+        switch voice.authorizationStatus {
+        case .authorized:
+            showVoicePanel = true
+            voice.startManualListening()
+        case .notDetermined:
+            // OS permission prompt hasn't resolved yet (or hasn't fired —
+            // `onAppear` calls `voice.requestAuthorization()` but the prompt
+            // is async). Mark the tap as pending; the `onChange` handler
+            // below will auto-start listening once the user grants, or fall
+            // through to the denied alert if they decline. Calling
+            // `requestAuthorization()` here is idempotent — if a prompt is
+            // already in flight, this is a no-op.
+            pendingMicAutoStart = true
+            voice.requestAuthorization()
+        default:
+            // .denied / .restricted — Settings is the only way out.
+            micPermissionDenied = true
         }
-        showVoicePanel = true
-        voice.startManualListening()
     }
 
     /// Speak the question text, then "Your options are:", then each option.
@@ -880,8 +934,19 @@ private extension QuizView {
         return Button {
             guard let image = card.renderImage() else { return }
             let av = UIActivityViewController(activityItems: [image], applicationActivities: nil)
-            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let root = scene.windows.first?.rootViewController else { return }
+            // Pick the foreground-active window scene rather than `connectedScenes.first`.
+            // On iPhone today there's typically only one scene, but iPad multi-window
+            // (and any future Stage Manager / external display setup) makes `.first`
+            // non-deterministic — we could end up presenting the share sheet onto a
+            // background scene's root and have it never appear. Filtering by
+            // `.foregroundActive` and preferring `isKeyWindow` keeps the activity
+            // sheet on the user's currently visible window.
+            guard let scene = UIApplication.shared.connectedScenes
+                    .compactMap({ $0 as? UIWindowScene })
+                    .first(where: { $0.activationState == .foregroundActive }),
+                  let root = (scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first)?
+                    .rootViewController
+            else { return }
             if let popover = av.popoverPresentationController {
                 popover.sourceView = root.view
                 popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)

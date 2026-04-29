@@ -25,7 +25,23 @@ protocol SpeechToTextService {
                         localeCode:String,
                         offlineOnly:Bool)
 
+    /// Graceful stop — finalize whatever audio has been captured (e.g. upload
+    /// to Whisper). Use when the user wants their words to count.
     func stopRecording()
+
+    /// Hard cancel — discard any captured audio, skip any pending upload, and
+    /// release the audio session. Use when the user has explicitly chosen a
+    /// different action (End/Back/Skip/tap-answer/replay) and the in-flight
+    /// recording is no longer relevant.
+    ///
+    /// Default implementation falls through to `stopRecording()` for services
+    /// without async finalization. WhisperSTTService overrides this to skip
+    /// the wasted Whisper round-trip.
+    func cancelRecording()
+}
+
+extension SpeechToTextService {
+    func cancelRecording() { stopRecording() }
 }
 
 // ───────────────────────────────────────────
@@ -47,7 +63,6 @@ final class LocalSTTService: NSObject, SpeechToTextService {
     private var recognizer  : SFSpeechRecognizer?
     private var request     : SFSpeechAudioBufferRecognitionRequest?
     private var task        : SFSpeechRecognitionTask?
-    private var expectedLC  : [String] = []
 
     // ───────────────────────────────
     // MARK: authorisation
@@ -88,13 +103,35 @@ final class LocalSTTService: NSObject, SpeechToTextService {
         request = SFSpeechAudioBufferRecognitionRequest()
         request?.shouldReportPartialResults  = true
         request?.requiresOnDeviceRecognition = wantOnDevice
+        // `options` is part of the protocol for callers that wanted early-stop
+        // on a literal option phrase. We don't use it any more — that hack
+        // cut off ESL users mid-sentence ("not Washington, I mean Adams") and
+        // mis-fired on short options. We rely on SF's `isFinal` (silence) here
+        // and on AnswerMatcher to handle the actual match downstream.
+        _ = options
 
-        expectedLC = options.map { $0.lowercased() }
-
-        // audio session — only reconfigure if needed
+        // Audio session — only reconfigure if needed.
+        //
+        // Unified on `.playAndRecord` + `.spokenAudio` to match
+        // `LocalTTSService`, `OpenAITTSService`, `WhisperSTTService`,
+        // and `SlowSpeechHelper`. Previously this used `.record` /
+        // `.measurement`, which forced a category transition on every
+        // TTS-then-STT-then-TTS cycle. Live-session category transitions
+        // are flaky on real devices (the comment in
+        // `OpenAITTSService.swift:160` documents this) — keeping every
+        // service on the same config means we configure once per
+        // launch and never change it.
+        //
+        // `.measurement` mode bypasses signal processing for pure-tone
+        // measurement; `.spokenAudio` is the correct mode for STT and
+        // is what Whisper already uses. No accuracy regression expected.
         let session = AVAudioSession.sharedInstance()
-        if session.category != .record {
-            try? session.setCategory(.record, mode: .measurement, options: .duckOthers)
+        if session.category != .playAndRecord {
+            try? session.setCategory(
+                .playAndRecord,
+                mode: .spokenAudio,
+                options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP]
+            )
         }
         do {
             try session.setActive(true, options: .notifyOthersOnDeactivation)
@@ -126,11 +163,6 @@ final class LocalSTTService: NSObject, SpeechToTextService {
             if let res {
                 let txt = res.bestTranscription.formattedString
                 trans.send(txt)
-
-                let spoken = txt.lowercased()
-                if expectedLC.contains(where: { spoken == $0 || spoken.contains($0) }) {
-                    stopRecording(); return
-                }
                 if res.isFinal { stopRecording(); return }
             }
             if err != nil { stopRecording() }

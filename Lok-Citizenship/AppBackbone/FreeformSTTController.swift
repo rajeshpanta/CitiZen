@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import Speech
+import AVFoundation
 
 /// Thin wrapper around `LocalSTTService` for free-form speech capture.
 ///
@@ -36,6 +37,43 @@ final class FreeformSTTController: ObservableObject {
         stt.authorizationStatusPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in self?.authorizationStatus = $0 }
+            .store(in: &subs)
+
+        observeAudioInterruptions()
+    }
+
+    /// Halt recording on `AVAudioSession.interruptionNotification` (.began).
+    /// Without this, an incoming phone call / Siri / FaceTime / alarm during
+    /// a Reading or Writing test rips the audio engine out from under
+    /// `SFSpeechRecognizer`, freezes the on-screen partial transcript, and
+    /// — if the user taps Done after returning from the call — commits the
+    /// stale partial as their answer. Mirrors the observer in
+    /// `VoiceQuizController.observeAudioInterruptions`.
+    ///
+    /// We deliberately ignore `.ended`: iOS' `shouldResume` hint is meant
+    /// for media players, and silently re-arming the mic while the user
+    /// is still wrapping up a call is worse UX than letting them tap mic
+    /// again when ready.
+    private func observeAudioInterruptions() {
+        NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
+            .receive(on: DispatchQueue.main)  // AVAudioSession posts off main
+            .sink { [weak self] notification in
+                guard let self,
+                      let info = notification.userInfo,
+                      let raw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+                      let type = AVAudioSession.InterruptionType(rawValue: raw),
+                      type == .began
+                else { return }
+
+                // Only act if we're actually recording — `stop()` is
+                // idempotent against the underlying STT service, but
+                // calling it on an idle controller still triggers a
+                // session deactivation in `LocalSTTService`, which is
+                // wasted work and a needless `notifyOthersOnDeactivation`
+                // ping to other audio apps.
+                guard self.isRecording else { return }
+                self.stop()
+            }
             .store(in: &subs)
     }
 

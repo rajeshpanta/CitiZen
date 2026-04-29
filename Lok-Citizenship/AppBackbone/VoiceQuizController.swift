@@ -33,6 +33,14 @@ enum VoiceFlowPhase: Equatable {
 ///   View drives the flow. Call `speakSequence()` and `startManualListening()` explicitly.
 ///   On voice match, controller sets `matchedAnswerIndex` without touching quiz logic.
 ///   Set `autoAdvance = false`.
+///
+/// `@MainActor` because every consumer is a SwiftUI view; the controller
+/// reads `@MainActor`-isolated `UnifiedQuizLogic` state, mutates `@Published`
+/// state that SwiftUI requires from main, and already routes every Combine
+/// publisher through `receive(on: DispatchQueue.main)`. Annotating the class
+/// makes that already-main-only contract explicit so Swift 6 strict
+/// concurrency doesn't flag the cross-isolation calls into the quiz logic.
+@MainActor
 final class VoiceQuizController: ObservableObject {
 
     // MARK: - Published state
@@ -43,7 +51,32 @@ final class VoiceQuizController: ObservableObject {
     @Published private(set) var lastAnswerExplanation: String = ""
     @Published private(set) var lastCorrectIndex: Int?
     @Published private(set) var isRecording = false
+
+    /// True whenever the controller intends to be producing audio — either
+    /// because the underlying TTS engine is currently emitting samples, or
+    /// because we're between clips of a `speakSequence` (the post-question
+    /// pause before options are read).
+    ///
+    /// The two-source design (`ttsCurrentlyPlaying || inSpeechChain`) is the
+    /// fix for the QuizView speaker-button flicker: if we mirrored only the
+    /// per-utterance signal from `tts.isSpeakingPublisher`, the button would
+    /// flip "Stop"→"Listen"→"Stop" every time the chain crossed an
+    /// inter-clip delay, and a tap during the gap would *restart* the
+    /// sequence instead of stopping it (the action branched on the icon
+    /// label). With the chain flag, the icon stays "Stop" for the whole
+    /// sequence and a tap reliably halts playback.
     @Published private(set) var isSpeaking = false
+
+    /// Mirrors `tts.isSpeakingPublisher` — true exactly while a single TTS
+    /// clip is producing audio. Drives `onTTSFinished` (auto-advance to
+    /// listening) on the true→false transition.
+    private var ttsCurrentlyPlaying = false
+
+    /// True from `speakSequence` start through the final `.sink` of its
+    /// publisher chain. Cleared on `stopAudio` so an interrupted sequence
+    /// flips `isSpeaking` to false synchronously.
+    private var inSpeechChain = false
+
     @Published var authorizationStatus: SFSpeechRecognizerAuthorizationStatus = .notDetermined
 
     /// True if the last listening session ended without a recognized answer (silence/timeout).
@@ -101,6 +134,12 @@ final class VoiceQuizController: ObservableObject {
     private var ttsChain: AnyCancellable?
     private var delayTask: AnyCancellable?
     private var timeoutTask: AnyCancellable?
+    /// In-flight `AnswerMatcher.match` Task. Held so `stopAudio` can cancel
+    /// it when the user taps End / Back / Skip during the up-to-12 s GPT
+    /// round-trip. The result is already discarded by a phase-mismatch
+    /// guard inside the Task, so cancellation is mostly about not keeping
+    /// the Task and its captures around longer than needed.
+    private var matchingTask: Task<Void, Never>?
     private var subscribers = Set<AnyCancellable>()
 
     // MARK: - Init
@@ -112,6 +151,65 @@ final class VoiceQuizController: ObservableObject {
         self.tts = tts
         self.stt = stt
         bindPublishers()
+        observeAudioInterruptions()
+    }
+
+    /// Listen for `AVAudioSession.interruptionNotification` so an incoming
+    /// phone call / Siri / FaceTime / alarm cleanly halts the quiz instead
+    /// of leaving the controller stuck in `.listening` or `.speakingQuestion`
+    /// with a dead audio engine. Without this, the user returns from the
+    /// call to a screen that *looks* recording but captures nothing —
+    /// every question dead-ends at the 10 s timeout.
+    ///
+    /// On `.began` we call `stop()`, which kills TTS, cancels STT, drops any
+    /// pending prewarm, and flips phase back to `.idle`. The user resumes
+    /// by tapping the existing Replay or mic button — we deliberately do
+    /// NOT auto-resume on `.ended` because iOS' `shouldResume` hint is
+    /// meant for media players, and auto-replaying a question while the
+    /// user is still wrapping up a call is worse UX than letting them
+    /// re-engage manually.
+    private func observeAudioInterruptions() {
+        NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
+            .receive(on: DispatchQueue.main)  // AVAudioSession posts off main
+            .sink { [weak self] notification in
+                guard let self,
+                      let info = notification.userInfo,
+                      let raw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+                      let type = AVAudioSession.InterruptionType(rawValue: raw)
+                else { return }
+
+                guard type == .began else {
+                    // .ended: intentionally no-op. iOS' shouldResume hint is
+                    // for media players — auto-replaying a question while
+                    // the user is still wrapping up the call is worse UX
+                    // than letting them tap Replay/Mic when ready.
+                    return
+                }
+
+                // Always drop a pending prewarm on `.began`, even in
+                // phases that don't need a full `stop()`. Otherwise a
+                // call ringing during the 200 ms duck-settle window
+                // after a Start/Try-Again tap would still let the
+                // continuation fire and try to TTS into an interrupted
+                // session — silent failure that leaves the user
+                // looking at a "started" interview with no audio.
+                AudioSessionPrewarmer.cancel()
+
+                // Only intervene in phases where audio is actually live.
+                // `.awaitingContinue` already has nothing playing (TTS
+                // finished, STT idle, GPT result already arrived) — and
+                // forcing it to `.idle` would erase the "Next Question"
+                // CTA and re-enable the fallback options, letting the
+                // user accidentally re-answer the same question.
+                // `.idle` / `.finished` have nothing to stop either.
+                switch self.phase {
+                case .speakingQuestion, .listening, .matching, .processingAnswer:
+                    self.stop()
+                case .idle, .awaitingContinue, .finished:
+                    break
+                }
+            }
+            .store(in: &subscribers)
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -125,6 +223,8 @@ final class VoiceQuizController: ObservableObject {
 
     /// Stop all audio and reset to idle.
     func stop() {
+        // `stopAudio()` already cancels any pending prewarm continuation,
+        // so we don't need a second `AudioSessionPrewarmer.cancel()` here.
         stopAudio()
         phase = .idle
     }
@@ -198,8 +298,14 @@ final class VoiceQuizController: ObservableObject {
     func speakSequence(_ items: [(text: String, delay: TimeInterval)]) {
         stopAudio()
         phase = .speakingQuestion
+        inSpeechChain = true
+        updateIsSpeaking()
         Analytics.track(.voiceUsed(feature: "tts", language: localeCode))
-        guard let first = items.first else { return }
+        guard let first = items.first else {
+            inSpeechChain = false
+            updateIsSpeaking()
+            return
+        }
 
         var chain: AnyPublisher<Void, Never> = tts
             .speak(first.text, languageCode: localeCode)
@@ -217,6 +323,8 @@ final class VoiceQuizController: ObservableObject {
 
         ttsChain = chain.sink { [weak self] _ in
             self?.phase = .idle
+            self?.inSpeechChain = false
+            self?.updateIsSpeaking()
         }
     }
 
@@ -324,8 +432,19 @@ final class VoiceQuizController: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !spoken.isEmpty else {
-            // User didn't say anything audible. Stay in listening with timeout running,
-            // or surface "didn't hear" if timeout already fired.
+            // STT auto-stopped (silence/error) or user manually tapped mic to
+            // stop, but no audible speech was captured. Surface the
+            // "didn't hear" state immediately rather than letting the user
+            // wait up to `listeningTimeout` more seconds for the timer to
+            // fire. Recording is already stopped at this point (rec.send(false)
+            // was emitted before this method ran), so there's no race with
+            // an in-flight capture.
+            timeoutTask?.cancel()
+            timeoutTask = nil
+            didTimeout = true
+            listeningStartedAt = nil
+            phase = .idle
+            Analytics.track(.voiceTimeout(language: localeCode))
             return
         }
 
@@ -333,23 +452,33 @@ final class VoiceQuizController: ObservableObject {
         let options = currentVariant().options
         let question = currentVariant().text
 
-        Task { [weak self] in
+        matchingTask?.cancel()
+        // `@MainActor` on the Task body keeps result-handling on main without
+        // a nested `MainActor.run`. The previous structure (`Task { [weak
+        // self] in ... await MainActor.run { guard let self ... } }`) made
+        // the `MainActor.run` closure capture the outer `weak var self`,
+        // which Swift 6 strict concurrency flags as "reference to captured
+        // var 'self' in concurrently-executing code." With `@MainActor` on
+        // the outer Task, the strong-bound `self` from `guard let` lives
+        // entirely on the main actor — no inner closure capture, no
+        // diagnostic. `await AnswerMatcher.match` still suspends the actor
+        // off-main for the network round-trip, so this isn't a behavior
+        // change for the user.
+        matchingTask = Task { @MainActor [weak self] in
             let match = await AnswerMatcher.match(spoken: spoken, options: options, question: question)
-            await MainActor.run {
-                guard let self, self.phase == .matching else { return }
-                if let idx = match {
-                    if self.autoAdvance {
-                        self.recordAnswer(idx)
-                    } else {
-                        self.stopAudio()
-                        self.matchedAnswerIndex = idx
-                        self.phase = .idle
-                    }
+            guard let self, self.phase == .matching else { return }
+            if let idx = match {
+                if self.autoAdvance {
+                    self.recordAnswer(idx)
                 } else {
-                    Analytics.track(.voiceMatchFailed(language: self.localeCode))
-                    self.didTimeout = true  // show "didn't hear you" banner
+                    self.stopAudio()
+                    self.matchedAnswerIndex = idx
                     self.phase = .idle
                 }
+            } else {
+                Analytics.track(.voiceMatchFailed(language: self.localeCode))
+                self.didTimeout = true  // show "didn't hear you" banner
+                self.phase = .idle
             }
         }
     }
@@ -458,7 +587,10 @@ final class VoiceQuizController: ObservableObject {
             .sink { [weak self] _ in
                 guard let self, self.phase == .listening else { return }
                 Analytics.track(.voiceTimeout(language: self.localeCode))
-                self.stt.stopRecording()
+                // 10s of silence — there's nothing useful to send to Whisper.
+                // cancelRecording skips the upload (saves a network round-trip
+                // we'd just throw away) and tears down state immediately.
+                self.stt.cancelRecording()
                 self.didTimeout = true
                 self.listeningStartedAt = nil
                 self.phase = .idle
@@ -466,11 +598,48 @@ final class VoiceQuizController: ObservableObject {
     }
 
     private func stopAudio() {
+        // Drop any pending `AudioSessionPrewarmer` continuation. Every caller
+        // of `stopAudio` (stop, replayQuestion, restart, startManualListening,
+        // submitTapAnswer, skipCurrent, recordAnswer, evaluateTranscription's
+        // match-success branch, speakSequence's preamble) is starting a fresh
+        // audio cycle or tearing the session down — none of them want a
+        // 200 ms-old "speak the question" continuation to fire after the new
+        // intent has already taken effect. Previously this was only
+        // cancelled inside `stop()`, so a Listen-tap immediately followed by
+        // a mic-tap let the queued continuation kill the live mic recording
+        // mid-sentence (the prewarm fired into `speakSequence` → `stopAudio`
+        // → `stt.cancelRecording()`).
+        AudioSessionPrewarmer.cancel()
+
         ttsChain?.cancel(); ttsChain = nil
         delayTask?.cancel(); delayTask = nil
         timeoutTask?.cancel(); timeoutTask = nil
+        matchingTask?.cancel(); matchingTask = nil
         tts.stopSpeaking()
-        stt.stopRecording()
+        // cancelRecording (not stopRecording) — every caller of stopAudio is a
+        // "throw away the recording" path: End, Back, replay, skip, tap-answer,
+        // restart, or recordAnswer (after we've already evaluated). None of
+        // them want a Whisper upload of stale mic audio. Default protocol impl
+        // falls through to stopRecording for non-Whisper services.
+        stt.cancelRecording()
+
+        // Clear chain + per-utterance flags synchronously so `isSpeaking`
+        // flips false immediately on End/Back/option-tap. The async sink on
+        // `tts.isSpeakingPublisher` will fire a moment later with
+        // `speaking=false`; pre-clearing `ttsCurrentlyPlaying` here makes
+        // its `wasPlaying && !speaking` check return false, which prevents a
+        // spurious `onTTSFinished` from advancing state we just tore down.
+        inSpeechChain = false
+        ttsCurrentlyPlaying = false
+        updateIsSpeaking()
+    }
+
+    /// Recompute the public `isSpeaking` from its two backing flags. Only
+    /// emits a change when the composite actually flips, so SwiftUI doesn't
+    /// invalidate views on every `tts.isSpeakingPublisher` tick.
+    private func updateIsSpeaking() {
+        let new = ttsCurrentlyPlaying || inSpeechChain
+        if new != isSpeaking { isSpeaking = new }
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -482,9 +651,10 @@ final class VoiceQuizController: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] speaking in
                 guard let self else { return }
-                let wasSpeaking = self.isSpeaking
-                self.isSpeaking = speaking
-                if wasSpeaking && !speaking {
+                let wasPlaying = self.ttsCurrentlyPlaying
+                self.ttsCurrentlyPlaying = speaking
+                self.updateIsSpeaking()
+                if wasPlaying && !speaking {
                     self.onTTSFinished()
                 }
             }
