@@ -6,7 +6,6 @@ struct UIStrings {
 
     // MARK: - Practice selection
 
-    let navPracticeSelection: String
     let pickPractice: String
     let mockInterview: String
     let mockSubtitlePro: String
@@ -36,6 +35,16 @@ struct UIStrings {
     let levelExpert: String
     /// printf-style: "%d days until your interview"
     let daysUntilInterviewFormat: String
+    /// printf-style: "%d%% ready · master %d/day" — pct, dailyTarget
+    let dailyTargetSubtitleFormat: String
+    /// Shown in the interview card when the user has reached full mastery
+    /// before the interview date — replaces the daily-target line so they
+    /// don't see "master 0/day" or "master 1/day" once they're already prepared.
+    let interviewReadyLabel: String
+    /// Card title shown on the day of the interview itself.
+    let interviewTodayTitle: String
+    /// Card subtitle shown on the day of the interview itself.
+    let interviewTodaySubtitle: String
 
     // MARK: - Mock interview
 
@@ -158,8 +167,13 @@ struct UIStrings {
 
     // MARK: - Audio-only spoken feedback
 
-    /// Spoken when the user answers correctly (hands-free mode).
+    /// Spoken when the user answers correctly (hands-free mode). Used as a
+    /// short cue in cases that don't reinforce the answer text.
     let audioFeedbackCorrect: String
+    /// "Correct! The answer is %@" — used in audio-only on a correct answer
+    /// to reinforce the option text alongside the affirmation, parallel to
+    /// the wrong-answer phrasing.
+    let audioFeedbackCorrectAnswerIsFormat: String
     /// "The answer is %@" — %@ is the correct option text.
     let audioFeedbackTheAnswerIsFormat: String
 
@@ -309,6 +323,51 @@ struct UIStrings {
     /// printf 3-arg: "%d of %d correct (%d%%)"
     let audioOnlyFinalScoreFormat: String
 
+    // MARK: - Audio-only mode (Phase 2 redesign: length picker, end screen, review)
+
+    /// Pre-session length-picker title.
+    let audioOnlyChooseLengthTitle: String
+    /// Pre-session helper tip below the length picker.
+    let audioOnlyLengthTip: String
+    /// printf 1-arg: "%d questions" — used for 10 / 25 / 50 cards.
+    let audioOnlyLengthCardFormat: String
+    /// "Full pool" — runs every available question once.
+    let audioOnlyLengthFullPool: String
+    /// Subtitle copy for each length card (4 entries).
+    let audioOnlyLengthShortSubtitle: String
+    let audioOnlyLengthMediumSubtitle: String
+    let audioOnlyLengthLongSubtitle: String
+    let audioOnlyLengthFullSubtitle: String
+    /// CTA on the pre-session screen.
+    let audioOnlyStartBtn: String
+
+    /// Confirm-dialog when the user tries to leave a live session.
+    let audioOnlyExitConfirmTitle: String
+    let audioOnlyExitConfirmMessage: String
+    let audioOnlyExitConfirmEnd: String
+    let audioOnlyExitConfirmCancel: String
+
+    /// TTS phrase spoken when STT returned no transcript on a single attempt
+    /// — gives the user a chance to retry before the question is marked wrong.
+    let audioOnlyDidntHearTryAgain: String
+    /// TTS phrase spoken in audio-only when total silence has exhausted the
+    /// retry cap — the question is logged as missed (no answer) and the
+    /// session moves on without reciting the correct answer (the user wasn't
+    /// engaged anyway; the post-session review screen is where they'll see
+    /// what they missed).
+    let audioOnlyMovingOn: String
+    /// TTS spoken at the end of the session ("Session complete. You scored X
+    /// out of Y. Z percent.") — printf 3-arg: correct, total, percent.
+    let audioOnlySessionAnnouncementFormat: String
+
+    /// Review-missed entry point + sheet copy.
+    let audioOnlyReviewMissedBtn: String
+    let audioOnlyReviewMissedTitle: String
+    let audioOnlyReviewYouSaidLabel: String
+    let audioOnlyReviewCorrectLabel: String
+    let audioOnlyReviewNoAnswerCaptured: String
+    let audioOnlyReviewEmptyState: String
+
     // MARK: - Quiz voice panel + lifetime stats
 
     let quizTapToSpeakHint: String
@@ -331,6 +390,17 @@ struct UIStrings {
     let settingsSubscriptionHeader: String
     let settingsProActive: String
     let settingsRestorePurchases: String
+    /// CTA shown to non-Pro users in Settings to open the paywall.
+    let settingsUpgradeToPro: String
+    /// Row title shown to Pro users next to their active plan ("Monthly"
+    /// / "Lifetime"). Hidden under DEBUG dev-force.
+    let settingsPlanLabel: String
+    let settingsPlanMonthly: String
+    let settingsPlanLifetime: String
+    /// Button shown to monthly subscribers — opens iOS subscription
+    /// management. Required by App Store guideline 3.1.2 for renewable
+    /// subscriptions to provide an in-app management entry point.
+    let settingsManageSubscription: String
     let settingsLegalHeader: String
     let settingsPrivacyPolicy: String
     let settingsTermsOfUse: String
@@ -390,7 +460,6 @@ extension UIStrings {
     // ─────────────────────────────────────────────────────────────
 
     static let english = UIStrings(
-        navPracticeSelection: "Practice Selection",
         pickPractice: "Pick A Practice Set 👇🏻",
         mockInterview: "Mock Interview",
         mockSubtitlePro: "Simulate the real USCIS test",
@@ -417,6 +486,10 @@ extension UIStrings {
         levelAdvanced: "Advanced",
         levelExpert: "Expert",
         daysUntilInterviewFormat: "%d days until your interview",
+        dailyTargetSubtitleFormat: "%d%% ready · master %d/day",
+        interviewReadyLabel: "100%% ready · you're prepared",
+        interviewTodayTitle: "Your interview is today!",
+        interviewTodaySubtitle: "Stay calm — you've got this",
 
         navMockInterview: "Mock Interview",
         mockHeadline: "Mock Interview",
@@ -537,6 +610,7 @@ extension UIStrings {
         paywallErrorVerificationFailed: "Purchase could not be verified. Please try restoring purchases.",
 
         audioFeedbackCorrect: "Correct",
+        audioFeedbackCorrectAnswerIsFormat: "Correct! The answer is %@",
         audioFeedbackTheAnswerIsFormat: "The answer is %@",
 
         practiceCardCountFormat: "Card %d of %d",
@@ -629,10 +703,36 @@ extension UIStrings {
         audioOnlyStatusListeningToQuestion: "Listening to question…",
         audioOnlyStatusSpeakYourAnswer: "Speak your answer",
         audioOnlyStatusProcessing: "Processing…",
-        audioOnlyStopBtn: "Stop",
+        audioOnlyStopBtn: "End Session",
         audioOnlySessionComplete: "Session Complete",
         audioOnlyProgressFormat: "%d/%d · %d correct",
         audioOnlyFinalScoreFormat: "%d of %d correct (%d%%)",
+
+        audioOnlyChooseLengthTitle: "Choose Session Length",
+        audioOnlyLengthTip: "Phone face-down works fine. Tap End anytime to stop.",
+        audioOnlyLengthCardFormat: "%d questions",
+        audioOnlyLengthFullPool: "Full pool",
+        audioOnlyLengthShortSubtitle: "Quick session, ~3 min",
+        audioOnlyLengthMediumSubtitle: "Standard session, ~8 min",
+        audioOnlyLengthLongSubtitle: "Deep session, ~15 min",
+        audioOnlyLengthFullSubtitle: "Marathon — every question",
+        audioOnlyStartBtn: "Start Session",
+
+        audioOnlyExitConfirmTitle: "End the session?",
+        audioOnlyExitConfirmMessage: "Your progress on this attempt will be lost.",
+        audioOnlyExitConfirmEnd: "End Session",
+        audioOnlyExitConfirmCancel: "Keep Going",
+
+        audioOnlyDidntHearTryAgain: "I didn't hear you. Try again.",
+        audioOnlyMovingOn: "Moving on.",
+        audioOnlySessionAnnouncementFormat: "Session complete. You scored %d out of %d. %d percent.",
+
+        audioOnlyReviewMissedBtn: "Review Missed",
+        audioOnlyReviewMissedTitle: "Missed Questions",
+        audioOnlyReviewYouSaidLabel: "You said:",
+        audioOnlyReviewCorrectLabel: "Correct answer:",
+        audioOnlyReviewNoAnswerCaptured: "(no answer captured)",
+        audioOnlyReviewEmptyState: "Nothing missed in this session — great work!",
 
         quizTapToSpeakHint: "Tap to speak",
         quizMicListening: "Listening…",
@@ -652,6 +752,11 @@ extension UIStrings {
         settingsSubscriptionHeader: "Subscription",
         settingsProActive: "Active",
         settingsRestorePurchases: "Restore Purchases",
+        settingsUpgradeToPro: "Upgrade to Pro",
+        settingsPlanLabel: "Plan",
+        settingsPlanMonthly: "Monthly",
+        settingsPlanLifetime: "Lifetime",
+        settingsManageSubscription: "Manage Subscription",
         settingsLegalHeader: "Legal",
         settingsPrivacyPolicy: "Privacy Policy",
         settingsTermsOfUse: "Terms of Use",
@@ -667,7 +772,6 @@ extension UIStrings {
     // ─────────────────────────────────────────────────────────────
 
     static let spanish = UIStrings(
-        navPracticeSelection: "Selección de práctica",
         pickPractice: "Elige tu práctica 👇🏻",
         mockInterview: "Entrevista simulada",
         mockSubtitlePro: "Simula el examen real de USCIS",
@@ -694,6 +798,10 @@ extension UIStrings {
         levelAdvanced: "Avanzado",
         levelExpert: "Experto",
         daysUntilInterviewFormat: "%d días para tu entrevista",
+        dailyTargetSubtitleFormat: "%d%% listo · domina %d/día",
+        interviewReadyLabel: "100%% listo · estás preparado",
+        interviewTodayTitle: "¡Tu entrevista es hoy!",
+        interviewTodaySubtitle: "Mantén la calma — tú puedes",
 
         navMockInterview: "Entrevista simulada",
         mockHeadline: "Entrevista simulada",
@@ -814,6 +922,7 @@ extension UIStrings {
         paywallErrorVerificationFailed: "No se pudo verificar la compra. Intenta restaurar compras.",
 
         audioFeedbackCorrect: "Correcto",
+        audioFeedbackCorrectAnswerIsFormat: "¡Correcto! La respuesta es %@",
         audioFeedbackTheAnswerIsFormat: "La respuesta es %@",
 
         practiceCardCountFormat: "Tarjeta %d de %d",
@@ -906,10 +1015,36 @@ extension UIStrings {
         audioOnlyStatusListeningToQuestion: "Escuchando la pregunta…",
         audioOnlyStatusSpeakYourAnswer: "Di tu respuesta",
         audioOnlyStatusProcessing: "Procesando…",
-        audioOnlyStopBtn: "Detener",
+        audioOnlyStopBtn: "Terminar sesión",
         audioOnlySessionComplete: "Sesión completa",
         audioOnlyProgressFormat: "%d/%d · %d correctas",
         audioOnlyFinalScoreFormat: "%d de %d correctas (%d%%)",
+
+        audioOnlyChooseLengthTitle: "Elige la duración",
+        audioOnlyLengthTip: "Puedes dejar el teléfono boca abajo. Toca Terminar cuando quieras.",
+        audioOnlyLengthCardFormat: "%d preguntas",
+        audioOnlyLengthFullPool: "Todas las preguntas",
+        audioOnlyLengthShortSubtitle: "Sesión rápida, ~3 min",
+        audioOnlyLengthMediumSubtitle: "Sesión estándar, ~8 min",
+        audioOnlyLengthLongSubtitle: "Sesión larga, ~15 min",
+        audioOnlyLengthFullSubtitle: "Maratón — todo el banco",
+        audioOnlyStartBtn: "Empezar sesión",
+
+        audioOnlyExitConfirmTitle: "¿Terminar la sesión?",
+        audioOnlyExitConfirmMessage: "Perderás tu progreso en este intento.",
+        audioOnlyExitConfirmEnd: "Terminar sesión",
+        audioOnlyExitConfirmCancel: "Seguir",
+
+        audioOnlyDidntHearTryAgain: "No te escuché. Inténtalo de nuevo.",
+        audioOnlyMovingOn: "Continuando.",
+        audioOnlySessionAnnouncementFormat: "Sesión completa. Acertaste %d de %d. %d por ciento.",
+
+        audioOnlyReviewMissedBtn: "Revisar fallos",
+        audioOnlyReviewMissedTitle: "Preguntas falladas",
+        audioOnlyReviewYouSaidLabel: "Dijiste:",
+        audioOnlyReviewCorrectLabel: "Respuesta correcta:",
+        audioOnlyReviewNoAnswerCaptured: "(no se captó respuesta)",
+        audioOnlyReviewEmptyState: "Ningún fallo en esta sesión — ¡excelente!",
 
         quizTapToSpeakHint: "Toca para hablar",
         quizMicListening: "Escuchando…",
@@ -929,6 +1064,11 @@ extension UIStrings {
         settingsSubscriptionHeader: "Suscripción",
         settingsProActive: "Activa",
         settingsRestorePurchases: "Restaurar compras",
+        settingsUpgradeToPro: "Actualizar a Pro",
+        settingsPlanLabel: "Plan",
+        settingsPlanMonthly: "Mensual",
+        settingsPlanLifetime: "De por vida",
+        settingsManageSubscription: "Administrar suscripción",
         settingsLegalHeader: "Legal",
         settingsPrivacyPolicy: "Política de privacidad",
         settingsTermsOfUse: "Términos de uso",
@@ -944,7 +1084,6 @@ extension UIStrings {
     // ─────────────────────────────────────────────────────────────
 
     static let nepali = UIStrings(
-        navPracticeSelection: "अभ्यास छनोट",
         pickPractice: "आफ्नो अभ्यास छान्नुहोस् 👇🏻",
         mockInterview: "नक्कली अन्तर्वार्ता",
         mockSubtitlePro: "वास्तविक USCIS परीक्षाको अनुकरण",
@@ -971,6 +1110,10 @@ extension UIStrings {
         levelAdvanced: "उन्नत",
         levelExpert: "विज्ञ",
         daysUntilInterviewFormat: "तपाईंको अन्तर्वार्तामा %d दिन बाँकी",
+        dailyTargetSubtitleFormat: "%d%% तयार · दैनिक %d सिक्नुहोस्",
+        interviewReadyLabel: "100%% तयार · तपाईं तयार हुनुहुन्छ",
+        interviewTodayTitle: "तपाईंको अन्तर्वार्ता आज छ!",
+        interviewTodaySubtitle: "शान्त रहनुहोस् — तपाईं सक्नुहुन्छ",
 
         navMockInterview: "नक्कली अन्तर्वार्ता",
         mockHeadline: "नक्कली अन्तर्वार्ता",
@@ -1091,6 +1234,7 @@ extension UIStrings {
         paywallErrorVerificationFailed: "खरिद प्रमाणित गर्न सकिएन। कृपया खरिदहरू पुनर्स्थापना गर्ने प्रयास गर्नुहोस्।",
 
         audioFeedbackCorrect: "सही",
+        audioFeedbackCorrectAnswerIsFormat: "सही! जवाफ %@ हो",
         audioFeedbackTheAnswerIsFormat: "जवाफ %@ हो",
 
         practiceCardCountFormat: "कार्ड %d / %d",
@@ -1183,10 +1327,36 @@ extension UIStrings {
         audioOnlyStatusListeningToQuestion: "प्रश्न सुन्दै…",
         audioOnlyStatusSpeakYourAnswer: "आफ्नो उत्तर भन्नुहोस्",
         audioOnlyStatusProcessing: "प्रक्रियामा…",
-        audioOnlyStopBtn: "रोक्नुहोस्",
+        audioOnlyStopBtn: "सत्र समाप्त",
         audioOnlySessionComplete: "सत्र पूरा भयो",
         audioOnlyProgressFormat: "%d/%d · %d सही",
         audioOnlyFinalScoreFormat: "%d/%d सही (%d%%)",
+
+        audioOnlyChooseLengthTitle: "सत्रको लम्बाइ छान्नुहोस्",
+        audioOnlyLengthTip: "फोन उल्टो राखेर पनि चल्छ। जतिखेर पनि समाप्त थिच्न सक्नुहुन्छ।",
+        audioOnlyLengthCardFormat: "%d प्रश्न",
+        audioOnlyLengthFullPool: "सबै प्रश्न",
+        audioOnlyLengthShortSubtitle: "छोटो सत्र, ~३ मिनेट",
+        audioOnlyLengthMediumSubtitle: "मानक सत्र, ~८ मिनेट",
+        audioOnlyLengthLongSubtitle: "लामो सत्र, ~१५ मिनेट",
+        audioOnlyLengthFullSubtitle: "पूरा अभ्यास — सबै प्रश्न",
+        audioOnlyStartBtn: "सत्र सुरु गर्नुहोस्",
+
+        audioOnlyExitConfirmTitle: "सत्र समाप्त गर्ने?",
+        audioOnlyExitConfirmMessage: "यस प्रयासमा तपाईंको प्रगति हराउनेछ।",
+        audioOnlyExitConfirmEnd: "सत्र समाप्त",
+        audioOnlyExitConfirmCancel: "जारी राख्नुहोस्",
+
+        audioOnlyDidntHearTryAgain: "मैले तपाईंलाई सुनिनँ। फेरि प्रयास गर्नुहोस्।",
+        audioOnlyMovingOn: "अर्को प्रश्नमा जाँदै।",
+        audioOnlySessionAnnouncementFormat: "सत्र सकियो। तपाईंले %d मध्ये %d सही गर्नुभयो। %d प्रतिशत।",
+
+        audioOnlyReviewMissedBtn: "गल्तीहरू हेर्नुहोस्",
+        audioOnlyReviewMissedTitle: "गल्ती गरेका प्रश्नहरू",
+        audioOnlyReviewYouSaidLabel: "तपाईंले भन्नुभयो:",
+        audioOnlyReviewCorrectLabel: "सही उत्तर:",
+        audioOnlyReviewNoAnswerCaptured: "(कुनै उत्तर सुनिएन)",
+        audioOnlyReviewEmptyState: "यस सत्रमा कुनै गल्ती छैन — उत्कृष्ट!",
 
         quizTapToSpeakHint: "बोल्न ट्याप गर्नुहोस्",
         quizMicListening: "सुन्दै…",
@@ -1206,6 +1376,11 @@ extension UIStrings {
         settingsSubscriptionHeader: "सदस्यता",
         settingsProActive: "सक्रिय",
         settingsRestorePurchases: "खरिदहरू पुनर्स्थापना",
+        settingsUpgradeToPro: "Pro मा अपग्रेड गर्नुहोस्",
+        settingsPlanLabel: "योजना",
+        settingsPlanMonthly: "मासिक",
+        settingsPlanLifetime: "जीवनभर",
+        settingsManageSubscription: "सदस्यता व्यवस्थापन गर्नुहोस्",
         settingsLegalHeader: "कानुनी",
         settingsPrivacyPolicy: "गोपनीयता नीति",
         settingsTermsOfUse: "प्रयोगका सर्तहरू",
@@ -1221,7 +1396,6 @@ extension UIStrings {
     // ─────────────────────────────────────────────────────────────
 
     static let chinese = UIStrings(
-        navPracticeSelection: "选择你的练习",
         pickPractice: "选择你的练习👇🏻",
         mockInterview: "模拟面试",
         mockSubtitlePro: "模拟真实的USCIS考试",
@@ -1248,6 +1422,10 @@ extension UIStrings {
         levelAdvanced: "进阶",
         levelExpert: "专家",
         daysUntilInterviewFormat: "距离面试还有 %d 天",
+        dailyTargetSubtitleFormat: "%d%% 就绪 · 每天掌握 %d 题",
+        interviewReadyLabel: "100%% 就绪 · 你已经准备好了",
+        interviewTodayTitle: "今天就是面试日！",
+        interviewTodaySubtitle: "保持冷静 — 你可以的",
 
         navMockInterview: "模拟面试",
         mockHeadline: "模拟面试",
@@ -1368,6 +1546,7 @@ extension UIStrings {
         paywallErrorVerificationFailed: "无法验证购买. 请尝试恢复购买.",
 
         audioFeedbackCorrect: "正确",
+        audioFeedbackCorrectAnswerIsFormat: "正确！答案是 %@",
         audioFeedbackTheAnswerIsFormat: "答案是 %@",
 
         practiceCardCountFormat: "第 %d 张 / 共 %d 张",
@@ -1460,10 +1639,36 @@ extension UIStrings {
         audioOnlyStatusListeningToQuestion: "正在播放问题…",
         audioOnlyStatusSpeakYourAnswer: "请说出你的答案",
         audioOnlyStatusProcessing: "处理中…",
-        audioOnlyStopBtn: "停止",
+        audioOnlyStopBtn: "结束会话",
         audioOnlySessionComplete: "会话完成",
         audioOnlyProgressFormat: "%d/%d · 答对 %d 题",
         audioOnlyFinalScoreFormat: "答对 %d / %d 题（%d%%）",
+
+        audioOnlyChooseLengthTitle: "选择会话长度",
+        audioOnlyLengthTip: "手机正面朝下也可以使用。随时可以点结束。",
+        audioOnlyLengthCardFormat: "%d 题",
+        audioOnlyLengthFullPool: "全部题目",
+        audioOnlyLengthShortSubtitle: "快速练习，约 3 分钟",
+        audioOnlyLengthMediumSubtitle: "标准练习，约 8 分钟",
+        audioOnlyLengthLongSubtitle: "深度练习，约 15 分钟",
+        audioOnlyLengthFullSubtitle: "马拉松 — 全部题目",
+        audioOnlyStartBtn: "开始会话",
+
+        audioOnlyExitConfirmTitle: "结束本次会话？",
+        audioOnlyExitConfirmMessage: "本次尝试的进度将会丢失。",
+        audioOnlyExitConfirmEnd: "结束会话",
+        audioOnlyExitConfirmCancel: "继续",
+
+        audioOnlyDidntHearTryAgain: "我没有听清楚，请再说一次。",
+        audioOnlyMovingOn: "继续下一题。",
+        audioOnlySessionAnnouncementFormat: "会话完成。您答对了 %d 题，共 %d 题。%d 分。",
+
+        audioOnlyReviewMissedBtn: "查看错题",
+        audioOnlyReviewMissedTitle: "答错的题",
+        audioOnlyReviewYouSaidLabel: "你说的是：",
+        audioOnlyReviewCorrectLabel: "正确答案：",
+        audioOnlyReviewNoAnswerCaptured: "（未捕获回答）",
+        audioOnlyReviewEmptyState: "这次没有答错 — 太棒了！",
 
         quizTapToSpeakHint: "点击说话",
         quizMicListening: "聆听中…",
@@ -1483,6 +1688,11 @@ extension UIStrings {
         settingsSubscriptionHeader: "订阅",
         settingsProActive: "已启用",
         settingsRestorePurchases: "恢复购买",
+        settingsUpgradeToPro: "升级到 Pro",
+        settingsPlanLabel: "套餐",
+        settingsPlanMonthly: "按月订阅",
+        settingsPlanLifetime: "永久版",
+        settingsManageSubscription: "管理订阅",
         settingsLegalHeader: "法律",
         settingsPrivacyPolicy: "隐私政策",
         settingsTermsOfUse: "使用条款",

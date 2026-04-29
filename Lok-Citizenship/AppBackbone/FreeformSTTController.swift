@@ -65,12 +65,12 @@ final class FreeformSTTController: ObservableObject {
                       type == .began
                 else { return }
 
-                // Only act if we're actually recording — `stop()` is
-                // idempotent against the underlying STT service, but
-                // calling it on an idle controller still triggers a
-                // session deactivation in `LocalSTTService`, which is
-                // wasted work and a needless `notifyOthersOnDeactivation`
-                // ping to other audio apps.
+                // Only act if we're actually recording. `stop()` is
+                // idempotent against the underlying STT service, so
+                // calling it on an idle controller is safe — but
+                // `LocalSTTService.stopRecording` still goes through
+                // `engine.stop` + tap removal + `task.cancel`, which is
+                // wasted work when there was nothing to record.
                 guard self.isRecording else { return }
                 self.stop()
             }

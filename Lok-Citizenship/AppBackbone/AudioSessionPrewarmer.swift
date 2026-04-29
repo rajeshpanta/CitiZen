@@ -61,6 +61,13 @@ enum AudioSessionPrewarmer {
     /// apart over time.
     @discardableResult
     static func configureSession() -> Bool {
+        // Install the route-change observer the first time anything
+        // configures audio. Lazy-installing here (instead of from the
+        // app delegate) keeps the audio system self-contained and
+        // ensures the observer can never be missed by a code path that
+        // forgets to call it explicitly.
+        ensureRouteObserver()
+
         let session = AVAudioSession.sharedInstance()
         do {
             // Set category only when the current config doesn't already
@@ -121,7 +128,73 @@ enum AudioSessionPrewarmer {
         pending = nil
     }
 
+    /// Cancel any pending prewarm and deactivate the audio session.
+    ///
+    /// Call this only when the user is actually leaving an audio-bearing
+    /// screen (`.onDisappear`) — NOT between questions. Mid-quiz
+    /// deactivation is what made background music "pump" (un-duck and
+    /// re-duck) on every TTS↔STT handoff: `.duckOthers` releases on
+    /// `setActive(false)`, then re-engages on the next `setActive(true)`,
+    /// and the audible swing happens on every cycle.
+    ///
+    /// `.notifyOthersOnDeactivation` lets Music / Podcasts / Spotify
+    /// resume cleanly once the session releases.
+    static func deactivate() {
+        cancel()
+        try? AVAudioSession.sharedInstance()
+            .setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
     // MARK: - Route override
+
+    // MARK: - Route-change observer
+
+    /// `true` once `ensureRouteObserver` has wired up the
+    /// `routeChangeNotification` handler. Process-lifetime — the
+    /// notification handler is intentionally never removed.
+    private static var routeObserverInstalled = false
+
+    /// Install a one-time `AVAudioSession.routeChangeNotification`
+    /// observer that re-applies the route override whenever the audio
+    /// route changes mid-session.
+    ///
+    /// Why this exists: `applyRouteOverride()` is only called inside
+    /// `configureSession()`, which fires once per TTS-or-STT entry point
+    /// (typically once per question). Without this observer, plugging in
+    /// a Bluetooth speaker DURING a question would leave us routing to
+    /// the previous output until the next configure call — the user
+    /// hears the rest of the current question on the iPhone speaker even
+    /// though their AirPods are now connected. Same problem in reverse
+    /// for unplugging mid-question.
+    ///
+    /// Reapplying the override on every route change keeps the route
+    /// always-correct: when something external connects we clear our
+    /// `.speaker` override so iOS' default routing carries audio there;
+    /// when it disconnects we re-assert `.speaker` so audio doesn't
+    /// silently fall back to the receiver (earpiece) — which would
+    /// happen with `.playAndRecord` minus `.defaultToSpeaker`.
+    ///
+    /// `addObserver(forName:object:queue:using:)` retains the closure
+    /// internally; we never store the returned token because the
+    /// observer should live for the entire app lifetime.
+    private static func ensureRouteObserver() {
+        guard !routeObserverInstalled else { return }
+        routeObserverInstalled = true
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // `applyRouteOverride()` is safe to call against an
+            // inactive session — the inner `try?` swallows the error
+            // if iOS hasn't activated audio yet. So it's fine if a
+            // route change fires while the user is on a non-audio
+            // screen (e.g., they connect AirPods on the language
+            // picker); the override is simply set up correctly for
+            // the next audio entry point.
+            applyRouteOverride()
+        }
+    }
 
     /// Override output to the built-in speaker when nothing external is
     /// connected. With `.playAndRecord` the default route is the receiver

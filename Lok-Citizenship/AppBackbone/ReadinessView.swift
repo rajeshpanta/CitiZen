@@ -25,8 +25,10 @@ struct ReadinessView: View {
                 // Stats row
                 statsRow
 
-                // Interview countdown
-                if let date = progress.interviewDate, date > Date() {
+                // Interview countdown — full coaching version: countdown +
+                // daily target + on-track color, with a calm "today" state
+                // on the day-of. Past dates render nothing.
+                if let date = progress.interviewDate {
                     countdownCard(to: date)
                 }
 
@@ -64,10 +66,17 @@ struct ReadinessView: View {
         )
     }
 
+    /// The locale code questions are recorded under for this language.
+    /// `QuestionTracker` buckets per-locale so a Nepali learner's
+    /// progress is independent from their (possibly accidental) English
+    /// quiz attempts. This computed property is the single source of
+    /// truth for "what bucket does this readiness screen read from".
+    private var localeKey: String { language.rawValue }
+
     // MARK: - Readiness Ring
 
     private var readinessRing: some View {
-        let mastered = tracker.masteredCount
+        let mastered = tracker.masteredCount(for: localeKey)
         let pct = totalQuestions > 0 ? Double(mastered) / Double(totalQuestions) : 0
 
         return VStack(spacing: 8) {
@@ -99,12 +108,17 @@ struct ReadinessView: View {
     // MARK: - Stats Row
 
     private var statsRow: some View {
-        HStack(spacing: 0) {
-            statItem(value: "\(tracker.masteredCount)", label: s.readinessStatMastered, color: .green)
+        // Per-language counts: mistakes in another language must NOT
+        // pull these numbers down. Computed from per-locale buckets in
+        // `QuestionTracker`.
+        let mastered = tracker.masteredCount(for: localeKey)
+        let learning = tracker.learningCount(for: localeKey)
+        return HStack(spacing: 0) {
+            statItem(value: "\(mastered)", label: s.readinessStatMastered, color: .green)
             Divider().frame(height: 36).background(Color.white.opacity(0.2))
-            statItem(value: "\(tracker.learningCount)", label: s.readinessStatLearning, color: .yellow)
+            statItem(value: "\(learning)", label: s.readinessStatLearning, color: .yellow)
             Divider().frame(height: 36).background(Color.white.opacity(0.2))
-            let notStarted = max(0, totalQuestions - tracker.masteredCount - tracker.learningCount)
+            let notStarted = max(0, totalQuestions - mastered - learning)
             statItem(value: "\(notStarted)", label: s.readinessStatNew, color: .white.opacity(0.5))
         }
         .padding(.vertical, 14)
@@ -128,8 +142,10 @@ struct ReadinessView: View {
 
     private func levelProgressRow(level: Int) -> some View {
         let levelQuestions = questionsForLevel(level)
+        // Per-language lookup: a Spanish learner's mastery of `q_1_01`
+        // in Spanish does NOT count toward their English level 1 bar.
         let masteredInLevel = levelQuestions.filter { q in
-            (tracker.record(for: q.id)?.consecutiveCorrect ?? 0) >= 3
+            (tracker.record(for: q.id, language: localeKey)?.consecutiveCorrect ?? 0) >= 3
         }.count
         let pct = Double(masteredInLevel) / Double(totalPerLevel)
         let labels = ["", s.levelEasy, s.levelMedium, s.levelHard, s.levelAdvanced, s.levelExpert]
@@ -168,27 +184,106 @@ struct ReadinessView: View {
 
     // MARK: - Countdown
 
-    private func countdownCard(to date: Date) -> some View {
-        let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0)
+    /// Whole-day-aligned days from today to interview. Negative when past.
+    /// Anchoring on `startOfDay` makes "today" stable through the whole
+    /// interview day — picking 09:00 still reads as 0 at 9 PM the same day.
+    private func daysUntilInterview(_ date: Date) -> Int {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let target = cal.startOfDay(for: date)
+        return cal.dateComponents([.day], from: today, to: target).day ?? 0
+    }
 
-        return HStack(spacing: 14) {
-            Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 28))
-                .foregroundColor(.blue)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(String(format: s.daysUntilInterviewFormat, days))
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Text(date, style: .date)
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.5))
-            }
-            Spacer()
+    /// Linear on-track curve: target mastery climbs ~2 percentage points per
+    /// day as the interview approaches, hitting 90% on day-of. So 30 days
+    /// out → ≥30% to be on track; 14 days → ≥62%; 7 days → ≥76%. Behind
+    /// the curve goes orange — or red if ≤7 days out, since there's little
+    /// runway left to recover.
+    private func interviewAccent(daysOut: Int, pct: Int) -> Color {
+        let target = max(0, 90 - daysOut * 2)
+        if pct >= target { return .green }
+        return daysOut <= 7 ? .red : .orange
+    }
+
+    @ViewBuilder
+    private func countdownCard(to date: Date) -> some View {
+        let days = daysUntilInterview(date)
+        if days > 0 {
+            interviewFutureCard(days: days, date: date)
+        } else if days == 0 {
+            interviewTodayCard
         }
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.blue.opacity(0.15)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.blue.opacity(0.3), lineWidth: 1))
-        .padding(.horizontal, 20)
+        // Past dates render nothing — a stale interviewDate shouldn't
+        // keep occupying the dashboard after the user has taken the test.
+    }
+
+    private func interviewFutureCard(days: Int, date: Date) -> some View {
+        let mastered = tracker.masteredCount(for: localeKey)
+        let pct = totalQuestions > 0 ? (mastered * 100) / totalQuestions : 0
+        let remaining = max(0, totalQuestions - mastered)
+        // Ceiling division: 17 questions over 5 days → 4/day, not 3
+        // (which would leave the user short on the last day).
+        let dailyTarget = days > 0 ? (remaining + days - 1) / days : remaining
+        let accent = interviewAccent(daysOut: days, pct: pct)
+
+        return NavigationLink(
+            destination: InterviewChecklistView().navigationTitle(s.navInterviewChecklist)
+        ) {
+            HStack(spacing: 14) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 28))
+                    .foregroundColor(accent)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(format: s.daysUntilInterviewFormat, days))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(dailyTarget == 0
+                         ? s.interviewReadyLabel
+                         : String(format: s.dailyTargetSubtitleFormat, pct, dailyTarget))
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                    Text(date, style: .date)
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.4))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 14).fill(accent.opacity(0.15)))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(accent.opacity(0.3), lineWidth: 1))
+            .padding(.horizontal, 20)
+        }
+    }
+
+    private var interviewTodayCard: some View {
+        NavigationLink(
+            destination: InterviewChecklistView().navigationTitle(s.navInterviewChecklist)
+        ) {
+            HStack(spacing: 14) {
+                Image(systemName: "star.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(.yellow)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(s.interviewTodayTitle)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(s.interviewTodaySubtitle)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 14).fill(Color.yellow.opacity(0.15)))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.yellow.opacity(0.35), lineWidth: 1))
+            .padding(.horizontal, 20)
+        }
     }
 
     // MARK: - Streak
@@ -216,7 +311,12 @@ struct ReadinessView: View {
             .frame(maxWidth: .infinity)
 
             VStack(spacing: 4) {
-                Text("\(progress.accuracyPercentage)%")
+                // Per-language accuracy. The global
+                // `progress.accuracyPercentage` mixes every language
+                // together, which would let a Spanish learner's wrong
+                // answers pull down the accuracy figure shown on the
+                // English readiness screen (and vice versa).
+                Text("\(tracker.accuracyPercentage(for: localeKey))%")
                     .font(.title.bold())
                     .foregroundColor(.green)
                 Text(s.readinessAccuracy)

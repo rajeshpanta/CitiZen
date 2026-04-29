@@ -14,6 +14,15 @@ protocol SpeechToTextService {
     var authorizationStatusPublisher: AnyPublisher<SFSpeechRecognizerAuthorizationStatus,Never> { get }
     var isRecordingPublisher:         AnyPublisher<Bool,Never>                                 { get }
     var transcriptionPublisher:       AnyPublisher<String,Never>                               { get }
+    /// True from the moment the engine stops (silence detected) through the
+    /// async transcription round-trip, false otherwise. Lets views distinguish
+    /// "still listening" from "user finished, we're processing" — without
+    /// this signal, `isRecordingPublisher` stays true through the cloud-
+    /// transcription window (Whisper) and the UI reads "Listening" while
+    /// the user has actually stopped talking and is waiting on the upload.
+    /// Default impl returns `Just(false)` for synchronous services
+    /// (LocalSTT) where the gap doesn't exist.
+    var isProcessingPublisher:        AnyPublisher<Bool,Never>                                 { get }
 
     func requestAuthorization()
 
@@ -42,6 +51,13 @@ protocol SpeechToTextService {
 
 extension SpeechToTextService {
     func cancelRecording() { stopRecording() }
+    /// Default: services without a post-engine-stop processing window
+    /// (LocalSTT — SF returns transcripts synchronously off the engine
+    /// callback) report a constant false. Concrete services that have
+    /// such a window (WhisperSTT) override with a real subject.
+    var isProcessingPublisher: AnyPublisher<Bool,Never> {
+        Just(false).eraseToAnyPublisher()
+    }
 }
 
 // ───────────────────────────────────────────
@@ -161,10 +177,14 @@ final class LocalSTTService: NSObject, SpeechToTextService {
         request = nil; task = nil
         rec.send(false)
 
-        // Deactivate audio session so the orange mic indicator turns off
-        // and other apps can reclaim audio. The .notifyOthersOnDeactivation
-        // flag lets Music/Podcasts resume playback.
-        try? AVAudioSession.sharedInstance()
-            .setActive(false, options: .notifyOthersOnDeactivation)
+        // Do NOT deactivate the audio session here. `stopRecording` is
+        // called between every question (via `VoiceQuizController.stopAudio`),
+        // and a `setActive(false)` → next-question's `setActive(true)` cycle
+        // makes background music un-duck and re-duck audibly on every
+        // STT↔TTS handoff. The orange mic indicator drops as soon as
+        // `engine.stop()` runs (it tracks active mic capture, not session
+        // active state), so we don't need the deactivate to clear it.
+        // Final teardown happens in the view's `.onDisappear` via
+        // `AudioSessionPrewarmer.deactivate()`.
     }
 }

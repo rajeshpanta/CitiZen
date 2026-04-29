@@ -16,7 +16,7 @@ import os
 ///    not literal wording.
 ///
 /// Decision rule (in order):
-///  - Local score ≥ 0.7 with margin ≥ 0.15 over the runner-up → commit locally.
+///  - Local score ≥ 0.6 with margin ≥ 0.15 over the runner-up → commit locally.
 ///  - Otherwise, ask GPT (12s timeout).
 ///  - GPT returns a matched index → commit it.
 ///  - GPT explicitly says "no match" → return nil (don't second-guess — GPT
@@ -44,7 +44,17 @@ enum AnswerMatcher {
     private static let log = Logger(subsystem: "com.citizen.app", category: "AnswerMatcher")
 
     /// Local score required to commit without consulting GPT.
-    private static let highConfidence = 0.7
+    ///
+    /// Lowered from 0.7 → 0.6: at 0.7, common cases like "first president
+    /// Washington" (mixed answer + filler) scored ~0.6 against Washington —
+    /// a clear local match — but were sent to GPT, where the model
+    /// occasionally rejected them as "no exact match." Committing locally
+    /// at 0.6 is safe because (a) the margin guard still requires a clear
+    /// runner-up gap, so ambiguous answers still go to GPT, and (b) it
+    /// removes a class of false rejection entirely (no GPT round-trip
+    /// means no GPT mistake). Saves money + ~500-2000ms latency on
+    /// these answers as a side effect.
+    private static let highConfidence = 0.6
     /// Required margin between best and runner-up for a confident local commit.
     private static let confidenceMargin = 0.15
     /// Minimum local score to accept as a fallback when GPT is unavailable.
@@ -142,14 +152,43 @@ enum AnswerMatcher {
             let oTokens = tokenize(option)
             let oTrigrams = trigrams(option.lowercased())
 
+            // Symmetric signals (the legacy floor): how alike are these two
+            // strings overall. Jaccard catches token overlap, trigrams catch
+            // character-level slips like "constitushun"→"Constitution".
             let jacc = jaccard(sTokens, oTokens)
             let tri = jaccard(sTrigrams, oTrigrams)
-            // Take the max of the two signals. Either a strong word-level overlap
-            // OR a strong character-level overlap is enough to count.
-            let score = max(jacc, tri * trigramWeight)
+
+            // Asymmetric signals (the recall ceiling): "what fraction of the
+            // option's content did the user say?" Symmetric Jaccard penalizes
+            // the user for adding correct context — saying "the President of
+            // the United States" for option "the President" scores only 0.33
+            // because the union grows. The asymmetric form ignores the
+            // spoken side's extra tokens entirely, which is the right
+            // semantics for quiz matching: extra context is good, not noise.
+            // Same idea on trigrams handles accent slips simultaneously
+            // (most of "washington"'s trigrams survive in "whashington").
+            let asymJacc = asymmetric(option: oTokens, spoken: sTokens)
+            let asymTri = asymmetric(option: oTrigrams, spoken: sTrigrams)
+
+            // Best of all four — let any signal prove a match. The existing
+            // commit threshold (0.6) and margin guard (0.15) still gate
+            // ambiguous cases (multiple options scoring high → falls to GPT).
+            let score = max(jacc, tri * trigramWeight,
+                            asymJacc, asymTri * trigramWeight)
             results.append(Candidate(idx: idx, score: score))
         }
         return results.sorted { $0.score > $1.score }
+    }
+
+    /// Asymmetric containment score: |option ∩ spoken| / |option|.
+    /// Answers "did the user say at least the option?" rather than "are
+    /// these two strings alike overall?" — which is the right metric for
+    /// quiz matching where extra spoken context shouldn't penalize.
+    private static func asymmetric<T: Hashable>(option: Set<T>,
+                                                spoken: Set<T>) -> Double {
+        guard !option.isEmpty else { return 0 }
+        let intersect = option.intersection(spoken).count
+        return Double(intersect) / Double(option.count)
     }
 
     // MARK: - Token-level normalization

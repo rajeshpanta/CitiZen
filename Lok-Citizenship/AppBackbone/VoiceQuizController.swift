@@ -52,6 +52,14 @@ final class VoiceQuizController: ObservableObject {
     @Published private(set) var lastCorrectIndex: Int?
     @Published private(set) var isRecording = false
 
+    /// True after the user has stopped speaking but before the Whisper
+    /// transcript has arrived (the cloud-STT processing window). Mirrors
+    /// `stt.isProcessingPublisher`. Views read this to flip status text
+    /// from "Listening" to "Processing" so the user knows the app is
+    /// thinking, not still waiting on them. Always false for synchronous
+    /// services (LocalSTT) — protocol default returns `Just(false)`.
+    @Published private(set) var isProcessingTranscript = false
+
     /// True whenever the controller intends to be producing audio — either
     /// because the underlying TTS engine is currently emitting samples, or
     /// because we're between clips of a `speakSequence` (the post-question
@@ -129,11 +137,56 @@ final class VoiceQuizController: ObservableObject {
     /// calls `continueAfterWrong()`. When false (audio-only), wrong answers auto-advance.
     var requireContinueOnWrong = false
 
+    /// Max seconds the auto-advance feedback chain (speak feedback → delay
+    /// → advance) is allowed to take before a watchdog force-advances.
+    /// Set to 0 to disable. Audio-only uses 8s as a safety net against TTS
+    /// publisher stalls. Mock Interview leaves it at 0 (it's intentionally
+    /// tap-to-continue on wrong answers).
+    var feedbackWatchdogTimeout: TimeInterval = 0
+
+    /// Audio-only only: when true, an empty STT transcript triggers a
+    /// "didn't hear you, try again" retry instead of dead-ending in `.idle`.
+    /// After `emptySpokenRetryLimit` consecutive empty transcripts the
+    /// question is marked wrong and the session advances. Mock Interview
+    /// leaves this at false (its view shows a "didn't hear you" banner
+    /// with manual mic-tap retry).
+    var retryOnEmptySpoken = false
+    var emptySpokenRetryLimit = 1
+
     // MARK: - Private
 
     private var ttsChain: AnyCancellable?
     private var delayTask: AnyCancellable?
     private var timeoutTask: AnyCancellable?
+    /// Upper bound on recording duration once speech has actually started.
+    /// Armed when the first non-empty STT partial arrives; cancelled by
+    /// `stopAudio`. On fire, calls `stt.stopRecording()` (graceful — finalizes
+    /// and uploads what was captured, unlike the original `listeningTimeout`
+    /// which used `cancelRecording` and dropped the audio). Safety net for
+    /// the case where SF can't detect end-of-speech (background noise,
+    /// hesitation, mumbled trailing words) and would otherwise leave the
+    /// mic open until SF's ~60 s internal cap. 8 s is comfortably above the
+    /// longest realistic citizenship answer (~5 s) plus SF's ~1.5 s silence
+    /// window — when SF detects silence first, this timer is irrelevant.
+    private var speechMaxTask: AnyCancellable?
+    /// Watchdog for the audio-only "speak feedback then advance" chain.
+    /// If the chain (TTS → delay → advanceToNextQuestion) doesn't reach the
+    /// advance call within `feedbackWatchdogTimeout` seconds, this fires and
+    /// force-advances. Belt-and-suspenders against the prior silent-stall
+    /// failure mode where TTS would not complete its publisher and the
+    /// session sat in `.awaitingContinue` forever (back button quietly
+    /// appeared after `phase` drifted to `.idle` via a stale binding).
+    /// Only armed in the auto-advance + spoken-feedback configuration
+    /// (audio-only). Mock Interview leaves it at zero — its wrong-answer
+    /// flow is intentionally tap-to-continue.
+    private var feedbackWatchdog: AnyCancellable?
+    /// Counts consecutive listening attempts on the current question that
+    /// returned no transcript (silence / inaudible). Reset on every
+    /// successful match, on a non-empty transcript, on `replayQuestion`,
+    /// and on `advanceToNextQuestion`. Used by audio-only's "didn't hear
+    /// you, try again" retry path so the question only gets marked wrong
+    /// after the second silence in a row.
+    private var emptySpokenRetries: Int = 0
     /// In-flight `AnswerMatcher.match` Task. Held so `stopAudio` can cancel
     /// it when the user taps End / Back / Skip during the up-to-12 s GPT
     /// round-trip. The result is already discarded by a phase-mismatch
@@ -141,6 +194,15 @@ final class VoiceQuizController: ObservableObject {
     /// the Task and its captures around longer than needed.
     private var matchingTask: Task<Void, Never>?
     private var subscribers = Set<AnyCancellable>()
+
+    /// Set in the audio-interruption observer when an incoming call /
+    /// Siri / FaceTime forces us to stop an active audio phase. Read on
+    /// the matching `.ended` so we only auto-replay the question for
+    /// users who were actually interrupted — not for users who happened
+    /// to be idle (e.g., on the "didn't hear you" recovery banner) when
+    /// the system posted an unrelated `.ended` (some interruption types
+    /// fire `.ended` without a paired `.began` we acted on).
+    private var wasInterruptedDuringActivePhase = false
 
     // MARK: - Init
 
@@ -162,12 +224,17 @@ final class VoiceQuizController: ObservableObject {
     /// every question dead-ends at the 10 s timeout.
     ///
     /// On `.began` we call `stop()`, which kills TTS, cancels STT, drops any
-    /// pending prewarm, and flips phase back to `.idle`. The user resumes
-    /// by tapping the existing Replay or mic button — we deliberately do
-    /// NOT auto-resume on `.ended` because iOS' `shouldResume` hint is
-    /// meant for media players, and auto-replaying a question while the
-    /// user is still wrapping up a call is worse UX than letting them
-    /// re-engage manually.
+    /// pending prewarm, and flips phase back to `.idle`.
+    ///
+    /// On `.ended`, when iOS hints `.shouldResume` AND we were the cause
+    /// of the stop (i.e. `.began` interrupted us in an active audio
+    /// phase), we auto-replay the current question in autoAdvance modes
+    /// (Mock Interview / Audio-Only). Practice quizzes don't auto-resume
+    /// — they have no "currently being read" question concept; the user
+    /// taps the speaker button when they're ready. The
+    /// `wasInterruptedDuringActivePhase` flag is what guarantees we
+    /// don't misfire a replay for a user who happened to be idle when
+    /// `.ended` arrived.
     private func observeAudioInterruptions() {
         NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
             .receive(on: DispatchQueue.main)  // AVAudioSession posts off main
@@ -178,34 +245,65 @@ final class VoiceQuizController: ObservableObject {
                       let type = AVAudioSession.InterruptionType(rawValue: raw)
                 else { return }
 
-                guard type == .began else {
-                    // .ended: intentionally no-op. iOS' shouldResume hint is
-                    // for media players — auto-replaying a question while
-                    // the user is still wrapping up the call is worse UX
-                    // than letting them tap Replay/Mic when ready.
-                    return
-                }
+                switch type {
+                case .began:
+                    // Always drop a pending prewarm on `.began`, even in
+                    // phases that don't need a full `stop()`. Otherwise a
+                    // call ringing during the 200 ms duck-settle window
+                    // after a Start/Try-Again tap would still let the
+                    // continuation fire and try to TTS into an interrupted
+                    // session — silent failure that leaves the user
+                    // looking at a "started" interview with no audio.
+                    AudioSessionPrewarmer.cancel()
 
-                // Always drop a pending prewarm on `.began`, even in
-                // phases that don't need a full `stop()`. Otherwise a
-                // call ringing during the 200 ms duck-settle window
-                // after a Start/Try-Again tap would still let the
-                // continuation fire and try to TTS into an interrupted
-                // session — silent failure that leaves the user
-                // looking at a "started" interview with no audio.
-                AudioSessionPrewarmer.cancel()
+                    // Only intervene in phases where audio is actually live.
+                    // `.awaitingContinue` already has nothing playing (TTS
+                    // finished, STT idle, GPT result already arrived) — and
+                    // forcing it to `.idle` would erase the "Next Question"
+                    // CTA and re-enable the fallback options, letting the
+                    // user accidentally re-answer the same question.
+                    // `.idle` / `.finished` have nothing to stop either.
+                    switch self.phase {
+                    case .speakingQuestion, .listening, .matching, .processingAnswer:
+                        // Mark that we're the reason audio stopped, so the
+                        // matching `.ended` knows to auto-replay. Set BEFORE
+                        // `stop()` because `stop()` resets phase to `.idle`,
+                        // which would otherwise look identical to "user was
+                        // already idle" by the time `.ended` arrives.
+                        self.wasInterruptedDuringActivePhase = true
+                        self.stop()
+                    case .idle, .awaitingContinue, .finished:
+                        break
+                    }
+                case .ended:
+                    // Only auto-resume if WE caused the stop. This guards
+                    // against system-emitted `.ended` events for which we
+                    // never saw a paired actionable `.began`.
+                    guard self.wasInterruptedDuringActivePhase else { return }
+                    self.wasInterruptedDuringActivePhase = false
 
-                // Only intervene in phases where audio is actually live.
-                // `.awaitingContinue` already has nothing playing (TTS
-                // finished, STT idle, GPT result already arrived) — and
-                // forcing it to `.idle` would erase the "Next Question"
-                // CTA and re-enable the fallback options, letting the
-                // user accidentally re-answer the same question.
-                // `.idle` / `.finished` have nothing to stop either.
-                switch self.phase {
-                case .speakingQuestion, .listening, .matching, .processingAnswer:
-                    self.stop()
-                case .idle, .awaitingContinue, .finished:
+                    // Honor iOS' `shouldResume` hint — when missing, the
+                    // system is telling us the user is still busy (e.g.
+                    // wrapping up a call) and resuming would step on
+                    // them. Without this guard, mid-call `.ended` events
+                    // would auto-replay the question over the call audio.
+                    guard let optRaw = info[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+                    let opts = AVAudioSession.InterruptionOptions(rawValue: optRaw)
+                    guard opts.contains(.shouldResume) else { return }
+
+                    // Practice mode (autoAdvance == false) has no "current
+                    // question being read" concept — the user explicitly
+                    // tapped Listen, and re-arming after an interruption
+                    // would feel surprising. Replay only auto-advance modes.
+                    guard self.autoAdvance, !self.quizLogic.isFinished else { return }
+
+                    // `replayQuestion` is the same path used by the
+                    // Replay/Try-Again UI buttons — stops any residual
+                    // audio (no-op, already stopped) and re-speaks the
+                    // current question, which then auto-starts listening
+                    // via the existing `onTTSFinished` flow.
+                    self.replayQuestion()
+                @unknown default:
                     break
                 }
             }
@@ -227,6 +325,20 @@ final class VoiceQuizController: ObservableObject {
         // so we don't need a second `AudioSessionPrewarmer.cancel()` here.
         stopAudio()
         phase = .idle
+    }
+
+    /// Drop any latent state that the interruption observer might use to
+    /// auto-resume after `.ended`. Call from a view's `.onDisappear`
+    /// (after `stop()`) so that an `.ended` notification arriving in
+    /// the small window between view dismissal and StateObject
+    /// deallocation can't trigger a `replayQuestion()` that would emit
+    /// TTS into a screen the user has already left.
+    ///
+    /// Separate from `stop()` because the interruption handler itself
+    /// calls `stop()` between `.began` and `.ended` — clearing the
+    /// flag in `stop()` would prevent the legitimate auto-resume path.
+    func cancelPendingInterruptionResume() {
+        wasInterruptedDuringActivePhase = false
     }
 
     /// Clear the matched answer index after the view has processed it.
@@ -262,6 +374,7 @@ final class VoiceQuizController: ObservableObject {
         guard autoAdvance else { return }
         stopAudio()
         didTimeout = false
+        emptySpokenRetries = 0
         speakCurrentQuestion()
     }
 
@@ -286,6 +399,7 @@ final class VoiceQuizController: ObservableObject {
         didTimeout = false
         transcription = ""
         matchedAnswerIndex = nil
+        emptySpokenRetries = 0
         speakCurrentQuestion()
     }
 
@@ -441,12 +555,64 @@ final class VoiceQuizController: ObservableObject {
             // an in-flight capture.
             timeoutTask?.cancel()
             timeoutTask = nil
-            didTimeout = true
             listeningStartedAt = nil
-            phase = .idle
             Analytics.track(.voiceTimeout(language: localeCode))
+
+            // Audio-only retry path: the prior behavior (drop straight to
+            // `.idle`) is what made the session feel dead — phase=.idle
+            // unhid the back button and the user had no audio cue what
+            // happened. With `retryOnEmptySpoken`, the controller speaks
+            // a short "didn't hear you, try again" prompt and re-listens,
+            // up to `emptySpokenRetryLimit` times. After the cap is hit,
+            // we mark the question wrong (Int.max → standard wrong-answer
+            // flow), which keeps the session moving instead of stalling.
+            if retryOnEmptySpoken && autoAdvance {
+                emptySpokenRetries += 1
+                if emptySpokenRetries <= emptySpokenRetryLimit {
+                    didTimeout = true
+                    // Move to .processingAnswer for the duration of the
+                    // "didn't hear you, try again" TTS so the view's
+                    // phase-indicator reads "Processing…" instead of
+                    // "Speak your answer." Without this transition the
+                    // user would think they should speak over the prompt.
+                    // Side benefit: `onTTSFinished` is guarded to
+                    // .speakingQuestion, so being in .processingAnswer
+                    // here keeps the bound subscriber from racing with
+                    // our explicit `.sink` continuation below.
+                    phase = .processingAnswer
+                    let strings = UIStrings.forLocaleCode(localeCode)
+                    ttsChain = tts.speak(strings.audioOnlyDidntHearTryAgain,
+                                         languageCode: localeCode)
+                        .flatMap { _ in
+                            Just(()).delay(for: .seconds(0.3),
+                                           scheduler: DispatchQueue.main)
+                        }
+                        .sink { [weak self] _ in
+                            // Bail if the user tore down the session
+                            // (voice.stop() flips phase to .idle) or
+                            // the session naturally finished mid-TTS.
+                            guard let self,
+                                  self.phase == .processingAnswer
+                            else { return }
+                            self.didTimeout = false
+                            self.autoStartListening()
+                        }
+                    return
+                }
+                // Cap exhausted — fall through to mark-wrong below so the
+                // session keeps moving. The wrong-answer feedback chain
+                // already speaks "the answer is X" and advances.
+                didTimeout = true
+                emptySpokenRetries = 0
+                recordAnswer(Int.max, spokenText: nil)
+                return
+            }
+
+            didTimeout = true
+            phase = .idle
             return
         }
+        emptySpokenRetries = 0
 
         phase = .matching
         let options = currentVariant().options
@@ -477,8 +643,38 @@ final class VoiceQuizController: ObservableObject {
                 }
             } else {
                 Analytics.track(.voiceMatchFailed(language: self.localeCode))
-                self.didTimeout = true  // show "didn't hear you" banner
-                self.phase = .idle
+                if self.autoAdvance {
+                    // The user spoke clearly enough for STT to produce a
+                    // transcript (the empty case is filtered above), but
+                    // the answer doesn't match any option — paraphrased
+                    // nonsense, off-topic, or a genuinely wrong answer
+                    // the matcher couldn't reconcile. Record it as a
+                    // wrong attempt with `Int.max` (an out-of-range
+                    // index that `UnifiedQuizLogic.answerQuestion` logs
+                    // as `userAnswer = nil` while still incrementing the
+                    // wrong counter and triggering the standard
+                    // wrong-answer flow). Without this, mock interview
+                    // and audio-only sat silently after a clearly-spoken
+                    // wrong answer until the user tapped Skip — the user
+                    // perception was "the app is waiting for the right
+                    // answer." The transcription is already shown in the
+                    // banner, so the user can see what was captured
+                    // alongside the correct-answer reveal.
+                    //
+                    // `spokenText: spoken` propagates the heard text into
+                    // the answer log so the result-screen review row can
+                    // show "you answered: 'Lincoln'" instead of the
+                    // misleading "no answer given" we'd otherwise get
+                    // from a `userAnswer == nil` log entry.
+                    self.recordAnswer(Int.max, spokenText: spoken)
+                } else {
+                    // Practice mode: keep the existing "didn't hear you"
+                    // banner so the user can tap an option, retry voice,
+                    // or replay. Auto-recording wrong here would conflict
+                    // with practice's view-driven answer flow.
+                    self.didTimeout = true
+                    self.phase = .idle
+                }
             }
         }
     }
@@ -487,7 +683,11 @@ final class VoiceQuizController: ObservableObject {
     /// - Correct: auto-advance after a short delay.
     /// - Wrong: stay on the question so the view can show the correct answer; the view
     ///   must call `continueAfterWrong()` to proceed.
-    private func recordAnswer(_ answerIndex: Int) {
+    ///
+    /// `spokenText` is forwarded to the quiz log only on the voice-no-match
+    /// path (where `answerIndex` is `Int.max` and we want the review screen
+    /// to show what the user said). All other callers omit it.
+    private func recordAnswer(_ answerIndex: Int, spokenText: String? = nil) {
         stopAudio()
 
         // Snapshot data about the CURRENT question before mutating state.
@@ -496,7 +696,7 @@ final class VoiceQuizController: ObservableObject {
         lastCorrectIndex = answeredQuestion.correctAnswer
         let correctOptionText = currentVariant().options[safe: answeredQuestion.correctAnswer] ?? ""
 
-        let correct = quizLogic.answerQuestion(answerIndex)
+        let correct = quizLogic.answerQuestion(answerIndex, userSpokenText: spokenText)
         lastAnswerCorrect = correct
 
         if quizLogic.isFinished {
@@ -505,13 +705,25 @@ final class VoiceQuizController: ObservableObject {
         }
 
         phase = .awaitingContinue
+        // Audio-only safety net: if the feedback chain stalls (TTS publisher
+        // never completes, network hiccup, etc.), this watchdog force-advances
+        // the session instead of leaving the user staring at a silent screen.
+        // Mock Interview's tap-to-continue path leaves `feedbackWatchdogTimeout`
+        // at 0 so this is a no-op there. See `armFeedbackWatchdog`.
+        armFeedbackWatchdog()
 
         let strings = UIStrings.forLocaleCode(localeCode)
 
         if correct {
-            // Auto-advance after short pause.
+            // Auto-advance after short pause. Audio-only reinforces the
+            // option text alongside the "Correct" affirmation — the user
+            // is hands-free, often eyes-off, and hearing the answer they
+            // just got right is a small but real study reinforcement
+            // (mirrors how the wrong-answer branch already recites it).
             if speakAnswerFeedback {
-                ttsChain = tts.speak(strings.audioFeedbackCorrect, languageCode: localeCode)
+                let phrase = String(format: strings.audioFeedbackCorrectAnswerIsFormat,
+                                    correctOptionText)
+                ttsChain = tts.speak(phrase, languageCode: localeCode)
                     .flatMap { [weak self] _ -> AnyPublisher<Void, Never> in
                         guard let self else { return Just(()).eraseToAnyPublisher() }
                         return Just(()).delay(for: .seconds(self.postAnswerDelay),
@@ -552,6 +764,8 @@ final class VoiceQuizController: ObservableObject {
 
     /// Move to the next question and speak it.
     private func advanceToNextQuestion() {
+        feedbackWatchdog?.cancel(); feedbackWatchdog = nil
+        emptySpokenRetries = 0
         guard !quizLogic.isFinished else {
             phase = .finished
             return
@@ -563,6 +777,28 @@ final class VoiceQuizController: ObservableObject {
         }
         phase = .processingAnswer
         speakCurrentQuestion()
+    }
+
+    /// Arm the audio-only feedback watchdog. If `feedbackWatchdogTimeout`
+    /// elapses while we're still in `.awaitingContinue`, force-advance.
+    /// This is the safety net for the prior failure mode where the wrong-
+    /// answer TTS chain didn't complete its publisher and the session
+    /// stalled silently. No-op when timeout is 0 (mock interview path).
+    private func armFeedbackWatchdog() {
+        feedbackWatchdog?.cancel(); feedbackWatchdog = nil
+        guard feedbackWatchdogTimeout > 0 else { return }
+        feedbackWatchdog = Just(())
+            .delay(for: .seconds(feedbackWatchdogTimeout), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self, self.phase == .awaitingContinue else { return }
+                // Don't fire if a tap-to-continue (Mock Interview) is the
+                // intended UX. `feedbackWatchdogTimeout > 0` already gates
+                // this, but `requireContinueOnWrong` is the semantic source
+                // of truth — guard explicitly so a future config tweak
+                // can't accidentally auto-skip a Mock Interview question.
+                guard !self.requireContinueOnWrong else { return }
+                self.advanceToNextQuestion()
+            }
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -591,10 +827,87 @@ final class VoiceQuizController: ObservableObject {
                 // cancelRecording skips the upload (saves a network round-trip
                 // we'd just throw away) and tears down state immediately.
                 self.stt.cancelRecording()
-                self.didTimeout = true
                 self.listeningStartedAt = nil
+
+                // Audio-only is hands-free, so dropping to `.idle` (which
+                // hides the mic and forces a tap to retry) breaks the
+                // mode's promise. Instead, replay the question once and
+                // re-listen; on a second silence, log it as missed and
+                // move on with a brief "Moving on" cue so the user
+                // (likely away from the device) knows the session is
+                // still alive. Gated by `retryOnEmptySpoken && autoAdvance`
+                // so Mock Interview and Practice keep their existing
+                // tap-to-retry behavior.
+                if self.retryOnEmptySpoken && self.autoAdvance {
+                    self.handleSilentTimeout()
+                    return
+                }
+
+                self.didTimeout = true
                 self.phase = .idle
             }
+    }
+
+    /// Audio-only handling for total-silence timeout.
+    ///
+    /// First silence on a question replays the question to give the user
+    /// another shot. Second silence skips with a short "Moving on"
+    /// announcement and records the question as missed (Int.max →
+    /// `userAnswer = nil` in the answer log, surfaced as "no answer
+    /// captured" in the post-session Review Missed sheet).
+    ///
+    /// Shares the `emptySpokenRetries` counter with the post-Whisper
+    /// empty-transcript path — both are "no usable answer captured"
+    /// cases from the user's POV, so a silence followed by a mumble (or
+    /// vice-versa) correctly counts as two attempts rather than one of
+    /// each.
+    private func handleSilentTimeout() {
+        emptySpokenRetries += 1
+        if emptySpokenRetries <= emptySpokenRetryLimit {
+            // Replay path. `.processingAnswer` while the question
+            // re-reads keeps the view's status text on "Processing…"
+            // instead of "Speak your answer," which would invite the
+            // user to talk over the replay.
+            didTimeout = false
+            let text = currentVariant().text
+            guard !text.isEmpty else {
+                // Defensive: empty question shouldn't happen, but if
+                // it does, fall through to the legacy idle behavior
+                // rather than speaking nothing and hanging.
+                emptySpokenRetries = 0
+                didTimeout = true
+                phase = .idle
+                return
+            }
+            phase = .processingAnswer
+            ttsChain = tts.speak(text, languageCode: localeCode)
+                .flatMap { _ in
+                    Just(()).delay(for: .seconds(0.3),
+                                   scheduler: DispatchQueue.main)
+                }
+                .sink { [weak self] _ in
+                    guard let self, self.phase == .processingAnswer else { return }
+                    self.autoStartListening()
+                }
+            return
+        }
+
+        // Cap exhausted — mark missed, announce "Moving on", advance.
+        emptySpokenRetries = 0
+        didTimeout = false
+        _ = quizLogic.answerQuestion(Int.max)
+        if quizLogic.isFinished {
+            phase = .finished
+            return
+        }
+        phase = .processingAnswer
+        let strings = UIStrings.forLocaleCode(localeCode)
+        ttsChain = tts.speak(strings.audioOnlyMovingOn, languageCode: localeCode)
+            .flatMap { _ in
+                Just(()).delay(for: .seconds(0.3),
+                               scheduler: DispatchQueue.main)
+            }
+            .sink { [weak self] _ in self?.advanceToNextQuestion() }
     }
 
     private func stopAudio() {
@@ -614,7 +927,12 @@ final class VoiceQuizController: ObservableObject {
         ttsChain?.cancel(); ttsChain = nil
         delayTask?.cancel(); delayTask = nil
         timeoutTask?.cancel(); timeoutTask = nil
+        speechMaxTask?.cancel(); speechMaxTask = nil
         matchingTask?.cancel(); matchingTask = nil
+        // Cancel the audio-only watchdog too — otherwise tearing down via
+        // End/Back/Skip could leave a pending advance fire on a session
+        // the user has already left.
+        feedbackWatchdog?.cancel(); feedbackWatchdog = nil
         tts.stopSpeaking()
         // cancelRecording (not stopRecording) — every caller of stopAudio is a
         // "throw away the recording" path: End, Back, replay, skip, tap-answer,
@@ -682,6 +1000,39 @@ final class VoiceQuizController: ObservableObject {
                 // stale transcription reappears on the next question).
                 guard self.phase == .listening || self.phase == .matching else { return }
                 self.transcription = text
+                // Once any non-empty partial arrives, the user has clearly
+                // spoken — cancel the listening timeout so a slow Whisper
+                // upload can't get aborted mid-flight at the 10s mark. The
+                // upload doesn't release `rec` (and therefore doesn't move
+                // phase out of `.listening`) until the cloud round-trip
+                // returns, so for wrong answers — which skip the SF
+                // early-exit path — total time (speech + 1.5s silence +
+                // 3–5s Whisper) routinely exceeded `listeningTimeout`.
+                // When that fired, `cancelRecording()` killed the in-flight
+                // upload and phase dropped to `.idle` with no transcript
+                // ever delivered, leaving the session stalled silently.
+                if !text.isEmpty, self.phase == .listening {
+                    self.timeoutTask?.cancel()
+                    self.timeoutTask = nil
+                    // Arm the max-speech-duration safety net once. If SF
+                    // never decides the user stopped (noise, hesitation),
+                    // graceful-stop after 8 s so Whisper still gets the
+                    // audio and the answer flow keeps moving instead of
+                    // hanging the mic indefinitely. Gated to autoAdvance
+                    // (audio-only, mock interview) — practice mode is
+                    // user-driven (tap mic, tap again to stop) and a
+                    // hard cap could cut off a user who pauses mid-answer
+                    // to think.
+                    if self.autoAdvance, self.speechMaxTask == nil {
+                        self.speechMaxTask = Just(())
+                            .delay(for: .seconds(8), scheduler: DispatchQueue.main)
+                            .sink { [weak self] _ in
+                                guard let self, self.phase == .listening else { return }
+                                self.speechMaxTask = nil
+                                self.stt.stopRecording()
+                            }
+                    }
+                }
             }
             .store(in: &subscribers)
 
@@ -689,6 +1040,13 @@ final class VoiceQuizController: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
                 self?.authorizationStatus = status
+            }
+            .store(in: &subscribers)
+
+        stt.isProcessingPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] processing in
+                self?.isProcessingTranscript = processing
             }
             .store(in: &subscribers)
     }

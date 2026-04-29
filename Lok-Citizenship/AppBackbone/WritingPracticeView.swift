@@ -26,11 +26,23 @@ struct WritingPracticeView: View {
     // M2: in-progress Test session flag + confirm-exit alert state.
     @State private var testSessionActive: Bool = false
     @State private var showExitConfirm: Bool = false
+    /// Tab-switch abandon-confirm state. Mirrors ReadingPracticeView:
+    /// the picker's custom binding diverts an "abandon the active Test
+    /// tab" gesture into this alert; confirm applies `pendingMode`,
+    /// cancel drops it.
+    @State private var showAbandonTabConfirm: Bool = false
+    @State private var pendingMode: Mode? = nil
     // F5: auto-focus the text field shortly after the view appears.
     @FocusState private var inputFocused: Bool
     // F4: guard for delayed auto-speak — if user leaves before the delay fires,
     // skip the speak so it can't collide with a Test-mode auto-dictation.
     @State private var isAppeared: Bool = false
+
+    // Speaker-button loading state — see ReadingPracticeView for full notes.
+    // Cloud TTS cold path is 300–1500 ms; spinner shows during that gap.
+    @State private var isSpeakerLoading: Bool = false
+    @State private var speakerLoadNonce: Int = 0
+
     @Environment(\.dismiss) private var dismiss
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
@@ -49,17 +61,27 @@ struct WritingPracticeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Mode selector
-            Picker("", selection: $mode) {
+            // Mode selector. Custom binding intercepts tab-switch
+            // attempts during an active test session and routes them
+            // through `showAbandonTabConfirm` instead of letting `mode`
+            // change silently — same destructive-action treatment as
+            // the back-button confirm dialog. Switches when no test is
+            // active pass straight through.
+            Picker("", selection: Binding(
+                get: { mode },
+                set: { newValue in
+                    if testSessionActive && newValue != mode {
+                        pendingMode = newValue
+                        showAbandonTabConfirm = true
+                    } else {
+                        mode = newValue
+                    }
+                }
+            )) {
                 Text(s.testModeLearn).tag(Mode.learn)
                 Text(s.testModeTest).tag(Mode.test)
             }
             .pickerStyle(.segmented)
-            // Disable mid-test so the user can't silently abandon a
-            // session by switching to Learn — that path bypassed the
-            // back-button confirm-exit alert and skipped F6 progress
-            // recording. Same rationale as ReadingPracticeView.
-            .disabled(testSessionActive)
             .padding(.horizontal, 20)
             .padding(.top, 12)
             .padding(.bottom, 4)
@@ -109,6 +131,29 @@ struct WritingPracticeView: View {
         } message: {
             Text(s.testModeExitConfirmMessage)
         }
+        // Tab-switch abandon-confirm. Reuses the same exit-confirm strings
+        // since the user-visible action is identical (abandon the in-progress
+        // test session, lose progress on this attempt).
+        .alert(s.testModeExitConfirmTitle, isPresented: $showAbandonTabConfirm) {
+            Button(s.testModeExitConfirmYes, role: .destructive) {
+                if let m = pendingMode { mode = m }
+                pendingMode = nil
+            }
+            Button(s.testModeExitConfirmNo, role: .cancel) {
+                pendingMode = nil
+            }
+        } message: {
+            Text(s.testModeExitConfirmMessage)
+        }
+        // Release the audio session when the user actually leaves Writing
+        // Practice (back-button or swipe-back). Inner `.onDisappear` hooks
+        // on `learnModeBody` / `WritingTestView` deliberately don't
+        // deactivate — those fire on every Learn↔Test tab switch and
+        // would re-introduce the music-pumping we just fixed for the
+        // mock-interview flow. This outer hook fires only on screen-leave.
+        .onDisappear {
+            AudioSessionPrewarmer.deactivate()
+        }
     }
 
     // MARK: - Learn mode (existing flashcard flow, unchanged)
@@ -156,7 +201,19 @@ struct WritingPracticeView: View {
                     speak(currentWord.exampleSentence)
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "speaker.wave.2.fill")
+                        // ZStack with fixed slot keeps button width
+                        // stable when the icon is swapped for a spinner
+                        // — see ReadingPracticeView for full rationale.
+                        ZStack {
+                            if isSpeakerLoading {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.blue)
+                            } else {
+                                Image(systemName: "speaker.wave.2.fill")
+                            }
+                        }
+                        .frame(width: 18, height: 18)
                         Text(s.writingPlayAgainBtn)
                     }
                     .font(.subheadline.bold())
@@ -165,6 +222,7 @@ struct WritingPracticeView: View {
                     .padding(.vertical, 10)
                     .background(Capsule().fill(Color.blue.opacity(0.15)))
                 }
+                .disabled(isSpeakerLoading)
             }
 
             // Text input
@@ -240,6 +298,10 @@ struct WritingPracticeView: View {
         }
         .onAppear {
             isAppeared = true
+            // Warm the cache for the first card before auto-play. Cuts
+            // perceived latency on cold launch when the network round-trip
+            // would otherwise stack on top of the 0.5s auto-play delay.
+            SlowSpeechHelper.shared.prefetch(text: currentWord.exampleSentence)
             // Auto-play the first sentence (F4: skip if view disappeared before firing).
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 guard isAppeared else { return }
@@ -252,11 +314,25 @@ struct WritingPracticeView: View {
                 inputFocused = true
             }
         }
+        // Prefetch the new card whenever the index advances, so a Play
+        // Again tap on the next card is a cache hit. The auto-play in
+        // `nextCard` will warm the cache too, but starting the prefetch
+        // earlier (the moment index changes) covers the small race
+        // where the user taps Play Again before auto-play resolves.
+        .onChange(of: currentIndex) { _ in
+            SlowSpeechHelper.shared.prefetch(text: currentWord.exampleSentence)
+        }
+        // Clear the spinner the moment cloud audio actually starts.
+        // Safety timeout in `speak()` handles the local-fallback path.
+        .onReceive(SlowSpeechHelper.shared.isSpeakingPublisher) { speaking in
+            if speaking { isSpeakerLoading = false }
+        }
         // C1: stop Learn-mode TTS when user switches to the Test tab or leaves the screen,
         // so it can't overlap with Test Mode's auto-dictation.
         .onDisappear {
             isAppeared = false
             SlowSpeechHelper.shared.stop()
+            isSpeakerLoading = false
         }
     }
 
@@ -269,6 +345,7 @@ struct WritingPracticeView: View {
 
     private func nextCard() {
         SlowSpeechHelper.shared.stop()
+        isSpeakerLoading = false
         userInput = ""
         lastDiff = nil
         currentIndex += 1
@@ -283,7 +360,16 @@ struct WritingPracticeView: View {
     }
 
     private func speak(_ text: String) {
+        isSpeakerLoading = true
+        speakerLoadNonce &+= 1
+        let myNonce = speakerLoadNonce
         SlowSpeechHelper.shared.speak(text, rateMultiplier: 0.8)
+        // Safety net for the local-fallback path — see ReadingPracticeView.speak.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            if speakerLoadNonce == myNonce {
+                isSpeakerLoading = false
+            }
+        }
     }
 
     /// Render the expected sentence with green = matched-in-order, red = missed-or-out-of-order.

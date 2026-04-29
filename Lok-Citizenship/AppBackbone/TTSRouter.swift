@@ -32,7 +32,16 @@ final class TTSRouter: TextToSpeechService {
     func speak(_ text: String, languageCode: String) -> AnyPublisher<Void, Never> {
         stopSpeaking()
 
-        guard openAI.isConfigured else {
+        // Language-aware engine choice. OpenAI nova is American-English-
+        // accented — it sounds natural reading English content but
+        // unnatural reading Spanish / Mandarin / Nepali (correct words,
+        // wrong accent). Native iOS voices for those locales sound
+        // dramatically better, so non-English speech stays on local TTS.
+        // English text gets the OpenAI cloud voice everywhere it's
+        // configured, matching the premium feel of Mock Interview.
+        let englishOnly = languageCode.lowercased().hasPrefix("en")
+
+        guard openAI.isConfigured && englishOnly else {
             return local.speak(text, languageCode: languageCode)
         }
 

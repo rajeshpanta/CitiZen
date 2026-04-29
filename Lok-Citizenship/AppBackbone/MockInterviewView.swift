@@ -188,8 +188,12 @@ struct MockInterviewView: View {
                 // tapped Start, or they revoked from Settings mid-quiz.
                 // Halt any in-flight TTS/STT so it doesn't keep playing
                 // underneath the permissionScreen, and drop any stale
-                // pending start.
+                // pending start. Also clear the post-interruption resume
+                // flag so a `.ended` notification arriving after permission
+                // is revoked doesn't replay the question on top of the
+                // permission screen UI.
                 voice.stop()
+                voice.cancelPendingInterruptionResume()
                 pendingStartInterview = false
             } else if pendingStartInterview && status == .authorized {
                 // OS prompt resolved with grant after the user tapped
@@ -282,6 +286,17 @@ struct MockInterviewView: View {
             // can bypass those paths and leave TTS/STT running in the background.
             // voice.stop() is idempotent so the double-call on explicit paths is a no-op.
             voice.stop()
+            // Drop any latent "auto-resume after interruption" intent so an
+            // `AVAudioSession.interruptionNotification(.ended)` arriving
+            // between this disappear and the StateObject's actual
+            // deallocation can't replayQuestion() into a screen the user
+            // has already left.
+            voice.cancelPendingInterruptionResume()
+            // Release the audio session now that the user is leaving the
+            // screen for real — between-question stops deliberately keep
+            // the session active to avoid music-ducking flicker, so this
+            // is the one place the session gets torn down.
+            AudioSessionPrewarmer.deactivate()
         }
     }
 
@@ -639,17 +654,26 @@ struct MockInterviewView: View {
 
     @ViewBuilder
     private var statusPill: some View {
-        switch voice.phase {
-        case .speakingQuestion:
-            statusLabel(icon: "speaker.wave.2.fill", text: s.interviewStatusReading, color: .blue)
-        case .listening:
-            statusLabel(icon: "waveform", text: s.interviewStatusListening, color: .red)
-        case .matching:
+        // Whisper upload window: rec is still true (cleared after the cloud
+        // round-trip) but the user has already stopped speaking. Show the
+        // same "matching answer…" pill we use for the GPT-match window so
+        // the post-speech "we're working" state is one unified UI instead
+        // of flipping Listening → Matching mid-flow.
+        if voice.isProcessingTranscript {
             statusLabel(icon: "sparkles", text: s.interviewMatching, color: .purple)
-        case .processingAnswer:
-            statusLabel(icon: "hourglass", text: s.interviewStatusNext, color: .yellow)
-        default:
-            EmptyView()
+        } else {
+            switch voice.phase {
+            case .speakingQuestion:
+                statusLabel(icon: "speaker.wave.2.fill", text: s.interviewStatusReading, color: .blue)
+            case .listening:
+                statusLabel(icon: "waveform", text: s.interviewStatusListening, color: .red)
+            case .matching:
+                statusLabel(icon: "sparkles", text: s.interviewMatching, color: .purple)
+            case .processingAnswer:
+                statusLabel(icon: "hourglass", text: s.interviewStatusNext, color: .yellow)
+            default:
+                EmptyView()
+            }
         }
     }
 
@@ -922,14 +946,25 @@ struct MockInterviewView: View {
             .frame(width: 80, height: 80)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(voice.isRecording ? s.interviewListening : s.interviewTapMic)
+                // Three states: processing (Whisper round-trip in flight after
+                // user stopped speaking), listening (mic active and capturing),
+                // idle (waiting for the user to tap). Without the processing
+                // branch, the dock kept reading "Listening" through the cloud
+                // upload window even though the user had already finished.
+                Text(voice.isProcessingTranscript
+                     ? s.interviewMatching
+                     : (voice.isRecording ? s.interviewListening : s.interviewTapMic))
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
-                Text(voice.isRecording
-                     ? s.interviewTapAgain
-                     : s.interviewAnswerOutLoud)
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.55))
+                // Subtitle is contextual help — "tap to stop" while listening,
+                // "answer out loud" while idle. Suppressed during processing
+                // because the mic is no-op in that window (didTriggerStop guard
+                // makes a tap silent), so a help line would be misleading.
+                if !voice.isProcessingTranscript {
+                    Text(voice.isRecording ? s.interviewTapAgain : s.interviewAnswerOutLoud)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.55))
+                }
             }
 
             Spacer()
@@ -1128,6 +1163,15 @@ struct MockInterviewView: View {
         let userText: String = {
             if let ua = entry.userAnswer, let opt = options[safe: ua] {
                 return opt
+            }
+            // Voice-no-match path: STT captured speech but it didn't map
+            // to any option, so we recorded `userAnswer = nil` plus the
+            // spoken text. Surface what was heard (in curly quotes) so
+            // the user can tell apart "I said something the matcher
+            // rejected" from "I skipped / nothing was heard."
+            if let spoken = entry.userSpokenText?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !spoken.isEmpty {
+                return "\u{201C}\(spoken)\u{201D}"
             }
             return s.resultReviewNoAnswer
         }()

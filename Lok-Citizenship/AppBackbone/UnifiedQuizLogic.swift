@@ -118,6 +118,12 @@ final class UnifiedQuizLogic: ObservableObject {
         let question: UnifiedQuestion
         /// Selected option index, or nil if skipped / no valid answer.
         let userAnswer: Int?
+        /// The user's spoken text when STT captured speech that didn't map
+        /// to any option (voice-no-match path). `nil` for tap answers,
+        /// voice answers that matched an option, and explicit skips.
+        /// Lets the result screen show "you answered: 'Lincoln'" instead
+        /// of the misleading "no answer given" for these cases.
+        let userSpokenText: String?
         let isCorrect: Bool
     }
 
@@ -193,8 +199,12 @@ final class UnifiedQuizLogic: ObservableObject {
     // MARK: - Answer handling
 
     /// Record an answer. Returns true if correct.
+    ///
+    /// `userSpokenText` is only set on the voice-no-match path so the
+    /// result screen can surface what was actually heard. All other
+    /// callers (tap answers, voice matches, skips) pass `nil`.
     @discardableResult
-    func answerQuestion(_ answerIndex: Int) -> Bool {
+    func answerQuestion(_ answerIndex: Int, userSpokenText: String? = nil) -> Bool {
         guard currentQuestionIndex < questions.count, !isFinished else { return false }
 
         let q = currentQuestion
@@ -210,12 +220,24 @@ final class UnifiedQuizLogic: ObservableObject {
         answerLog.append(AnswerLogEntry(
             question: q,
             userAnswer: validIndex,
+            userSpokenText: userSpokenText,
             isCorrect: isCorrect
         ))
 
         if tracksProgress {
             progress.recordAnswer(correct: isCorrect)
-            QuestionTracker.shared.recordAnswer(questionID: currentQuestion.id, correct: isCorrect)
+            // Tag with the current language so per-question history is
+            // bucketed per locale — a Spanish learner's wrong answer here
+            // stays in their Spanish bucket and doesn't leak into the
+            // English readiness dashboard. `languageTag` is set by the
+            // calling view (QuizView's `syncVoiceConfig`, AudioOnlyView's
+            // `startQuizIfPossible`, MockInterviewView's English-only
+            // default).
+            QuestionTracker.shared.recordAnswer(
+                questionID: currentQuestion.id,
+                language: languageTag,
+                correct: isCorrect
+            )
         }
 
         // Ask the mode if we've hit a terminal condition
@@ -305,8 +327,15 @@ final class UnifiedQuizLogic: ObservableObject {
 
     /// Shuffle questions so that ones the user struggles with appear earlier.
     /// Questions with <60% accuracy get 3x weight; unattempted questions keep normal weight.
+    ///
+    /// Per-language: only consults the user's history in the language
+    /// they're starting this quiz in (`languageTag`). Otherwise a learner
+    /// who struggled with `q_1_01` in Spanish would see it boosted at the
+    /// top of their first English quiz, even though they've never seen
+    /// it in English — that's confusing and contrary to the per-language
+    /// readiness model.
     private func adaptiveShuffle(_ pool: [UnifiedQuestion]) -> [UnifiedQuestion] {
-        let records = QuestionTracker.shared.records
+        let records = QuestionTracker.shared.recordsForLanguage(languageTag)
         return pool.map { q -> (q: UnifiedQuestion, weight: Double) in
             guard let record = records[q.id], record.attempts > 0 else {
                 return (q, Double.random(in: 0..<1))

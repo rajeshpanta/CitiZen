@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		762E2D9B2F883AEE003FE133 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 762E2D9A2F883AEE003FE133 /* StoreKit.framework */; };
-		762E2D9F2F88426A003FE133 /* Citizenship.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 762E2D9E2F88426A003FE133 /* Citizenship.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -125,7 +124,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				762E2D9F2F88426A003FE133 /* Citizenship.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,8 +272,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Citizenship-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CitiZen;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "CitiZen needs microphone access so you can practice answering citizenship test questions out loud.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CitiZen uses speech recognition to evaluate your spoken answers during practice and mock interview sessions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -310,8 +306,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Citizenship-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CitiZen;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "CitiZen needs microphone access so you can practice answering citizenship test questions out loud.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "CitiZen uses speech recognition to evaluate your spoken answers during practice and mock interview sessions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

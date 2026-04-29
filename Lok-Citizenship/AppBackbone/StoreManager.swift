@@ -16,6 +16,13 @@ final class StoreManager: ObservableObject {
 
     @Published private(set) var products: [Product] = []
     @Published private(set) var isPro = false
+    /// The product ID of the currently-active entitlement, e.g.
+    /// `com.citizen.pro.monthly.v2` or `com.citizen.pro.lifetime`. `nil`
+    /// when the user has no active entitlement, OR when Pro is unlocked
+    /// only via the DEBUG dev-force flag (no real transaction). Settings
+    /// uses this to show the user which plan they're on and to gate the
+    /// "Manage Subscription" affordance to renewable plans.
+    @Published private(set) var activeProductID: String?
     /// True when the most recent product-load attempt failed (network error, zero products
     /// returned, etc). Paywall renders a localized "pricing unavailable" message when set.
     /// The specific internal reason isn't exposed — Paywall shows the same user-facing text.
@@ -145,6 +152,7 @@ final class StoreManager: ObservableObject {
     func refreshEntitlements() async {
         var hasPro = false
         var verifyFailed = false
+        var activeID: String?
 
         for await result in Transaction.currentEntitlements {
             do {
@@ -152,6 +160,7 @@ final class StoreManager: ObservableObject {
 
                 if transaction.revocationDate == nil {
                     hasPro = true
+                    activeID = transaction.productID
                     break
                 }
             } catch {
@@ -165,10 +174,13 @@ final class StoreManager: ObservableObject {
         #if DEBUG
         if UserDefaults.standard.bool(forKey: "dev_force_pro") {
             hasPro = true
+            // Intentionally don't set `activeID` for dev-force — there's
+            // no real transaction, so Settings hides the plan row.
         }
         #endif
 
         isPro = hasPro
+        activeProductID = activeID
         entitlementVerificationFailed = hasPro ? false : verifyFailed
     }
 

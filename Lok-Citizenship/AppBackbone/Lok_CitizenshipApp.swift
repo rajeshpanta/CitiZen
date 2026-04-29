@@ -33,6 +33,25 @@ struct Lok_CitizenshipApp: App {
         UINavigationBar.appearance().titleTextAttributes      = attrs
         UINavigationBar.appearance().largeTitleTextAttributes = attrs
 
+        // Segmented-picker styling for the dark gradient backdrop. Only
+        // Reading / Writing Practice use `.segmented` Pickers; on the
+        // dark backdrop, iOS' adaptive default rendered the *unselected*
+        // segment in dark text-on-translucent and was nearly invisible.
+        // White at 70% opacity for the unselected label, with a slightly
+        // lighter translucent background, restores legibility. The
+        // selected segment keeps a solid white capsule with system label
+        // color (high contrast).
+        UISegmentedControl.appearance().setTitleTextAttributes(
+            [.foregroundColor: UIColor.white.withAlphaComponent(0.7)],
+            for: .normal
+        )
+        UISegmentedControl.appearance().setTitleTextAttributes(
+            [.foregroundColor: UIColor.label],
+            for: .selected
+        )
+        UISegmentedControl.appearance().backgroundColor = UIColor.white.withAlphaComponent(0.12)
+        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor.white
+
         // Trim the OpenAI TTS MP3 cache once per launch. The cache key
         // is `model|voice|text`, so every unique question / option /
         // answer-feedback string accumulates an MP3 forever. Across

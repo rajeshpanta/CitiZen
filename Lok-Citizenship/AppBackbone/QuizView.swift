@@ -48,6 +48,13 @@ struct QuizView: View {
         let stt: SpeechToTextService = SupabaseConfig.isConfigured
             ? WhisperSTTService()
             : ServiceLocator.shared.sttService
+        // Use the shared `TTSRouter` (default arg of VoiceQuizController).
+        // The router is language-aware: English text → OpenAI nova (premium
+        // voice, matches Mock Interview); non-English (Spanish / Mandarin /
+        // Nepali) → on-device `LocalTTSService` so the natural locale
+        // voices are used instead of an American-accented nova reading
+        // foreign words. SlowSpeechHelper (Reading / Writing) follows the
+        // same English→OpenAI rule.
         let vc = VoiceQuizController(quizLogic: logic, stt: stt)
         vc.autoAdvance = false  // practice mode: view controls answer flow
         _quizLogic = StateObject(wrappedValue: logic)
@@ -81,10 +88,18 @@ struct QuizView: View {
     }
 
     /// Sync voice controller config when variant changes.
+    ///
+    /// Also updates `quizLogic.languageTag` so any answer recorded after
+    /// a mid-quiz language toggle goes to the correct per-language bucket
+    /// in `QuestionTracker`. Without this, a Spanish learner who toggles
+    /// to the English variant on question 5 would still record those
+    /// English-mode answers under `es-ES`, which conflates the two
+    /// languages' readiness scores.
     private func syncVoiceConfig() {
         voice.localeCode = localeCode
         voice.offlineSTT = offlineOnly
         voice.variantIndex = quizLogic.selectedVariantIndex
+        quizLogic.languageTag = localeCode
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -178,6 +193,19 @@ struct QuizView: View {
             // can bypass those paths and leave TTS/STT running in the background.
             // voice.stop() is idempotent so the double-call on explicit paths is a no-op.
             voice.stop()
+            // Drop any latent "auto-resume after interruption" intent so an
+            // `AVAudioSession.interruptionNotification(.ended)` arriving
+            // between this disappear and the StateObject's actual
+            // deallocation can't replayQuestion() into a screen the user
+            // has already left. (Practice mode wouldn't auto-replay anyway
+            // due to the `autoAdvance` guard, but clearing the flag here
+            // keeps the intent explicit and matches Mock/Audio-Only.)
+            voice.cancelPendingInterruptionResume()
+            // Release the audio session now that the user is leaving for
+            // real — between-question stops deliberately keep the session
+            // active to avoid music-ducking flicker, so this is the one
+            // place the session gets torn down.
+            AudioSessionPrewarmer.deactivate()
         }
 
         // When voice matches an answer in manual mode, process it

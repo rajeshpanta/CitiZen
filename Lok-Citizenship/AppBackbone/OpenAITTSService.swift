@@ -59,11 +59,17 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     /// Calls `completion(true)` when playback finishes, `completion(false)` if fetch
     /// or play failed. The router uses this to fall back to local TTS on failure.
     ///
+    /// `rate` adjusts playback speed via `AVAudioPlayer.rate` (1.0 = original).
+    /// Used by `SlowSpeechHelper` to keep the 0.8–0.85× ESL slowdown for
+    /// Reading / Writing practice while still using the OpenAI voice.
+    /// Cache key is unaffected — the same MP3 is reused across rates,
+    /// since rate is a playback-time property, not file content.
+    ///
     /// The completion is automatically dropped if `stopSpeaking` (or another
     /// `fetchAndPlay`) supersedes this request — see `currentRequestId`. This
     /// prevents stale-cancel callbacks from triggering the router's local-TTS
     /// fallback for the previous question's text.
-    func fetchAndPlay(text: String, completion: @escaping (Bool) -> Void) {
+    func fetchAndPlay(text: String, rate: Float = 1.0, completion: @escaping (Bool) -> Void) {
         guard isConfigured, !text.isEmpty else {
             completion(false)
             return
@@ -87,7 +93,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
 
         let cacheURL = cacheFileURL(for: text)
         if FileManager.default.fileExists(atPath: cacheURL.path) {
-            play(from: cacheURL, completion: guardedCompletion)
+            play(from: cacheURL, rate: rate, completion: guardedCompletion)
             return
         }
 
@@ -158,7 +164,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
                 // continue speaking the (now-cancelled) question over the
                 // result screen. This guard is the actual fix.
                 guard let self, self.currentRequestId == myId else { return }
-                self.play(from: cacheURL, completion: guardedCompletion)
+                self.play(from: cacheURL, rate: rate, completion: guardedCompletion)
             }
         }
         currentTask?.resume()
@@ -168,7 +174,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
 
     private var playCompletion: ((Bool) -> Void)?
 
-    private func play(from url: URL, completion: @escaping (Bool) -> Void) {
+    private func play(from url: URL, rate: Float = 1.0, completion: @escaping (Bool) -> Void) {
         do {
             // Configure the shared session via the central helper. Same
             // category + options + route override as STT, so the
@@ -181,7 +187,17 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
 
             player = try AVAudioPlayer(contentsOf: url)
             player?.delegate = self
+            // Apple requires `enableRate = true` BEFORE `prepareToPlay()`
+            // for rate adjustments to take effect. Skip it at default
+            // speed so we don't pay the time-stretching engine cost
+            // for the common case (Mock Interview, Practice 1–5).
+            if rate != 1.0 {
+                player?.enableRate = true
+            }
             player?.prepareToPlay()
+            if rate != 1.0 {
+                player?.rate = rate
+            }
             player?.play()
             isSpeaking.send(true)
             playCompletion = completion
@@ -195,6 +211,61 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
             try? FileManager.default.removeItem(at: url)
             completion(false)
         }
+    }
+
+    // MARK: - Prefetch
+
+    /// Warm the on-disk cache for `text` without playing it. Used by the
+    /// Reading / Writing practice views to fetch the next card's audio in
+    /// the background while the user is still on the current card, so the
+    /// next speaker tap is a cache hit instead of a 1–2 second cloud
+    /// round-trip.
+    ///
+    /// Critical isolation: this method must NOT touch `currentTask`,
+    /// `currentRequestId`, `player`, `isSpeaking`, or `playCompletion`.
+    /// Those belong to the active `fetchAndPlay` request. Prefetch runs
+    /// completely in parallel — its URLSessionDataTask is fire-and-forget
+    /// (URLSession retains it while running), and its completion only
+    /// writes the MP3 to disk. No view-visible state changes, no audio
+    /// playback, no interference with `stopSpeaking()`.
+    ///
+    /// Idempotent: returns immediately if the cache file already exists,
+    /// so re-prefetching the same text across rapid card-swipes is cheap.
+    /// Backend rate-limits at 120/hour/device, well above any realistic
+    /// prefetch volume from a study session.
+    func prefetch(text: String) {
+        guard isConfigured, !text.isEmpty else { return }
+        let cacheURL = cacheFileURL(for: text)
+        if FileManager.default.fileExists(atPath: cacheURL.path) { return }
+
+        let endpoint = SupabaseConfig.url
+            .appendingPathComponent("functions/v1/tts")
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(SupabaseConfig.anonKey)", forHTTPHeaderField: "Authorization")
+        req.setValue(DeviceID.current, forHTTPHeaderField: "X-Device-Id")
+        req.timeoutInterval = 15
+
+        let body: [String: Any] = [
+            "text": text,
+            "voice": Self.voice,
+        ]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: req) { data, response, error in
+            // Silent no-op on any failure — this is a best-effort warm,
+            // not a user-facing operation. The next real `fetchAndPlay`
+            // call will hit the slow path and surface errors there.
+            guard error == nil,
+                  let data,
+                  let http = response as? HTTPURLResponse,
+                  http.statusCode == 200 else {
+                return
+            }
+            try? data.write(to: cacheURL, options: .atomic)
+        }.resume()
     }
 
     // MARK: - Stop

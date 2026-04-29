@@ -32,12 +32,21 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
     private let auth  = CurrentValueSubject<SFSpeechRecognizerAuthorizationStatus, Never>(.notDetermined)
     private let rec   = CurrentValueSubject<Bool, Never>(false)
     private let trans = PassthroughSubject<String, Never>()
+    /// True between "engine stopped (silence detected, upload starting)" and
+    /// "transcript arrived (finishWith called)". This is the window where
+    /// `rec` is still true (cleared inside finishWith) but the user has
+    /// already stopped talking — UI keyed off `rec` alone reads "Listening"
+    /// when it should read "Processing." Set false on cancel/teardown so
+    /// the post-Whisper retry / next-question paths don't inherit a stale
+    /// processing flag.
+    private let processing = CurrentValueSubject<Bool, Never>(false)
 
     var authorizationStatusPublisher: AnyPublisher<SFSpeechRecognizerAuthorizationStatus, Never> {
         auth.eraseToAnyPublisher()
     }
     var isRecordingPublisher: AnyPublisher<Bool, Never> { rec.eraseToAnyPublisher() }
     var transcriptionPublisher: AnyPublisher<String, Never> { trans.eraseToAnyPublisher() }
+    var isProcessingPublisher: AnyPublisher<Bool, Never> { processing.eraseToAnyPublisher() }
 
     // ── Recording state ─────────────────────────────────────────────────
     private let engine = AVAudioEngine()
@@ -81,6 +90,54 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
     private static let earlyExitMinTokens = 2
     /// Minimum elapsed listening time before early-exit is allowed.
     private static let earlyExitMinElapsed: TimeInterval = 1.5
+
+    // ── Whisper hallucination filter ────────────────────────────────────
+    /// Phrases Whisper is known to hallucinate when fed silent / quiet /
+    /// noisy audio — leakage from the YouTube and podcast transcripts in
+    /// its training set. Compared lowercased and whitespace-trimmed, so
+    /// case and trailing punctuation don't matter. None of these are
+    /// remotely plausible USCIS citizenship-test answers, so a full-string
+    /// match against any of them means the audio was effectively silent
+    /// and we should treat it as such.
+    private static let whisperHallucinations: Set<String> = [
+        "you",
+        "thank you",
+        "thank you.",
+        "thanks",
+        "thanks.",
+        "thanks for watching",
+        "thanks for watching!",
+        "thanks for watching.",
+        "thank you for watching",
+        "thank you for watching.",
+        "please subscribe",
+        "please subscribe.",
+        "subscribe",
+        "like and subscribe",
+        "please like and subscribe",
+        "please like, share, and subscribe",
+        "please like, share and subscribe",
+        "like, share, and subscribe",
+        "like, comment, and subscribe",
+        "don't forget to subscribe",
+        "don't forget to like and subscribe",
+        "subscribe to my channel",
+        "see you in the next video",
+        "see you next time",
+        "see you",
+        "bye",
+        "bye!",
+        "bye.",
+        "okay",
+        "ok",
+    ]
+
+    private static func isWhisperHallucination(_ text: String) -> Bool {
+        let normalized = text
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return whisperHallucinations.contains(normalized)
+    }
 
     // ── Authorization (mic + speech recognition) ───────────────────────
     func requestAuthorization() {
@@ -316,10 +373,19 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         }
     }
 
-    /// Hard cancel — discard captured audio, abort any in-flight Whisper upload,
-    /// release the audio session. Used by VoiceQuizController.stopAudio for all
-    /// the "user chose a different action" paths (End/Back/Skip/replay/tap-answer).
-    /// Idempotent.
+    /// Hard cancel — discard captured audio, abort any in-flight Whisper upload.
+    /// Used by VoiceQuizController.stopAudio for all the "user chose a different
+    /// action" paths (End/Back/Skip/replay/tap-answer). Idempotent.
+    ///
+    /// Does NOT deactivate the audio session. `cancelRecording` runs
+    /// between every question (after a successful match → `recordAnswer`
+    /// → `stopAudio` → `cancelRecording`), so deactivating here was the
+    /// source of the audible "music pumping" — `.duckOthers` releases on
+    /// `setActive(false)` and re-engages on the next `setActive(true)`,
+    /// once per question. The orange mic indicator already drops when
+    /// `engine.stop()` runs in `stopEngineAndSF`. Final session teardown
+    /// happens in the view's `.onDisappear` via
+    /// `AudioSessionPrewarmer.deactivate()`.
     func cancelRecording() {
         // Cancel pending upload (in case finishRecordingAndUpload already ran
         // and the Task is in flight). Task cancellation is cooperative — the
@@ -341,6 +407,11 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
             try? FileManager.default.removeItem(at: url)
         }
 
+        // Clear processing on cancel so a teardown that races with an
+        // in-flight upload doesn't leave the flag stuck on for the next
+        // question.
+        processing.send(false)
+
         // Only emit isRecording=false if it was actually true. Re-emitting
         // false→false would fire the controller's onSTTFinished guard
         // unnecessarily (it'd no-op via the phase guard, but the dispatch
@@ -348,7 +419,6 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         if wasRecording {
             rec.send(false)
         }
-        deactivateSession()
     }
 
     /// Stop engine, end SF, then kick off Whisper upload on the captured file.
@@ -359,6 +429,11 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         let partial = lastPartial
 
         stopEngineAndSF()
+        // Engine is stopped — user has finished talking. Mark processing so
+        // UI can flip from "Listening" to "Processing" while the upload is
+        // in flight. Cleared in finishWith / emitFailure when the transcript
+        // arrives (or fails).
+        processing.send(true)
 
         guard let url = urlToUpload else {
             // Engine never started or already torn down — emit failure so the
@@ -459,7 +534,24 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
             // Whisper sometimes returns empty text for true silence — fall
             // back to SF partial in that case (still likely empty, but lets
             // the controller decide the right "no speech" UX).
-            let final = trimmed.isEmpty ? fallback : trimmed
+            //
+            // It also hallucinates training-data boilerplate ("please like
+            // and subscribe", "thanks for watching", a bare "you", etc.)
+            // when fed quiet / silent audio — Whisper was trained on huge
+            // amounts of YouTube content and falls back to that when the
+            // signal is weak. None of those are remotely plausible
+            // citizenship-quiz answers, so treat them as silence and let
+            // the empty-spoken retry path take over instead of feeding
+            // the matcher a string the user never said.
+            let final: String
+            if trimmed.isEmpty || Self.isWhisperHallucination(trimmed) {
+                if Self.isWhisperHallucination(trimmed) {
+                    Self.log.info("dropping whisper hallucination: \(trimmed, privacy: .private)")
+                }
+                final = fallback
+            } else {
+                final = trimmed
+            }
             // Final user transcript — `.private` so device-log exports
             // (sysdiagnose, Console.app) redact the user's spoken text.
             // Aligns with the privacy policy's "we do not log or store
@@ -506,6 +598,10 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         if !text.isEmpty {
             trans.send(text)
         }
+        // Clear processing BEFORE rec — the controller transitions to .matching
+        // off the rec=false edge, and we don't want a stale processing=true
+        // bleeding into the matching phase.
+        processing.send(false)
         rec.send(false)
         // Note: NOT deactivating audio session here. Keeping .playAndRecord
         // active across questions avoids an activate/deactivate cycle on every
@@ -517,6 +613,7 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
 
     @MainActor
     private func emitFailure() {
+        processing.send(false)
         rec.send(false)
         // Same rationale as finishWith — keep session active.
     }

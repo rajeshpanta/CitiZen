@@ -26,6 +26,11 @@ struct WritingTestView: View {
     // F6: exactly-once guard for recording this session's outcome to ProgressManager.
     @State private var sessionRecorded: Bool = false
 
+    // Speaker-button loading state — see ReadingPracticeView for full notes.
+    // Cloud TTS cold path is 300–1500 ms; spinner shows during that gap.
+    @State private var isSpeakerLoading: Bool = false
+    @State private var speakerLoadNonce: Int = 0
+
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     init(language: AppLanguage,
@@ -55,6 +60,10 @@ struct WritingTestView: View {
         }
         .onAppear {
             isAppeared = true
+            // Warm the cache for the first sentence before auto-dictation.
+            // Cuts perceived latency on cold launch when the network
+            // round-trip would otherwise stack on top of the 0.5s delay.
+            SlowSpeechHelper.shared.prefetch(text: session.currentSentence)
             // Auto-dictate the first sentence after a short delay (F4: skip if disappeared).
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 guard isAppeared else { return }
@@ -65,17 +74,42 @@ struct WritingTestView: View {
                 guard isAppeared else { return }
                 inputFocused = true
             }
-            // M2: mark session active so the parent's back button will confirm.
-            sessionActive = !session.isFinished
+            // Leave the picker enabled on entry — the user hasn't typed
+            // or submitted anything yet, so switching to Learn loses
+            // nothing. The flag flips to true once they submit an answer
+            // (the onChange below); only then does the parent disable
+            // the picker against a silent abandon.
+            sessionActive = false
         }
         .onDisappear {
             isAppeared = false
             SlowSpeechHelper.shared.stop()
+            isSpeakerLoading = false
             // M2: clear the flag — user is no longer on the Test tab.
             sessionActive = false
         }
+        // Prefetch each new test sentence the moment the engine
+        // advances — keeps the auto-dictation warm and any Play
+        // Again tap a cache hit.
+        .onChange(of: session.currentIndex) { _ in
+            guard !session.isFinished else { return }
+            SlowSpeechHelper.shared.prefetch(text: session.currentSentence)
+        }
+        // Cleared the moment cloud audio actually starts. Safety
+        // timeout in `speak()` handles the local-fallback path.
+        .onReceive(SlowSpeechHelper.shared.isSpeakingPublisher) { speaking in
+            if speaking { isSpeakerLoading = false }
+        }
+        // Any submitted answer counts as engagement — abandoning after
+        // this would discard real progress on the engine.
+        .onChange(of: session.attempts.filter(\.attempted).count) { count in
+            if count > 0 { sessionActive = true }
+        }
         .onChange(of: session.isFinished) { finished in
-            sessionActive = !finished
+            // Finished → unlock the picker. Try-Again restart leaves
+            // sessionActive at false until the user submits in the new
+            // round (the onChange above re-flips it).
+            if finished { sessionActive = false }
             // F6: record this session's outcome to ProgressManager, exactly once.
             if finished && !sessionRecorded {
                 sessionRecorded = true
@@ -128,7 +162,18 @@ struct WritingTestView: View {
                     speak(session.currentSentence)
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "speaker.wave.2.fill")
+                        // Fixed slot keeps the capsule width stable
+                        // when the icon is swapped for a spinner.
+                        ZStack {
+                            if isSpeakerLoading {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                            } else {
+                                Image(systemName: "speaker.wave.2.fill")
+                            }
+                        }
+                        .frame(width: 18, height: 18)
                         Text(s.writingPlayAgainBtn)
                     }
                     .font(.subheadline.bold())
@@ -136,6 +181,7 @@ struct WritingTestView: View {
                     .padding(.horizontal, 20).padding(.vertical, 10)
                     .background(Capsule().fill(Color.blue.opacity(0.85)))
                 }
+                .disabled(isSpeakerLoading)
             }
 
             // Typing input
@@ -289,6 +335,7 @@ struct WritingTestView: View {
 
     private func checkAnswer() {
         SlowSpeechHelper.shared.stop()
+        isSpeakerLoading = false
         let diff = WritingDiffRenderer.diff(
             expected: session.currentSentence,
             input: userInput
@@ -301,6 +348,7 @@ struct WritingTestView: View {
     private func advanceSession() {
         lastDiff = nil
         userInput = ""
+        isSpeakerLoading = false
         session.advance()
         if !session.isFinished {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -315,12 +363,15 @@ struct WritingTestView: View {
         userInput = ""
         sessionRecorded = false  // F6: new session = new record on completion
         SlowSpeechHelper.shared.stop()
+        isSpeakerLoading = false
         let words = TestSentencePicker.pick(
             from: pool,
             excludingRecent: ProgressManager.shared.recentWritingSentenceIDs
         )
         ProgressManager.shared.rememberWritingSentences(words.map { $0.id })
         session.restart(with: words.map { $0.exampleSentence })
+        // Warm the new first-sentence cache before its auto-dictation.
+        SlowSpeechHelper.shared.prefetch(text: session.currentSentence)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             guard isAppeared else { return }
             speak(session.currentSentence)
@@ -328,7 +379,16 @@ struct WritingTestView: View {
     }
 
     private func speak(_ text: String) {
+        isSpeakerLoading = true
+        speakerLoadNonce &+= 1
+        let myNonce = speakerLoadNonce
         SlowSpeechHelper.shared.speak(text, rateMultiplier: 0.8)
+        // Safety net for the local-fallback path — see ReadingPracticeView.speak.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            if speakerLoadNonce == myNonce {
+                isSpeakerLoading = false
+            }
+        }
     }
 
     // N1: wrong words get bold + underline so colorblind users have a non-color cue.

@@ -12,13 +12,30 @@ struct SettingsView: View {
 
     @State private var showPrivacy = false
     @State private var showTerms = false
+    @State private var showPaywall = false
     @State private var interviewDate: Date = ProgressManager.shared.interviewDate ?? Date()
     @State private var hasInterview: Bool = ProgressManager.shared.interviewDate != nil
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
-        Form {
+        ZStack {
+            // Match the deep-blue gradient used by PracticeSelectionView /
+            // ReadinessView so Settings doesn't read as "a different app."
+            // Form keeps its native rows + accessibility — only the
+            // backdrop and color scheme change.
+            LinearGradient(
+                colors: [
+                    Color(red: 0.0, green: 0.12, blue: 0.35),
+                    Color(red: 0.0, green: 0.06, blue: 0.2),
+                    Color.black
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            Form {
             // MARK: - Study Reminders
             Section {
                 if notifications.isAuthorized {
@@ -86,7 +103,35 @@ struct SettingsView: View {
                             .foregroundColor(.green)
                             .bold()
                     }
+                    // Plan label — only when we have a real transaction.
+                    // DEBUG dev-force leaves activeProductID nil so this
+                    // row hides instead of misreporting "Lifetime".
+                    if let plan = planDisplayLabel(for: store.activeProductID) {
+                        HStack {
+                            Text(s.settingsPlanLabel)
+                            Spacer()
+                            Text(plan)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    // Renewable subscriptions only — Apple's guideline
+                    // 3.1.2 requires an in-app management entry. Lifetime
+                    // doesn't auto-renew, so the link would just confuse.
+                    if store.activeProductID == StoreManager.monthlyID {
+                        Button(s.settingsManageSubscription) {
+                            if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+                                openURL(url)
+                            }
+                        }
+                    }
+                    Button(s.settingsRestorePurchases) {
+                        Task { await store.restorePurchases() }
+                    }
                 } else {
+                    Button(s.settingsUpgradeToPro) {
+                        showPaywall = true
+                    }
+                    .bold()
                     Button(s.settingsRestorePurchases) {
                         Task { await store.restorePurchases() }
                     }
@@ -133,10 +178,23 @@ struct SettingsView: View {
                     .font(.caption2)
             }
             #endif
+            }
+            // Hide Form's default grouped-list backdrop so the gradient
+            // shows through. Without this we'd see the standard system
+            // gray (Light) or near-black (Dark) behind the rows.
+            .scrollContentBackground(.hidden)
         }
+        // Force dark color scheme so native controls (Toggle, DatePicker,
+        // Buttons inside Form) render their dark-mode variants regardless
+        // of the user's system setting — matching the rest of the app,
+        // which is hardcoded dark.
+        .preferredColorScheme(.dark)
         .navigationTitle(s.navSettings)
         .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
         .sheet(isPresented: $showTerms) { TermsOfUseView() }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(trigger: "settings_upgrade", language: language)
+        }
         .onAppear {
             notifications.checkAuthorization()
             // Refresh local @State from persisted state. The @State init
@@ -165,4 +223,16 @@ struct SettingsView: View {
         }
     }
 
+    /// Localized human-readable name for the user's current plan, derived
+    /// from the StoreKit product ID. Returns `nil` for unrecognized IDs
+    /// (e.g. a future SKU we haven't shipped strings for, or DEBUG
+    /// dev-force where there is no real transaction) — callers should
+    /// hide the row in that case rather than show a raw product ID.
+    private func planDisplayLabel(for productID: String?) -> String? {
+        switch productID {
+        case StoreManager.monthlyID:  return s.settingsPlanMonthly
+        case StoreManager.lifetimeID: return s.settingsPlanLifetime
+        default: return nil
+        }
+    }
 }

@@ -104,26 +104,55 @@ Deno.serve(async (req) => {
   }
 
   // ── Build prompt ────────────────────────────────────────────────────────
-  // Generous matching prompt — the goal is to give credit for understanding,
-  // not penalize wording. Mirrors how a real USCIS officer judges spoken
-  // answers from non-native speakers.
+  // Map a spoken answer to the option the speaker meant. Tuned aggressively
+  // toward "match when in doubt" because the cost asymmetry strongly favors
+  // false-positives:
+  //   - Wrong match: user gets 1 question wrong, sees the correct answer
+  //     revealed, moves on. Negligible UX cost.
+  //   - False reject: user feels the app is broken ("I said Adams, why
+  //     didn't it work?") and either repeats themselves (frustration) or
+  //     gives up. High UX cost, especially for ESL learners who are
+  //     already self-conscious about pronunciation.
+  // The system prompt below uses explicit rules + few-shot examples; in
+  // practice the examples carry most of the weight — bare instructions
+  // historically left edge cases ("maybe Adams", "Jefferson wait Adams")
+  // ambiguous and the model hedged toward null.
   const optionLines = options
     .map((o, i) => `${i}. ${o}`)
     .join("\n");
 
-  const systemPrompt =
-    "You evaluate spoken answers from non-native English speakers preparing for the U.S. citizenship test. " +
-    "Your job is to map a spoken answer to the multiple-choice option it best corresponds to.\n\n" +
-    "Be generous and user-favorable:\n" +
-    "- The answer does NOT need to be word-for-word. Reward understanding.\n" +
-    "- Paraphrases, partial answers, synonyms, related concepts, and number words (\"twenty seven\" = \"27\") all count.\n" +
-    "- Mild speech-recognition errors are common — pick the option that most plausibly matches what the speaker meant.\n" +
-    "- Pick the single best option even if the match isn't perfect, as long as the speaker is clearly attempting that answer.\n" +
-    "- Only return null if the spoken answer is genuinely unrelated to all options (off-topic, gibberish, \"I don't know\", or a different question entirely).\n\n" +
-    "Respond with ONLY a JSON object: {\"index\": <integer 0..N-1 or null>}. No prose, no explanation.";
+  const systemPrompt = [
+    "You evaluate spoken answers from non-native English speakers preparing for the U.S. citizenship test.",
+    "Map the spoken answer to the option (0..N-1) the speaker meant, or null only if genuinely unrelated.",
+    "",
+    "Judge understanding, not wording. Apply these rules:",
+    "",
+    "1. If any option name — or a clear paraphrase, synonym, partial form, or number-word equivalent — appears anywhere in the spoken text, pick that option. Filler and surrounding context don't change this.",
+    "2. Hedging is an attempt, NOT a rejection. \"I think Adams\", \"maybe Adams\", \"probably Adams\", \"I'm not sure but Adams\" all → match Adams.",
+    "3. On self-correction, use the LAST stated answer. \"Jefferson, no wait, I mean Adams\" → match Adams.",
+    "4. Number words match digits (\"twenty seven\" = \"27\"). Related concepts match (\"the supreme law of the land\" = \"the Constitution\").",
+    "5. Speech-recognition slips happen — accents, dropped letters, near-homophones (\"atom\" for \"Adams\", \"constitushun\" for \"Constitution\"). Pick what the speaker most plausibly meant.",
+    "",
+    "Return null ONLY when ALL of these hold:",
+    "- no option name or recognizable paraphrase appears anywhere in the text,",
+    "- AND the answer is clearly off-topic, gibberish, or an explicit \"I don't know\" / \"skip\" / \"pass\".",
+    "",
+    "When in doubt between rejecting and matching, MATCH. A wrong match costs the user one question; a false reject makes the app feel broken.",
+    "",
+    "Respond with ONLY a JSON object: {\"index\": <integer or null>}. No prose, no explanation.",
+    "",
+    "Examples (assume options are [Washington, Adams, Jefferson, Madison]):",
+    "Speaker: \"I think it's Adams\" → {\"index\": 1}",
+    "Speaker: \"maybe Madison\" → {\"index\": 3}",
+    "Speaker: \"Jefferson, wait, I mean Washington\" → {\"index\": 0}",
+    "Speaker: \"the second president was John Adams\" → {\"index\": 1}",
+    "Speaker: \"atom\" → {\"index\": 1}",
+    "Speaker: \"I don't know\" → {\"index\": null}",
+    "Speaker: \"the sky is blue\" → {\"index\": null}",
+  ].join("\n");
 
   const userPrompt =
-    `Question: ${question}\n\nOptions:\n${optionLines}\n\nThe speaker said: "${spoken}"\n\nWhich option (0..${options.length - 1}) did they mean?`;
+    `Question: ${question}\n\nOptions:\n${optionLines}\n\nSpeaker: "${spoken}"\n\nReturn {"index": 0..${options.length - 1}} or {"index": null}.`;
 
   // ── Call OpenAI ─────────────────────────────────────────────────────────
   const ctrl = new AbortController();

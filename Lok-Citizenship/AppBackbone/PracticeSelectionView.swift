@@ -209,6 +209,20 @@ struct PracticeSelectionView: View {
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
+    /// 2-letter abbreviation for the toolbar language chip. Mirrors what the
+    /// flag emoji already conveys, so a returning user sees both at a glance:
+    /// 🇺🇸 EN · 🇳🇵 NP · 🇪🇸 ES · 🇨🇳 CN. Country codes (NP/ES/CN) match the
+    /// flags directly; English uses "EN" rather than "US" since the language
+    /// abbreviation is more universally readable than the country one.
+    private func shortCode(for lang: AppLanguage) -> String {
+        switch lang {
+        case .english: return "EN"
+        case .nepali:  return "NP"
+        case .spanish: return "ES"
+        case .chinese: return "CN"
+        }
+    }
+
     private func levelMeta(_ level: Int) -> (label: String, color: Color, icon: String) {
         switch level {
         case 1: return (s.levelEasy,     .green,  "1.circle.fill")
@@ -264,63 +278,12 @@ struct PracticeSelectionView: View {
 
             ScrollView {
                 VStack(spacing: 14) {
-                    VStack(spacing: 6) {
-                        Text(s.pickPractice)
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.top, 12)
-
-                    // Language selector
-                    Menu {
-                        ForEach(AppLanguage.allCases) { lang in
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) { language = lang }
-                                // Persist so the choice survives relaunch.
-                                // Without this, the picker was session-only
-                                // and the next cold launch reverted to the
-                                // onboarding-set language.
-                                ProgressManager.shared.preferredLanguage = lang.rawValue
-                                // Reschedule local notifications so daily /
-                                // streak reminders fire in the new language.
-                                // `localizedStrings` in NotificationManager
-                                // reads `pm_preferredLanguage` at schedule
-                                // time, so this only works because we
-                                // persisted above.
-                                if NotificationManager.shared.isEnabled {
-                                    NotificationManager.shared.scheduleAll()
-                                }
-                                Analytics.track(.languageSelected(language: lang.rawValue))
-                            } label: {
-                                HStack {
-                                    Text("\(lang.flag) \(lang.displayName)")
-                                    if language == lang {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Text("\(language.flag) \(language.displayName)")
-                                .font(.subheadline.bold())
-                                .foregroundColor(.white)
-                            Image(systemName: "chevron.down")
-                                .font(.caption.bold())
-                                .foregroundColor(.white.opacity(0.5))
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.08))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                    }
+                    // Header slot: rich hero card when an interview date is
+                    // set, otherwise renders nothing (the `.large` nav-bar
+                    // title already labels the screen, so a body greeting
+                    // would duplicate it).
+                    interviewHeroSection
+                        .padding(.top, 12)
 
                     if shouldShowVoicePackBanner {
                         voicePackBanner
@@ -351,28 +314,6 @@ struct PracticeSelectionView: View {
                     }
                     .padding(.horizontal, 20)
 
-                    // Interview countdown banner
-                    if let date = ProgressManager.shared.interviewDate, date > Date() {
-                        let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0)
-                        NavigationLink(destination: InterviewChecklistView().navigationTitle(s.navInterviewChecklist)) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "calendar.badge.clock")
-                                    .font(.system(size: 22))
-                                    .foregroundColor(.blue)
-                                Text(String(format: s.daysUntilInterviewFormat, days))
-                                    .font(.subheadline.bold())
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.white.opacity(0.4))
-                            }
-                            .padding(14)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue.opacity(0.15)))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.blue.opacity(0.3), lineWidth: 1))
-                        }
-                        .padding(.horizontal, 20)
-                    }
-
                     // Exam Readiness card
                     NavigationLink(
                         destination: ReadinessView(language: language)
@@ -400,8 +341,15 @@ struct PracticeSelectionView: View {
                     .padding(.top, 6)
 
                     // Level cards
+                    //
+                    // Free tier: Practice 1 (Easy) + Practice 2 (Easy) only.
+                    // Pro: Practice 3 (Medium), 4 (Hard), 5 (Advanced).
+                    // Threshold was `>= 4` — bumped to `>= 3` to bring
+                    // Medium behind the paywall too. Practice 1 and 2 stay
+                    // free so a brand-new user can experience the core
+                    // quiz loop before being asked to pay.
                     ForEach(items) { item in
-                        let locked = item.level >= 4 && !store.isPro
+                        let locked = item.level >= 3 && !store.isPro
                         let meta = levelMeta(item.level)
 
                         if locked {
@@ -486,9 +434,63 @@ struct PracticeSelectionView: View {
                 }
             }
         }
-        .navigationTitle(s.navPracticeSelection)
+        // Nav-bar title carries the screen's purpose ("Pick a Practice")
+        // so we don't need a redundant body greeting. Inline display
+        // matches the rest of the app's nav-bar style.
+        .navigationTitle(s.pickPractice)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Menu {
+                    ForEach(AppLanguage.allCases) { lang in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) { language = lang }
+                            // Persist so the choice survives relaunch.
+                            // Without this, the picker was session-only
+                            // and the next cold launch reverted to the
+                            // onboarding-set language.
+                            ProgressManager.shared.preferredLanguage = lang.rawValue
+                            // Reschedule local notifications so daily /
+                            // streak reminders fire in the new language.
+                            // `localizedStrings` in NotificationManager
+                            // reads `pm_preferredLanguage` at schedule
+                            // time, so this only works because we
+                            // persisted above.
+                            if NotificationManager.shared.isEnabled {
+                                NotificationManager.shared.scheduleAll()
+                            }
+                            Analytics.track(.languageSelected(language: lang.rawValue))
+                        } label: {
+                            HStack {
+                                Text("\(lang.flag) \(lang.displayName)")
+                                if language == lang {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(language.flag)
+                            .font(.subheadline)
+                        Text(shortCode(for: language))
+                            .font(.caption.bold())
+                            .tracking(0.5)
+                            .foregroundColor(.white.opacity(0.85))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.08))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    )
+                }
+                .accessibilityLabel(language.displayName)
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 NavigationLink(destination: SettingsView(language: language)) {
                     Image(systemName: "gearshape.fill")
@@ -545,12 +547,149 @@ struct PracticeSelectionView: View {
         )
     }
 
+    // MARK: - Interview Hero Section
+
+    /// Whole-day-aligned days from today to interview. Negative when past.
+    /// `startOfDay` on both sides keeps "today" stable through the entire
+    /// interview day — picking 09:00 still reads as 0 at 9 PM the same day.
+    private func daysUntilInterview(_ date: Date) -> Int {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let target = cal.startOfDay(for: date)
+        return cal.dateComponents([.day], from: today, to: target).day ?? 0
+    }
+
+    /// Linear on-track curve: target mastery climbs ~2 percentage points per
+    /// day toward 90% on day-of. 30 days out → ≥30% to be on track; 14 days
+    /// → ≥62%; 7 days → ≥76%. Behind the curve goes orange — or red if
+    /// ≤7 days, since runway to recover is short.
+    private func interviewAccent(daysOut: Int, pct: Int) -> Color {
+        let target = max(0, 90 - daysOut * 2)
+        if pct >= target { return .green }
+        return daysOut <= 7 ? .red : .orange
+    }
+
+    /// The header slot. Renders the rich hero when an interview date is set
+    /// (future or today). When no date is scheduled (or the saved date is in
+    /// the past), nothing renders here — the `.large` nav-bar title already
+    /// provides the screen header, so adding a body greeting would just be
+    /// the same label twice.
+    @ViewBuilder
+    private var interviewHeroSection: some View {
+        if let date = ProgressManager.shared.interviewDate {
+            let days = daysUntilInterview(date)
+            if days > 0 {
+                interviewHeroFuture(days: days, date: date)
+            } else if days == 0 {
+                interviewHeroToday
+            }
+        }
+    }
+
+    private func interviewHeroFuture(days: Int, date: Date) -> some View {
+        let total = 75
+        let mastered = tracker.masteredCount(for: language.rawValue)
+        let pct = total > 0 ? (mastered * 100) / total : 0
+        let remaining = max(0, total - mastered)
+        // Ceiling division: 17 questions over 5 days → 4/day, not 3
+        // (which would leave the user short on the last day).
+        let dailyTarget = days > 0 ? (remaining + days - 1) / days : remaining
+        let accent = interviewAccent(daysOut: days, pct: pct)
+
+        return NavigationLink(
+            destination: ReadinessView(language: language)
+                .navigationTitle(s.navExamReadiness)
+                .navigationBarTitleDisplayMode(.inline)
+        ) {
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 28))
+                    .foregroundColor(.white)
+                    .frame(width: 36)
+                    .padding(.top, 2)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(String(format: s.daysUntilInterviewFormat, days))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Text(dailyTarget == 0
+                         ? s.interviewReadyLabel
+                         : String(format: s.dailyTargetSubtitleFormat, pct, dailyTarget))
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.85))
+                    Text(date, style: .date)
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white.opacity(0.55))
+                    .padding(.top, 4)
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(LinearGradient(colors: [accent.opacity(0.55), accent.opacity(0.25)],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(accent.opacity(0.5), lineWidth: 1)
+            )
+        }
+        .padding(.horizontal, 20)
+    }
+
+    private var interviewHeroToday: some View {
+        NavigationLink(
+            destination: ReadinessView(language: language)
+                .navigationTitle(s.navExamReadiness)
+                .navigationBarTitleDisplayMode(.inline)
+        ) {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: "star.circle.fill")
+                    .font(.system(size: 30))
+                    .foregroundColor(.white)
+                    .frame(width: 36)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(s.interviewTodayTitle)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(s.interviewTodaySubtitle)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white.opacity(0.55))
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(LinearGradient(colors: [Color.yellow.opacity(0.6), Color.orange.opacity(0.35)],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.yellow.opacity(0.55), lineWidth: 1)
+            )
+        }
+        .padding(.horizontal, 20)
+    }
+
     // MARK: - Readiness Card
 
     private var readinessCard: some View {
         let tracker = tracker
         let total = 75 // questions per language
-        let mastered = tracker.masteredCount
+        // Per-language mastered count — a learner studying in Spanish
+        // sees mastery of Spanish questions only, not their English or
+        // Nepali progress. Mirrors the readiness ring inside
+        // `ReadinessView` so the card and the dashboard always agree.
+        let mastered = tracker.masteredCount(for: language.rawValue)
         let pct = total > 0 ? (mastered * 100) / total : 0
 
         return HStack(spacing: 14) {
@@ -587,7 +726,13 @@ struct PracticeSelectionView: View {
     @ViewBuilder
     private var reviewMistakesCard: some View {
         let pool = QuestionPool.allQuestions(for: language)
-        let records = tracker.records
+        // Per-language records: the user's mistakes in OTHER languages
+        // must NOT show up in this language's review pool. A Nepali
+        // learner who got `q_1_01` wrong in Nepali should see it for
+        // review when studying in Nepali — but a Spanish learner who
+        // never opened the Nepali quiz shouldn't have `q_1_01` show up
+        // in their Spanish review queue.
+        let records = tracker.recordsForLanguage(language.rawValue)
         let dueCount = SpacedRepetitionEngine.dueCount(from: pool, records: records)
 
         if dueCount > 0 {

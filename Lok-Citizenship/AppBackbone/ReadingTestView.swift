@@ -65,9 +65,12 @@ struct ReadingTestView: View {
         }
         .onAppear {
             voice.requestAuthorization()
-            // M2: mark the session active unless it's already finished on appear
-            // (rare, but possible if SwiftUI reuses a finished view).
-            sessionActive = !session.isFinished
+            // Leave the picker enabled on entry — user hasn't made any
+            // progress yet, so switching back to Learn loses nothing.
+            // The flag flips to true the moment they actually engage
+            // (mic-tap or completed sentence) via the onChange handlers
+            // below; only then does the parent disable the picker.
+            sessionActive = false
         }
         .onDisappear {
             voice.stop()
@@ -75,10 +78,23 @@ struct ReadingTestView: View {
             // M2: clear the active flag so the parent stops gating the back button.
             sessionActive = false
         }
+        // First mic tap counts as engagement — they're producing audio that
+        // would be lost if they switched away.
+        .onChange(of: voice.isRecording) { recording in
+            if recording { sessionActive = true }
+        }
+        // Any submitted answer counts as engagement — even if they then
+        // stop recording, the result is in `attempts` and abandoning would
+        // discard real progress.
+        .onChange(of: session.attempts.filter(\.attempted).count) { count in
+            if count > 0 { sessionActive = true }
+        }
         .onChange(of: session.isFinished) { finished in
-            // M2: session finished → back button becomes freely tappable.
-            // Session restarted (via Try Again) → sessionActive flips back to true.
-            sessionActive = !finished
+            // Session finished → back button becomes freely tappable;
+            // sessionActive returns to false. Try-Again restart leaves
+            // sessionActive at false until the user engages with the new
+            // round (the two onChange handlers above re-flip it).
+            if finished { sessionActive = false }
             // F6: record the session outcome to ProgressManager, exactly once.
             if finished && !sessionRecorded {
                 sessionRecorded = true
