@@ -64,24 +64,11 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
         u.preUtteranceDelay = 0    // no pause before speaking
         u.postUtteranceDelay = 0   // no pause after speaking
 
-        // Match WhisperSTTService and OpenAITTSService — keep .playAndRecord
-        // throughout the interview so we don't transition categories mid-flow.
-        // Category switches on a live session are flaky on real devices.
-        let session = AVAudioSession.sharedInstance()
-        do {
-            if session.category != .playAndRecord {
-                try session.setCategory(
-                    .playAndRecord,
-                    mode: .spokenAudio,
-                    options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP]
-                )
-            }
-            try session.setActive(true)
-        } catch {
-            #if DEBUG
-            print("[TTS] Audio session setup failed: \(error)")
-            #endif
-        }
+        // Configure shared session via the central helper so this service
+        // uses the same category, options, and route override as every
+        // other audio path in the app. Idempotent — no-op when the
+        // session is already correctly configured.
+        AudioSessionPrewarmer.configureSession()
 
         synthesizer.speak(u)
         isSpeaking.send(true)

@@ -32,24 +32,16 @@ final class SlowSpeechHelper {
                languageCode: String = "en-US") {
         synthesizer.stopSpeaking(at: .immediate)
 
-        // Self-heal the audio session before speaking. LocalSTTService deactivates
-        // the session with `setActive(false, .notifyOthersOnDeactivation)` after
-        // any STT usage (Mock Interview voice, Practice Quiz voice, Audio-Only,
-        // Reading Test), leaving category `.record` + inactive. Without this block
-        // the synthesizer queues onto a dead session → silent failure, only fixed
-        // by an app restart. `.playback` also ignores the ringer switch, which
-        // `.soloAmbient` (iOS default) does not. Mirrors `LocalTTSService.speak`.
-        let session = AVAudioSession.sharedInstance()
-        do {
-            if session.category != .playback {
-                try session.setCategory(.playback, mode: .spokenAudio, options: .duckOthers)
-            }
-            try session.setActive(true)
-        } catch {
-            #if DEBUG
-            print("[SlowSpeech] Audio session setup failed: \(error)")
-            #endif
-        }
+        // Self-heal the audio session before speaking. `LocalSTTService`
+        // deactivates the session with `.notifyOthersOnDeactivation` after
+        // STT, so the next `synthesizer.speak()` would queue onto an
+        // inactive session and fail silently. Use the central helper
+        // (same `.playAndRecord` config as every other audio path) so we
+        // don't churn the category between Reading practice and Mock
+        // Interview / Quiz / Audio-Only — category transitions on a
+        // live session are flaky on real devices, and the previous
+        // `.playback` config here was the source of that churn.
+        AudioSessionPrewarmer.configureSession()
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: languageCode)

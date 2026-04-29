@@ -113,20 +113,15 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         listeningStartTime = Date()
         languageHint = String(localeCode.prefix(2)).lowercased()
 
-        // Audio session — keep on .playAndRecord so TTS can play between
-        // questions without another category transition (see comment in
-        // OpenAITTSService for why mid-session transitions are fragile on
-        // real devices).
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(
-                .playAndRecord,
-                mode: .spokenAudio,
-                options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP]
-            )
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            Self.log.error("session config failed: \(String(describing: error))")
+        // Configure shared session via the central helper — same
+        // category/mode/options as every other audio path, with the
+        // route override that picks BT/headphones when present and
+        // falls back to the loud speaker otherwise. Keeping
+        // `.playAndRecord` means TTS can play between questions without
+        // a mid-session category transition (those are fragile on real
+        // devices — see the OpenAITTSService comment block).
+        guard AudioSessionPrewarmer.configureSession() else {
+            Self.log.error("session config failed")
             rec.send(false); return
         }
 

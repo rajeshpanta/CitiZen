@@ -170,21 +170,14 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
 
     private func play(from url: URL, completion: @escaping (Bool) -> Void) {
         do {
-            // .playAndRecord with .defaultToSpeaker is what STT uses too. Keeping
-            // both services on the same category means we never have to switch
-            // mid-interview — category transitions on a live session are flaky
-            // on real devices (works on simulator). .playAndRecord is the
-            // recommended category for VoIP-style apps that interleave speech
-            // playback and recording.
-            let session = AVAudioSession.sharedInstance()
-            if session.category != .playAndRecord {
-                try session.setCategory(
-                    .playAndRecord,
-                    mode: .spokenAudio,
-                    options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP]
-                )
-            }
-            try session.setActive(true)
+            // Configure the shared session via the central helper. Same
+            // category + options + route override as STT, so the
+            // category never has to transition mid-interview (live
+            // category switches are flaky on real devices). The helper
+            // also drops `.defaultToSpeaker` and applies a runtime route
+            // override so BT speakers actually route to BT instead of
+            // being forced to the iPhone speaker.
+            AudioSessionPrewarmer.configureSession()
 
             player = try AVAudioPlayer(contentsOf: url)
             player?.delegate = self

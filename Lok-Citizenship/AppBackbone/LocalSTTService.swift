@@ -110,35 +110,14 @@ final class LocalSTTService: NSObject, SpeechToTextService {
         // and on AnswerMatcher to handle the actual match downstream.
         _ = options
 
-        // Audio session — only reconfigure if needed.
-        //
-        // Unified on `.playAndRecord` + `.spokenAudio` to match
-        // `LocalTTSService`, `OpenAITTSService`, `WhisperSTTService`,
-        // and `SlowSpeechHelper`. Previously this used `.record` /
-        // `.measurement`, which forced a category transition on every
-        // TTS-then-STT-then-TTS cycle. Live-session category transitions
-        // are flaky on real devices (the comment in
-        // `OpenAITTSService.swift:160` documents this) — keeping every
-        // service on the same config means we configure once per
-        // launch and never change it.
-        //
-        // `.measurement` mode bypasses signal processing for pure-tone
-        // measurement; `.spokenAudio` is the correct mode for STT and
-        // is what Whisper already uses. No accuracy regression expected.
-        let session = AVAudioSession.sharedInstance()
-        if session.category != .playAndRecord {
-            try? session.setCategory(
-                .playAndRecord,
-                mode: .spokenAudio,
-                options: [.duckOthers, .defaultToSpeaker, .allowBluetoothHFP]
-            )
-        }
-        do {
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            #if DEBUG
-            print("[STT] Audio session activation failed: \(error)")
-            #endif
+        // Configure shared session via the central helper. Same
+        // category, mode, options, and route override as every other
+        // audio path — and importantly, the helper drops
+        // `.defaultToSpeaker` (which previously forced our output to the
+        // iPhone speaker even when a BT speaker was connected) and
+        // applies a runtime route override that picks the speaker only
+        // when no external output is present.
+        guard AudioSessionPrewarmer.configureSession() else {
             rec.send(false); return
         }
 
