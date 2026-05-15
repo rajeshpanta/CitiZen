@@ -61,12 +61,15 @@ final class QuestionTracker: ObservableObject {
                 migrated[Self.compositeKey(qid: qid, lang: inferredLocale)] = record
             }
             records = migrated
-            // Persist in new format and remove the legacy key so the
-            // migration doesn't run again on the next launch.
+            // Persist in new format, and only remove the legacy key AFTER a
+            // successful write. If encode/persist fails, leave the legacy
+            // key in place so the migration can retry on next launch —
+            // wiping it unconditionally would lose the user's entire
+            // pre-v2 history if the v2 write didn't land.
             if let data = try? JSONEncoder().encode(migrated) {
                 UserDefaults.standard.set(data, forKey: Self.storageKey)
+                UserDefaults.standard.removeObject(forKey: Self.legacyStorageKey)
             }
-            UserDefaults.standard.removeObject(forKey: Self.legacyStorageKey)
         } else {
             records = [:]
         }
@@ -129,21 +132,42 @@ final class QuestionTracker: ObservableObject {
 
     /// Number of questions mastered (≥3 consecutive correct) in this
     /// language's bucket.
-    func masteredCount(for language: String) -> Int {
+    ///
+    /// Pass `inPool` to restrict the count to questions still present in the
+    /// current question bank. This matters after a question-bank migration
+    /// (e.g., English moved from the legacy 75-question layout to the 2025
+    /// 128-question USCIS bank): old records under the old IDs would
+    /// otherwise inflate the mastered count even though those questions
+    /// no longer appear in the pool. Without `inPool`, returns the raw
+    /// record-level count (suitable for telemetry that wants historical
+    /// totals, not per-pool readiness).
+    func masteredCount(for language: String, inPool pool: [UnifiedQuestion]? = nil) -> Int {
         let prefix = "\(language)::"
+        let validIDs = pool.map { Set($0.map(\.id)) }
         return records.reduce(0) { acc, entry in
-            entry.key.hasPrefix(prefix) && entry.value.consecutiveCorrect >= 3 ? acc + 1 : acc
+            guard entry.key.hasPrefix(prefix), entry.value.consecutiveCorrect >= 3 else { return acc }
+            if let validIDs {
+                let qid = String(entry.key.dropFirst(prefix.count))
+                guard validIDs.contains(qid) else { return acc }
+            }
+            return acc + 1
         }
     }
 
     /// Number of questions attempted but not yet mastered in this language.
-    func learningCount(for language: String) -> Int {
+    /// See `masteredCount(for:inPool:)` for `inPool` semantics.
+    func learningCount(for language: String, inPool pool: [UnifiedQuestion]? = nil) -> Int {
         let prefix = "\(language)::"
+        let validIDs = pool.map { Set($0.map(\.id)) }
         return records.reduce(0) { acc, entry in
-            entry.key.hasPrefix(prefix)
-                && entry.value.attempts > 0
-                && entry.value.consecutiveCorrect < 3
-                ? acc + 1 : acc
+            guard entry.key.hasPrefix(prefix),
+                  entry.value.attempts > 0,
+                  entry.value.consecutiveCorrect < 3 else { return acc }
+            if let validIDs {
+                let qid = String(entry.key.dropFirst(prefix.count))
+                guard validIDs.contains(qid) else { return acc }
+            }
+            return acc + 1
         }
     }
 

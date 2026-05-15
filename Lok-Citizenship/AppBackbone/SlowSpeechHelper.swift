@@ -21,7 +21,13 @@ final class SlowSpeechHelper {
     static let shared = SlowSpeechHelper()
 
     private let synthesizer = AVSpeechSynthesizer()
-    private let openAI = OpenAITTSService()
+    /// Shared with `TTSRouter` (and therefore the Quiz/Mock/AudioOnly
+    /// flows) via `ServiceLocator`. Owning a separate instance here used
+    /// to mean Reading-practice TTS and Mock-interview TTS could collide
+    /// on the same `AVAudioSession` with no way for either side's
+    /// `stopSpeaking` to silence the other. One shared instance gives
+    /// one in-flight player + one request-id across the whole app.
+    private let openAI = ServiceLocator.shared.openAITTS
 
     private init() {}
 

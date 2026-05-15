@@ -43,6 +43,13 @@ struct OnboardingView: View {
     @ObservedObject private var notifications = NotificationManager.shared
     @State private var isDemoPlaying = false
     @State private var demoSubscription: AnyCancellable?
+    /// Observed so `introScreen` can call `stopDemo()` if the user
+    /// backgrounds the app mid-demo. AVAudioSession interruptions (phone
+    /// call, Siri, alarm) sometimes leave the synthesizer in a half-
+    /// stopped state where the delegate didn't fire — without this, the
+    /// "Hear a sample" button stays stuck in the red "stop" state even
+    /// though no audio is playing.
+    @Environment(\.scenePhase) private var scenePhase
 
     // MARK: - Derived
 
@@ -152,6 +159,25 @@ struct OnboardingView: View {
             }
         }
         .scrollIndicators(.hidden)
+        // Bind the demo button's visual state to the real TTS engine
+        // signal rather than our local flag. The sink in `playDemo`
+        // fires only on natural completion of the publisher — an
+        // audio-session interruption (phone call, Siri) can leave the
+        // engine stopped without sending that terminal, stranding the
+        // button in the red "stop" state. The TTS service's
+        // `isSpeakingPublisher` reflects the synthesizer's delegate
+        // (didStart/didFinish/didCancel), so observing it here covers
+        // every stop path including interruptions.
+        .onReceive(ServiceLocator.shared.ttsService.isSpeakingPublisher) { speaking in
+            if !speaking { isDemoPlaying = false }
+        }
+        .onChange(of: scenePhase) { phase in
+            // Belt-and-suspenders: if the user backgrounds the app
+            // mid-demo, halt the demo explicitly so it doesn't resume
+            // when they come back (and so the UI flag doesn't get
+            // stuck on if the OS interrupted before the delegate ran).
+            if phase != .active { stopDemo() }
+        }
     }
 
     private func featureRow(icon: String, title: String, subtitle: String, color: Color) -> some View {
@@ -297,7 +323,15 @@ struct OnboardingView: View {
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.5))
 
-            DatePicker("", selection: $interviewDate, in: Date()..., displayedComponents: .date)
+            // Cap two years out: USCIS interview scheduling rarely exceeds
+            // ~14 months from filing, so a 24-month ceiling is generous.
+            // Without an upper bound, picking 2099 makes the readiness
+            // dashboard render "26500 days until your interview" — looks
+            // like a date-formatting bug.
+            DatePicker("",
+                       selection: $interviewDate,
+                       in: Date()...(Calendar.current.date(byAdding: .year, value: 2, to: Date()) ?? Date()),
+                       displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .labelsHidden()
                 .colorScheme(.dark)

@@ -97,16 +97,23 @@ struct PaywallView: View {
                             .padding(.horizontal, 24)
                     }
 
-                    // Restore + Legal
-                    VStack(spacing: 8) {
-                        Button(s.paywallRestore) {
+                    // Restore + Legal. Restore Purchases is a non-revenue
+                    // path BUT a leading driver of 1-star reviews when
+                    // users on a second device can't find it — making it
+                    // higher contrast (and pairing it with a visible icon)
+                    // prevents the "you took my money twice" complaint.
+                    // Legal links stay subdued; that's the right hierarchy.
+                    VStack(spacing: 14) {
+                        Button {
                             Task {
                                 await store.restorePurchases()
                                 if store.isPro { dismiss() }
                             }
+                        } label: {
+                            Label(s.paywallRestore, systemImage: "arrow.clockwise")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white.opacity(0.9))
                         }
-                        .font(.footnote)
-                        .foregroundColor(.white.opacity(0.5))
 
                         HStack(spacing: 12) {
                             Button(s.paywallPrivacy) { showPrivacy = true }
@@ -114,9 +121,9 @@ struct PaywallView: View {
                             Button(s.paywallTerms) { showTerms = true }
                         }
                         .font(.caption2)
-                        .foregroundColor(.white.opacity(0.35))
+                        .foregroundColor(.white.opacity(0.45))
                     }
-                    .padding(.top, 4)
+                    .padding(.top, 8)
                     .padding(.bottom, 30)
                 }
             }

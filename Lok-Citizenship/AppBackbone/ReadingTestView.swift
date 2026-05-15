@@ -120,6 +120,15 @@ struct ReadingTestView: View {
             }
         }
         .alert(s.testModeMicPermission, isPresented: $micDenied) {
+            // Deep-link to iOS Settings so the user can flip mic / speech
+            // recognition back on without leaving the alert and hunting for
+            // the path themselves. Mirrors the affordance in
+            // `MockInterviewView.permissionScreen`.
+            Button(s.micPermissionOpenSettings) {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
             Button(s.resultDone, role: .cancel) { }
         }
         .alert(s.testModeSpeechUnavailable, isPresented: $speechUnavailable) {

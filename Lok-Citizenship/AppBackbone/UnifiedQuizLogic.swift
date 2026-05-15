@@ -110,6 +110,14 @@ final class UnifiedQuizLogic: ObservableObject {
     @Published var incorrectAnswers     = 0
     @Published var status: QuizStatus   = .inProgress
 
+    /// Indices that have been answered exactly once. `answerQuestion`
+    /// refuses to re-score an index already in this set, so the
+    /// Previous→re-answer path can't inflate `correctAnswers`/
+    /// `incorrectAnswers` (which would overflow the progress bar and
+    /// could falsely trip the fail-at-4-mistakes rule). Cleared on
+    /// `resetWith` along with the other counters.
+    @Published private(set) var answeredIndices: Set<Int> = []
+
     /// Per-question log for end-of-quiz review (mock interview result screen).
     @Published var answerLog: [AnswerLogEntry] = []
 
@@ -206,6 +214,11 @@ final class UnifiedQuizLogic: ObservableObject {
     @discardableResult
     func answerQuestion(_ answerIndex: Int, userSpokenText: String? = nil) -> Bool {
         guard currentQuestionIndex < questions.count, !isFinished else { return false }
+        // Refuse to re-score a question that was already answered (e.g.
+        // user tapped Previous and somehow returned to an answered index).
+        // Without this guard the same question would double-bump
+        // correct/incorrect counters and re-append to the log.
+        guard !answeredIndices.contains(currentQuestionIndex) else { return false }
 
         let q = currentQuestion
         let optionCount = q.variants.first?.options.count ?? 0
@@ -216,6 +229,7 @@ final class UnifiedQuizLogic: ObservableObject {
         } else {
             incorrectAnswers += 1
         }
+        answeredIndices.insert(currentQuestionIndex)
 
         answerLog.append(AnswerLogEntry(
             question: q,
@@ -272,7 +286,28 @@ final class UnifiedQuizLogic: ObservableObject {
 
     func previousQuestion() {
         guard currentQuestionIndex > 0 else { return }
-        currentQuestionIndex -= 1
+        // Skip past any already-answered question. Previous is meant to
+        // let the user go back to an earlier question they SKIPPED — not
+        // to re-answer one they already scored. Walking past answered
+        // indices keeps the UI honest with the engine's no-re-answer rule.
+        var idx = currentQuestionIndex - 1
+        while idx > 0 && answeredIndices.contains(idx) {
+            idx -= 1
+        }
+        guard !answeredIndices.contains(idx) else { return }
+        currentQuestionIndex = idx
+    }
+
+    /// True when there's at least one earlier unanswered question to
+    /// return to. Views bind the Previous button's `.disabled` to the
+    /// negation of this so the button greys out once everything behind
+    /// the cursor has already been scored.
+    var canGoBack: Bool {
+        guard currentQuestionIndex > 0 else { return false }
+        for idx in 0..<currentQuestionIndex {
+            if !answeredIndices.contains(idx) { return true }
+        }
+        return false
     }
 
     // MARK: - Lifecycle
@@ -326,7 +361,14 @@ final class UnifiedQuizLogic: ObservableObject {
     // MARK: - Private
 
     /// Shuffle questions so that ones the user struggles with appear earlier.
-    /// Questions with <60% accuracy get 3x weight; unattempted questions keep normal weight.
+    /// Three weight buckets, sorted descending:
+    ///   • struggling (accuracy < 60%) → 3.0 + jitter → top of the quiz
+    ///   • mastered / unattempted       → 1.0 + jitter → mixed together below
+    /// Unattempted shares the mastered baseline (not [0,1) like the old
+    /// implementation) so new questions get interleaved with mastered ones
+    /// rather than pushed past every mastered question to the very end —
+    /// the previous ordering meant a learner kept re-seeing easy mastered
+    /// questions before ever reaching unseen material.
     ///
     /// Per-language: only consults the user's history in the language
     /// they're starting this quiz in (`languageTag`). Otherwise a learner
@@ -338,7 +380,7 @@ final class UnifiedQuizLogic: ObservableObject {
         let records = QuestionTracker.shared.recordsForLanguage(languageTag)
         return pool.map { q -> (q: UnifiedQuestion, weight: Double) in
             guard let record = records[q.id], record.attempts > 0 else {
-                return (q, Double.random(in: 0..<1))
+                return (q, 1.0 + Double.random(in: 0..<1))
             }
             let boost: Double = record.accuracy < 0.6 ? 3.0 : 1.0
             return (q, boost + Double.random(in: 0..<1))
@@ -359,6 +401,7 @@ final class UnifiedQuizLogic: ObservableObject {
         status               = .inProgress
         completionRecorded   = false
         answerLog            = []
+        answeredIndices      = []
     }
 
     private func finish(_ terminal: QuizStatus) {

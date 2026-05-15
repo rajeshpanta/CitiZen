@@ -17,7 +17,16 @@ enum SupabaseConfig {
     static let url: URL = {
         let raw = (Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as? String)
             ?? placeholderURL
-        return URL(string: raw) ?? URL(string: placeholderURL)!
+        // Chain: try the Info.plist override → fall back to the (known-valid)
+        // placeholder → last-resort file URL so the type stays non-optional.
+        // The last fallback is unreachable in practice (`placeholderURL` is a
+        // valid URL string) but avoids the prior `URL(string:)!` force-unwrap
+        // that would crash the process on the off chance someone broke the
+        // hardcoded placeholder. `isConfigured` continues to gate any actual
+        // network calls behind a match against the placeholder string.
+        return URL(string: raw)
+            ?? URL(string: placeholderURL)
+            ?? URL(fileURLWithPath: "/")
     }()
 
     static let anonKey: String = {

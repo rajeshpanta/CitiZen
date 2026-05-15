@@ -8,7 +8,7 @@ struct PrivacyPolicyView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 Text(privacyText)
                     .font(.body)
@@ -123,7 +123,7 @@ struct TermsOfUseView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 Text(termsText)
                     .font(.body)

@@ -37,6 +37,14 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
     private let synthesizer = AVSpeechSynthesizer()
     private let isSpeaking  = CurrentValueSubject<Bool, Never>(false)
     private var finished    = PassthroughSubject<Void, Never>()
+    /// Identity-track the utterance handed to `synthesizer.speak(...)`.
+    /// `stopSpeaking()` clears this BEFORE completing `finished`; `speak()`
+    /// sets it AFTER reassigning to a fresh subject. The delegate methods
+    /// drop callbacks whose utterance no longer matches — preventing a
+    /// delayed `didCancel` for a prior utterance from completing the
+    /// freshly-started speech chain (which previously caused TTS to
+    /// occasionally skip the next item in a `speakSequence`).
+    private weak var currentUtterance: AVSpeechUtterance?
 
     override init() {
         super.init()
@@ -70,6 +78,7 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
         // session is already correctly configured.
         AudioSessionPrewarmer.configureSession()
 
+        currentUtterance = u
         synthesizer.speak(u)
         isSpeaking.send(true)
         return finished.eraseToAnyPublisher()
@@ -93,6 +102,10 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
         // synchronous scheduler without revisiting that flow.
         synthesizer.stopSpeaking(at: .immediate)
         isSpeaking.send(false)
+        // Clear the identity pointer BEFORE completing the subject so a
+        // pending async `didCancel` for the just-stopped utterance can't
+        // re-fire `done()` against whatever `finished` points to next.
+        currentUtterance = nil
         finished.send(()); finished.send(completion: .finished)
     }
 }
@@ -102,11 +115,23 @@ extension LocalTTSService: AVSpeechSynthesizerDelegate {
     func speechSynthesizer(_: AVSpeechSynthesizer, didStart _: AVSpeechUtterance) {
         isSpeaking.send(true)
     }
-    func speechSynthesizer(_: AVSpeechSynthesizer, didFinish _: AVSpeechUtterance) { done() }
-    func speechSynthesizer(_: AVSpeechSynthesizer, didCancel _: AVSpeechUtterance) { done() }
+    func speechSynthesizer(_: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        // Drop callbacks for utterances we no longer consider "current"
+        // — either because stopSpeaking nil'd the pointer or because a
+        // newer speak() reassigned it. Without this guard, a delayed
+        // didCancel from a previous utterance could complete the
+        // freshly-started chain.
+        guard utterance === currentUtterance else { return }
+        done()
+    }
+    func speechSynthesizer(_: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        guard utterance === currentUtterance else { return }
+        done()
+    }
 
     private func done() {
         isSpeaking.send(false)
+        currentUtterance = nil
         finished.send(()); finished.send(completion: .finished)
         // Keep audio session active for faster TTS/STT transitions.
     }

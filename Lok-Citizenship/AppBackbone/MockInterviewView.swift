@@ -9,21 +9,27 @@ enum QuestionPool {
     static func allQuestions(for language: AppLanguage) -> [UnifiedQuestion] {
         switch language {
         case .english:
+            // All four languages are on the 2025 USCIS 8-practice /
+            // 128-question layout.
             return EnglishQuestions.practice1 + EnglishQuestions.practice2
                  + EnglishQuestions.practice3 + EnglishQuestions.practice4
-                 + EnglishQuestions.practice5
+                 + EnglishQuestions.practice5 + EnglishQuestions.practice6
+                 + EnglishQuestions.practice7 + EnglishQuestions.practice8
         case .nepali:
             return NepaliQuestions.practice1 + NepaliQuestions.practice2
                  + NepaliQuestions.practice3 + NepaliQuestions.practice4
-                 + NepaliQuestions.practice5
+                 + NepaliQuestions.practice5 + NepaliQuestions.practice6
+                 + NepaliQuestions.practice7 + NepaliQuestions.practice8
         case .spanish:
             return SpanishQuestions.practice1 + SpanishQuestions.practice2
                  + SpanishQuestions.practice3 + SpanishQuestions.practice4
-                 + SpanishQuestions.practice5
+                 + SpanishQuestions.practice5 + SpanishQuestions.practice6
+                 + SpanishQuestions.practice7 + SpanishQuestions.practice8
         case .chinese:
             return ChineseQuestions.practice1 + ChineseQuestions.practice2
                  + ChineseQuestions.practice3 + ChineseQuestions.practice4
-                 + ChineseQuestions.practice5
+                 + ChineseQuestions.practice5 + ChineseQuestions.practice6
+                 + ChineseQuestions.practice7 + ChineseQuestions.practice8
         }
     }
 }
@@ -38,6 +44,12 @@ struct MockInterviewView: View {
 
     @StateObject private var quizLogic = UnifiedQuizLogic()
     @StateObject private var voice: VoiceQuizController
+    /// Observed so the Try Again button can re-check Pro / free-attempt
+    /// eligibility before restarting. Without this gate, a free-tier user
+    /// could spam Try Again on the result screen and bypass the paywall
+    /// indefinitely — the initial entry gate lives in PracticeSelectionView,
+    /// but once inside this view there was no second check.
+    @ObservedObject private var store = StoreManager.shared
 
     @Environment(\.presentationMode) private var presentationMode
     @Environment(\.scenePhase) private var scenePhase
@@ -64,6 +76,10 @@ struct MockInterviewView: View {
     @State private var mockRecorded = false
     @State private var pulseRing = false
     @State private var showEndConfirm = false
+    /// Presented from the Try Again button when a non-Pro user has
+    /// already consumed their free mock attempt. Without this sheet, the
+    /// button just no-ops behind a stale `mockRecorded` latch.
+    @State private var showPaywall = false
     /// True when the user tapped Start Interview before mic / speech
     /// permission had resolved (still `.notDetermined`). Once the OS
     /// prompt completes the `onChange` handler reads this flag and either
@@ -234,6 +250,12 @@ struct MockInterviewView: View {
             }
         } message: {
             Text(s.endInterviewMessage)
+        }
+        .sheet(isPresented: $showPaywall) {
+            // Trigger string mirrors the convention in PracticeSelectionView
+            // (e.g. "mock_interview_card") so analytics can distinguish
+            // post-attempt retry conversion from the initial gate.
+            PaywallView(trigger: "mock_interview_retry", language: language)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -933,7 +955,17 @@ struct MockInterviewView: View {
                         .foregroundColor(.white)
                         .frame(width: 58, height: 58)
                         .background(
-                            Circle().fill(voice.isRecording ? Color.red : Color.blue)
+                            // Red signals "actively recording." During the
+                            // Whisper upload window `isRecording` stays true
+                            // until the cloud round-trip completes, but the
+                            // user has stopped talking and the title above
+                            // already reads "Matching answer…" — leaving the
+                            // button red here is a visible state mismatch.
+                            // Drop back to blue during processing so the dock
+                            // visually agrees with the rest of the UI.
+                            Circle().fill(voice.isRecording && !voice.isProcessingTranscript
+                                          ? Color.red
+                                          : Color.blue)
                         )
                         .overlay(
                             Circle().stroke(Color.white.opacity(0.2), lineWidth: 1)
@@ -1076,13 +1108,24 @@ struct MockInterviewView: View {
 
                 HStack(spacing: 12) {
                     Button {
-                        AudioSessionPrewarmer.prewarm {
-                            quizLogic.startMockInterview(
-                                from: QuestionPool.allQuestions(for: language),
-                                questionCount: interviewQuestionCount,
-                                requiredCorrect: requiredCorrect
-                            )
-                            voice.restart()
+                        // Re-check entitlement before restarting. The first
+                        // attempt is already recorded by the time we reach
+                        // this screen, so a non-Pro user has consumed their
+                        // free attempt and must see the paywall to continue.
+                        // Reset `mockRecorded` only on the allowed path so a
+                        // legitimate second attempt (Pro user) gets counted.
+                        if store.isPro || ProgressManager.shared.canAccessFreeMockInterview {
+                            mockRecorded = false
+                            AudioSessionPrewarmer.prewarm {
+                                quizLogic.startMockInterview(
+                                    from: QuestionPool.allQuestions(for: language),
+                                    questionCount: interviewQuestionCount,
+                                    requiredCorrect: requiredCorrect
+                                )
+                                voice.restart()
+                            }
+                        } else {
+                            showPaywall = true
                         }
                     } label: {
                         Label(s.resultTryAgain, systemImage: "arrow.clockwise")

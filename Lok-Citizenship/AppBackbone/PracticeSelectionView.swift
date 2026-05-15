@@ -4,29 +4,23 @@
 
 import SwiftUI
 
-// MARK: - Helper struct to bundle each destination
-private struct PracticeItem: Identifiable {
-    var id: Int { level }
-    let title: String
-    /// Builds the destination view on demand. Stored as a closure rather
-    /// than an `AnyView` so the wrapped `QuizView` (which allocates a
-    /// `UnifiedQuizLogic`, a `WhisperSTTService`, and a
-    /// `VoiceQuizController` in its `init`) is only constructed when the
-    /// user actually navigates into a level — not on every body render of
-    /// the selection screen. Combined with `LazyView` at the call site,
-    /// this keeps the 5 destination links from churning ~5 throwaway STT
-    /// services + interruption observers per re-render.
-    let buildView: () -> AnyView
-    let minHeight: CGFloat
-    let fontSize: CGFloat
-    let level: Int   // 1-5, used for gating
-}
-
 struct PracticeSelectionView: View {
     @State var language: AppLanguage
 
     @ObservedObject private var store = StoreManager.shared
-    @ObservedObject private var tracker = QuestionTracker.shared
+    /// `QuestionTracker.shared` is accessed as a plain reference — NOT
+    /// observed — because @ObservedObject re-renders this view on every
+    /// `records` publish, which fires on every quiz answer. That cascading
+    /// re-render recreates the `PracticeLevelsView(language:)` value at
+    /// the NavigationLink destination; under iOS 26 NavigationView, the
+    /// new destination identity pops the currently-active QuizView two
+    /// levels down ("tap an answer → quiz exits" bug). Fresh data is
+    /// pulled into `readinessCard`, `reviewMistakesCard`, and the
+    /// interview hero by bumping `trackerVersion` on `.onAppear`, which
+    /// makes those computed properties re-evaluate when the user returns
+    /// from a quiz.
+    private let tracker = QuestionTracker.shared
+    @State private var trackerVersion = 0
     @State private var showPaywall = false
     @State private var paywallTrigger = "locked_level"
 
@@ -45,166 +39,6 @@ struct PracticeSelectionView: View {
         return !UserDefaults.standard.bool(forKey: voicePackBannerDismissedKey)
     }
 
-    private var items: [PracticeItem] {
-        switch language {
-        case .english:
-            return [
-                PracticeItem(
-                    title: "Practice 1 – Very Easy",
-                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice1), level: 1)) },
-                    minHeight: 20,
-                    fontSize: 16,
-                    level: 1
-                ),
-                PracticeItem(
-                    title: "Practice 2 – Easy",
-                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice2), level: 2)) },
-                    minHeight: 25,
-                    fontSize: 18,
-                    level: 2
-                ),
-                PracticeItem(
-                    title: "Practice 3 – Medium",
-                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice3), level: 3)) },
-                    minHeight: 30,
-                    fontSize: 20,
-                    level: 3
-                ),
-                PracticeItem(
-                    title: "Practice 4 – Hard",
-                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice4), level: 4)) },
-                    minHeight: 35,
-                    fontSize: 22,
-                    level: 4
-                ),
-                PracticeItem(
-                    title: "Practice 5 – Expert",
-                    buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice5), level: 5)) },
-                    minHeight: 40,
-                    fontSize: 24,
-                    level: 5
-                )
-            ]
-
-        case .nepali:
-            return [
-                PracticeItem(
-                    title: "पहिलो अभ्यास – सजिलो प्रश्नहरू",
-                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice1), level: 1)) },
-                    minHeight: 20,
-                    fontSize: 16,
-                    level: 1
-                ),
-                PracticeItem(
-                    title: "दोस्रो अभ्यास – सजिलो प्रश्नहरू",
-                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice2), level: 2)) },
-                    minHeight: 25,
-                    fontSize: 18,
-                    level: 2
-                ),
-                PracticeItem(
-                    title: "तेस्रो अभ्यास – मध्यम प्रश्नहरू",
-                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice3), level: 3)) },
-                    minHeight: 30,
-                    fontSize: 20,
-                    level: 3
-                ),
-                PracticeItem(
-                    title: "चौथो अभ्यास – कठिन प्रश्नहरू",
-                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice4), level: 4)) },
-                    minHeight: 35,
-                    fontSize: 22,
-                    level: 4
-                ),
-                PracticeItem(
-                    title: "पाँचौं अभ्यास – अति कठिन प्रश्नहरू",
-                    buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice5), level: 5)) },
-                    minHeight: 40,
-                    fontSize: 24,
-                    level: 5
-                )
-            ]
-
-        case .spanish:
-            return [
-                PracticeItem(
-                    title: "Práctica 1 – Preguntas fáciles",
-                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice1), level: 1)) },
-                    minHeight: 20,
-                    fontSize: 16,
-                    level: 1
-                ),
-                PracticeItem(
-                    title: "Práctica 2 – Preguntas fáciles",
-                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice2), level: 2)) },
-                    minHeight: 25,
-                    fontSize: 18,
-                    level: 2
-                ),
-                PracticeItem(
-                    title: "Práctica 3 – Preguntas intermedias",
-                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice3), level: 3)) },
-                    minHeight: 30,
-                    fontSize: 20,
-                    level: 3
-                ),
-                PracticeItem(
-                    title: "Práctica 4 – Preguntas difíciles",
-                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice4), level: 4)) },
-                    minHeight: 35,
-                    fontSize: 22,
-                    level: 4
-                ),
-                PracticeItem(
-                    title: "Práctica 5 – Preguntas muy difíciles",
-                    buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice5), level: 5)) },
-                    minHeight: 40,
-                    fontSize: 24,
-                    level: 5
-                )
-            ]
-
-        case .chinese:
-            return [
-                PracticeItem(
-                    title: "练习 1 – 简单问题",
-                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice1), level: 1)) },
-                    minHeight: 20,
-                    fontSize: 16,
-                    level: 1
-                ),
-                PracticeItem(
-                    title: "练习 2 – 简单问题",
-                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice2), level: 2)) },
-                    minHeight: 25,
-                    fontSize: 18,
-                    level: 2
-                ),
-                PracticeItem(
-                    title: "练习 3 – 中等问题",
-                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice3), level: 3)) },
-                    minHeight: 30,
-                    fontSize: 20,
-                    level: 3
-                ),
-                PracticeItem(
-                    title: "练习 4 – 困难问题",
-                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice4), level: 4)) },
-                    minHeight: 35,
-                    fontSize: 22,
-                    level: 4
-                ),
-                PracticeItem(
-                    title: "练习 5 – 最难问题",
-                    buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice5), level: 5)) },
-                    minHeight: 40,
-                    fontSize: 24,
-                    level: 5
-                )
-            ]
-        }
-    }
-
     // MARK: - Language-specific UI
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
@@ -220,17 +54,6 @@ struct PracticeSelectionView: View {
         case .nepali:  return "NP"
         case .spanish: return "ES"
         case .chinese: return "CN"
-        }
-    }
-
-    private func levelMeta(_ level: Int) -> (label: String, color: Color, icon: String) {
-        switch level {
-        case 1: return (s.levelEasy,     .green,  "1.circle.fill")
-        case 2: return (s.levelMedium,   .cyan,   "2.circle.fill")
-        case 3: return (s.levelHard,     .orange, "3.circle.fill")
-        case 4: return (s.levelAdvanced, .pink,   "4.circle.fill")
-        case 5: return (s.levelExpert,   .red,    "5.circle.fill")
-        default: return ("", .gray, "circle")
         }
     }
 
@@ -308,7 +131,20 @@ struct PracticeSelectionView: View {
                                 paywallTrigger = "mock_interview"
                                 showPaywall = true
                             } label: {
-                                mockCard(locked: true, subtitle: s.mockSubtitleLocked)
+                                // Append the lifetime display price when StoreKit
+                                // has loaded products — gives the user a concrete
+                                // anchor on the card itself instead of forcing
+                                // them to open the paywall sheet to find out what
+                                // unlocking costs. Falls back to the plain locked
+                                // copy if products aren't ready yet (network
+                                // hiccup or cold launch).
+                                let subtitle: String = {
+                                    if let lifetime = store.products.first(where: { $0.id == StoreManager.lifetimeID }) {
+                                        return "\(s.mockSubtitleLocked) · \(lifetime.displayPrice)"
+                                    }
+                                    return s.mockSubtitleLocked
+                                }()
+                                mockCard(locked: true, subtitle: subtitle)
                             }
                         }
                     }
@@ -328,42 +164,14 @@ struct PracticeSelectionView: View {
                     reviewMistakesCard
                         .padding(.horizontal, 20)
 
-                    // Section label
-                    HStack {
-                        Text(s.practiceLevels)
-                            .font(.caption.bold())
-                            .foregroundColor(.white.opacity(0.35))
-                            .textCase(.uppercase)
-                            .tracking(1)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 6)
-
-                    // Level cards
-                    //
-                    // Free tier: Practice 1 (Easy) + Practice 2 (Easy) only.
-                    // Pro: Practice 3 (Medium), 4 (Hard), 5 (Advanced).
-                    // Threshold was `>= 4` — bumped to `>= 3` to bring
-                    // Medium behind the paywall too. Practice 1 and 2 stay
-                    // free so a brand-new user can experience the core
-                    // quiz loop before being asked to pay.
-                    ForEach(items) { item in
-                        let locked = item.level >= 3 && !store.isPro
-                        let meta = levelMeta(item.level)
-
-                        if locked {
-                            Button {
-                                paywallTrigger = "locked_level"
-                                showPaywall = true
-                            } label: { levelRow(item: item, meta: meta, locked: true) }
-                        } else {
-                            NavigationLink(
-                                destination: LazyView { item.buildView() }
-                                    .navigationTitle(item.title)
-                                    .navigationBarTitleDisplayMode(.inline)
-                            ) { levelRow(item: item, meta: meta, locked: false) }
-                        }
+                    // Civics Practice hub: opens a sub-screen with all
+                    // practice levels. Replaces the inline 5-card section
+                    // so the main page stays scannable as the question bank
+                    // grows beyond the original 75.
+                    NavigationLink(
+                        destination: PracticeLevelsView(language: language)
+                    ) {
+                        civicsPracticeCard
                     }
                     .padding(.horizontal, 20)
 
@@ -500,9 +308,21 @@ struct PracticeSelectionView: View {
             }
         }
         .onAppear {
-            // Force SwiftUI to re-read tracker data when returning from a quiz.
-            // NavigationView doesn't always re-render parent views on pop.
-            tracker.objectWillChange.send()
+            // Force the body to re-evaluate `readinessCard`,
+            // `reviewMistakesCard`, and the interview hero so they read
+            // fresh tracker data after the user returns from a quiz.
+            // Using a @State bump (instead of observing the tracker via
+            // @ObservedObject) avoids the cascading mid-quiz re-renders
+            // that previously popped the active QuizView.
+            trackerVersion &+= 1
+        }
+        .task {
+            // Eagerly load StoreKit products so the locked Mock Interview
+            // card can render its price subtitle without waiting for the
+            // user to tap the card and open the paywall. `loadProducts`
+            // is idempotent (cached after first success), so re-runs on
+            // every view appearance are cheap.
+            await store.loadProducts()
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView(trigger: paywallTrigger, language: language)
@@ -582,13 +402,86 @@ struct PracticeSelectionView: View {
                 interviewHeroFuture(days: days, date: date)
             } else if days == 0 {
                 interviewHeroToday
+            } else {
+                // Saved date is in the past (user passed their interview
+                // date and either forgot to clear it or hasn't returned).
+                // Fall back to the first-time hero so they see a forward
+                // CTA instead of an empty header.
+                firstTimeHero
             }
+        } else if isFirstTimeUser {
+            firstTimeHero
         }
     }
 
+    /// True for a user with no scheduled date AND no questions yet
+    /// mastered in the current language. Drives the first-time hero
+    /// affordance so the home screen has a clear starting point on
+    /// cold install instead of leading with a locked Mock card and
+    /// a 0/128 readiness row.
+    private var isFirstTimeUser: Bool {
+        _ = trackerVersion
+        let pool = QuestionPool.allQuestions(for: language)
+        return tracker.masteredCount(for: language.rawValue, inPool: pool) == 0
+    }
+
+    /// Coaching CTA: routes the user into the Civics Practice levels
+    /// hub (which lists Practice 1–8). Using a NavigationLink that
+    /// targets `PracticeLevelsView` mirrors the existing Civics card's
+    /// destination so the destination stays one screen, not two.
+    private var firstTimeHero: some View {
+        NavigationLink(destination: PracticeLevelsView(language: language)) {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: "hand.point.right.fill")
+                    .font(.system(size: 26))
+                    .foregroundColor(.white)
+                    .frame(width: 36)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(s.firstTimeHeroTitle)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Text(s.firstTimeHeroSubtitle)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.85))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white.opacity(0.55))
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(LinearGradient(colors: [Color.cyan.opacity(0.55), Color.blue.opacity(0.25)],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.cyan.opacity(0.5), lineWidth: 1)
+            )
+        }
+        .padding(.horizontal, 20)
+    }
+
     private func interviewHeroFuture(days: Int, date: Date) -> some View {
-        let total = 75
-        let mastered = tracker.masteredCount(for: language.rawValue)
+        // Re-evaluate when the user returns from a quiz (`trackerVersion`
+        // is bumped in `.onAppear`). We don't observe the tracker directly
+        // because mid-quiz publishes would cascade re-renders and pop the
+        // active QuizView two levels down.
+        _ = trackerVersion
+        // All four supported languages now use the 128-question 2025 USCIS
+        // bank. Reading from `QuestionPool` keeps this in sync as more
+        // languages are added.
+        // Passing the pool to `masteredCount` filters out orphaned records
+        // from the pre-migration English layout so the % isn't inflated for
+        // returning users.
+        let pool = QuestionPool.allQuestions(for: language)
+        let total = pool.count
+        let mastered = tracker.masteredCount(for: language.rawValue, inPool: pool)
         let pct = total > 0 ? (mastered * 100) / total : 0
         let remaining = max(0, total - mastered)
         // Ceiling division: 17 questions over 5 days → 4/day, not 3
@@ -683,13 +576,22 @@ struct PracticeSelectionView: View {
     // MARK: - Readiness Card
 
     private var readinessCard: some View {
+        // See `interviewHeroFuture` — bump-based refresh instead of
+        // observation so mid-quiz tracker publishes don't pop the quiz.
+        _ = trackerVersion
         let tracker = tracker
-        let total = 75 // questions per language
+        // All four supported languages use the 128-question 2025 USCIS bank.
+        // Reading from `QuestionPool` keeps this card in sync as additional
+        // languages are added. Passing the pool to `masteredCount` filters
+        // orphaned records so a returning user's % isn't inflated by the
+        // pre-migration question layout.
+        let pool = QuestionPool.allQuestions(for: language)
+        let total = pool.count
         // Per-language mastered count — a learner studying in Spanish
         // sees mastery of Spanish questions only, not their English or
         // Nepali progress. Mirrors the readiness ring inside
         // `ReadinessView` so the card and the dashboard always agree.
-        let mastered = tracker.masteredCount(for: language.rawValue)
+        let mastered = tracker.masteredCount(for: language.rawValue, inPool: pool)
         let pct = total > 0 ? (mastered * 100) / total : 0
 
         return HStack(spacing: 14) {
@@ -725,6 +627,10 @@ struct PracticeSelectionView: View {
 
     @ViewBuilder
     private var reviewMistakesCard: some View {
+        // See `interviewHeroFuture` — bump-based refresh instead of
+        // observation so mid-quiz tracker publishes don't pop the quiz.
+        // `let _ =` (not bare `_ =`) is required inside @ViewBuilder.
+        let _ = trackerVersion
         let pool = QuestionPool.allQuestions(for: language)
         // Per-language records: the user's mistakes in OTHER languages
         // must NOT show up in this language's review pool. A Nepali
@@ -836,53 +742,35 @@ struct PracticeSelectionView: View {
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(locked ? 0.05 : 0.1), lineWidth: 1))
     }
 
-    private func levelRow(item: PracticeItem, meta: (label: String, color: Color, icon: String), locked: Bool) -> some View {
-        let isRecommended = ProgressManager.shared.recommendedLevel == item.level && !locked
-        return HStack(spacing: 14) {
-            Image(systemName: meta.icon)
-                .font(.system(size: 24))
-                .foregroundColor(locked ? meta.color.opacity(0.3) : meta.color)
-                .frame(width: 32)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(item.title)
-                        .font(.subheadline.bold())
-                        .foregroundColor(locked ? .white.opacity(0.4) : .white)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    if isRecommended {
-                        Text(s.recommendedBadge.uppercased())
-                            .font(.caption2.bold())
-                            .tracking(0.5)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.cyan))
-                    }
-                }
-                Text(meta.label)
-                    .font(.caption2)
-                    .foregroundColor(locked ? meta.color.opacity(0.3) : meta.color)
+    // MARK: - Civics Practice Hub Card
+
+    private var civicsPracticeCard: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "building.columns.fill")
+                .font(.system(size: 26))
+                .foregroundColor(.white)
+                .frame(width: 40)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(s.civicsPractice)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text(s.civicsPracticeSubtitle)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.85))
             }
             Spacer()
-            Image(systemName: locked ? "lock.fill" : "chevron.right")
-                .font(.caption)
-                .foregroundColor(.white.opacity(locked ? 0.25 : 0.3))
+            Image(systemName: "chevron.right")
+                .foregroundColor(.white.opacity(0.55))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isRecommended
-                      ? Color.cyan.opacity(0.12)
-                      : Color.white.opacity(locked ? 0.03 : 0.07))
+            RoundedRectangle(cornerRadius: 14)
+                .fill(LinearGradient(colors: [.indigo.opacity(0.55), .indigo.opacity(0.25)],
+                                     startPoint: .leading, endPoint: .trailing))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isRecommended
-                        ? Color.cyan.opacity(0.45)
-                        : Color.white.opacity(locked ? 0.05 : 0.1),
-                        lineWidth: isRecommended ? 1.5 : 1)
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.indigo.opacity(0.4), lineWidth: 1)
         )
     }
 }

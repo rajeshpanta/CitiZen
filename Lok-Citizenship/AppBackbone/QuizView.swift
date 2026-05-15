@@ -16,6 +16,12 @@ struct QuizView: View {
 
     @State private var selectedAnswer: Int?
     @State private var showAnswerFeedback = false
+    /// Tap feedback for the speaker button. Set true on tap and cleared
+    /// when `voice.isSpeaking` flips true (audio started) or a 4-second
+    /// timeout fires (failure fallback). Bridges the silent ~100-400 ms
+    /// gap between tap and audio start (AudioSession prewarm + first-MP3
+    /// fetch) so users see a spinner instead of an unresponsive button.
+    @State private var speakerLoading = false
     @State private var isAnswerCorrect    = false
     @State private var isAnswered         = false
     @State private var showVoicePanel     = false
@@ -395,22 +401,43 @@ private extension QuizView {
 
     var speakerButton: some View {
         Button {
-            if voice.isSpeaking {
+            if voice.isSpeaking || speakerLoading {
                 voice.stop()
+                speakerLoading = false
             } else {
                 voice.stop()
-                // Pre-warm the audio session so .duckOthers has time
-                // to lower any background music before TTS plays.
+                // Visual ack BEFORE the prewarm + fetch window so the
+                // user knows their tap registered. Without this, the
+                // ~100-400 ms latency before audio starts looks like
+                // a broken button and users tap again — which (per the
+                // first branch) is now interpreted as stop, cancelling
+                // their own request.
+                speakerLoading = true
                 AudioSessionPrewarmer.prewarm {
                     speakQuestionAndOptions()
+                    // Safety net: if speech never starts (silent
+                    // failure path), clear the spinner after 4 s so
+                    // the button doesn't stay stuck. Happy path
+                    // clears via `onChange(voice.isSpeaking)` below.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                        if !voice.isSpeaking { speakerLoading = false }
+                    }
                 }
             }
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: voice.isSpeaking
-                      ? "speaker.wave.2.fill"
-                      : "play.fill")
-                    .font(.caption.bold())
+                if speakerLoading && !voice.isSpeaking {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                        .scaleEffect(0.6)
+                        .frame(width: 12, height: 12)
+                } else {
+                    Image(systemName: voice.isSpeaking
+                          ? "speaker.wave.2.fill"
+                          : "play.fill")
+                        .font(.caption.bold())
+                }
                 Text(voice.isSpeaking ? "Stop" : "Listen")
                     .font(.caption.bold())
             }
@@ -425,6 +452,12 @@ private extension QuizView {
         }
         .disabled(voice.isRecording || isAnswered)
         .opacity(voice.isRecording || isAnswered ? 0.4 : 1)
+        .onChange(of: voice.isSpeaking) { _ in
+            // Any isSpeaking transition (start OR stop) clears the
+            // loading spinner. Start = success; stop = either natural
+            // completion or a stop/cancel from elsewhere.
+            speakerLoading = false
+        }
     }
 
     // MARK: Answer options
@@ -619,8 +652,8 @@ private extension QuizView {
                             .fill(Color.white.opacity(0.08))
                     )
             }
-            .disabled(quizLogic.currentQuestionIndex == 0)
-            .opacity(quizLogic.currentQuestionIndex == 0 ? 0.4 : 1)
+            .disabled(!quizLogic.canGoBack)
+            .opacity(quizLogic.canGoBack ? 1 : 0.4)
 
             Button {
                 voice.stop()
@@ -982,7 +1015,8 @@ private extension QuizView {
             }
             root.present(av, animated: true)
         } label: {
-            Label("Share Result", systemImage: "square.and.arrow.up")
+            Label(UIStrings.forLocaleCode(localeCode).resultShareResult,
+                  systemImage: "square.and.arrow.up")
                 .font(.subheadline.bold())
                 .foregroundColor(.blue)
         }

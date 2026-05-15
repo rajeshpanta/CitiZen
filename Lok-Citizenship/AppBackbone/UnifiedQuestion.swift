@@ -36,7 +36,22 @@ struct UnifiedQuestion {
     /// Views use `isTimeSensitive` to render a small disclaimer pointing users
     /// to uscis.gov/citizenship for the current answer. Kept as a central set
     /// so question data files stay untouched.
-    static let timeSensitiveIDs: Set<String> = ["q_1_08", "q_1_09", "q_3_05", "q_4_10"]
+    ///
+    /// All four supported languages (English, Spanish, Chinese, Nepali) use
+    /// the official 2025 USCIS question numbers (`q_25_NNN`). The legacy
+    /// `q_1_NN` / `q_3_NN` / `q_4_NN` IDs are retained here for backward
+    /// compatibility with any user tracker records persisted before the
+    /// migration — they no longer appear in any active question file but
+    /// won't hurt to keep in the set.
+    static let timeSensitiveIDs: Set<String> = [
+        // Legacy IDs (retained for backward compatibility with old tracker records)
+        "q_1_08", "q_1_09", "q_3_05", "q_4_10",
+        // 2025 USCIS official question numbers (active across all languages)
+        "q_25_030",  // Speaker of the House
+        "q_25_038",  // President
+        "q_25_039",  // Vice President
+        "q_25_057"   // Chief Justice
+    ]
 
     /// True when the correct answer depends on current officeholders.
     var isTimeSensitive: Bool { Self.timeSensitiveIDs.contains(id) }

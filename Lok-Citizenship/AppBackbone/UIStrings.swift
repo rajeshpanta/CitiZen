@@ -19,6 +19,8 @@ struct UIStrings {
     let reviewMistakesSubtitleFormat: String
     let reviewMistakesEmpty: String
     let practiceLevels: String
+    let civicsPractice: String
+    let civicsPracticeSubtitle: String
     let readingWriting: String
     let handsFree: String
     let readingPractice: String
@@ -33,6 +35,12 @@ struct UIStrings {
     let levelHard: String
     let levelAdvanced: String
     let levelExpert: String
+    /// Difficulty labels for English's 8-practice extension (levels 6-8).
+    /// Other languages still cap at 5 (levelExpert) but provide values
+    /// here so the struct compiles uniformly across all language factories.
+    let levelMaster: String
+    let levelElite: String
+    let levelGrandmaster: String
     /// printf-style: "%d days until your interview"
     let daysUntilInterviewFormat: String
     /// printf-style: "%d%% ready · master %d/day" — pct, dailyTarget
@@ -45,6 +53,12 @@ struct UIStrings {
     let interviewTodayTitle: String
     /// Card subtitle shown on the day of the interview itself.
     let interviewTodaySubtitle: String
+    /// Coaching hero shown on the home screen for first-time users
+    /// (no interview date scheduled AND zero mastered questions). Points
+    /// them at Civics Practice so they have a clear starting point
+    /// instead of staring at a screen of zeros.
+    let firstTimeHeroTitle: String
+    let firstTimeHeroSubtitle: String
 
     // MARK: - Mock interview
 
@@ -291,8 +305,12 @@ struct UIStrings {
     // MARK: - Nav titles for secondary screens
 
     let navInterviewChecklist: String
+    /// Format string for the checklist progress label, e.g.
+    /// `"%d of %d completed"`. Two `%d` placeholders: `done`, then `total`.
+    let checklistProgressFormat: String
     let navExamReadiness: String
     let navReviewMistakes: String
+    let navCivicsPractice: String
     let navReadingPractice: String
     let navWritingPractice: String
     let navAudioOnly: String
@@ -471,6 +489,8 @@ extension UIStrings {
         reviewMistakesSubtitleFormat: "%d questions due for review",
         reviewMistakesEmpty: "Complete some practice first",
         practiceLevels: "Practice Levels",
+        civicsPractice: "Civics Practice",
+        civicsPracticeSubtitle: "128 official questions • 8 practice levels",
         readingWriting: "Reading & Writing",
         handsFree: "Hands-Free",
         readingPractice: "Reading Practice",
@@ -485,11 +505,16 @@ extension UIStrings {
         levelHard: "Hard",
         levelAdvanced: "Advanced",
         levelExpert: "Expert",
+        levelMaster: "Master",
+        levelElite: "Elite",
+        levelGrandmaster: "Grandmaster",
         daysUntilInterviewFormat: "%d days until your interview",
         dailyTargetSubtitleFormat: "%d%% ready · master %d/day",
-        interviewReadyLabel: "100%% ready · you're prepared",
+        interviewReadyLabel: "100% ready · you're prepared",
         interviewTodayTitle: "Your interview is today!",
         interviewTodaySubtitle: "Stay calm — you've got this",
+        firstTimeHeroTitle: "Start with Practice 1",
+        firstTimeHeroSubtitle: "Tap here to begin your first lesson",
 
         navMockInterview: "Mock Interview",
         mockHeadline: "Mock Interview",
@@ -563,10 +588,10 @@ extension UIStrings {
         paywallHeadlineLockedLevel: "Ready for Harder\nQuestions?",
         paywallHeadlineMockInterview: "Simulate the Real\nUSCIS Interview",
         paywallSubheadlineDefault: "Get full access to every feature and pass with confidence.",
-        paywallSubheadlineLockedLevel: "Harder questions prepare you for the real test. Unlock all 5 levels.",
+        paywallSubheadlineLockedLevel: "Harder questions prepare you for the real test. Unlock all 8 levels.",
         paywallSubheadlineMockInterview: "You've tried your free interview. Unlock unlimited attempts to keep improving.",
         paywallFeaturesDefault: [
-            "All 5 practice levels",
+            "All 8 practice levels",
             "Unlimited mock interviews",
             "Master hard & expert questions",
             "Full progress tracking"
@@ -683,8 +708,10 @@ extension UIStrings {
         readinessNotStarted: "Not started yet",
 
         navInterviewChecklist: "Interview Checklist",
+        checklistProgressFormat: "%d of %d completed",
         navExamReadiness: "Exam Readiness",
         navReviewMistakes: "Review Mistakes",
+        navCivicsPractice: "Civics Practice",
         navReadingPractice: "Reading Practice",
         navWritingPractice: "Writing Practice",
         navAudioOnly: "Audio-Only",
@@ -783,6 +810,8 @@ extension UIStrings {
         reviewMistakesSubtitleFormat: "%d preguntas para repasar",
         reviewMistakesEmpty: "Completa primero algo de práctica",
         practiceLevels: "Niveles de práctica",
+        civicsPractice: "Práctica de Civismo",
+        civicsPracticeSubtitle: "128 preguntas oficiales • 8 niveles de práctica",
         readingWriting: "Lectura y escritura",
         handsFree: "Manos libres",
         readingPractice: "Práctica de lectura",
@@ -797,11 +826,16 @@ extension UIStrings {
         levelHard: "Difícil",
         levelAdvanced: "Avanzado",
         levelExpert: "Experto",
+        levelMaster: "Maestro",
+        levelElite: "Élite",
+        levelGrandmaster: "Gran maestro",
         daysUntilInterviewFormat: "%d días para tu entrevista",
         dailyTargetSubtitleFormat: "%d%% listo · domina %d/día",
-        interviewReadyLabel: "100%% listo · estás preparado",
+        interviewReadyLabel: "100% listo · estás preparado",
         interviewTodayTitle: "¡Tu entrevista es hoy!",
         interviewTodaySubtitle: "Mantén la calma — tú puedes",
+        firstTimeHeroTitle: "Comienza con la Práctica 1",
+        firstTimeHeroSubtitle: "Toca aquí para empezar tu primera lección",
 
         navMockInterview: "Entrevista simulada",
         mockHeadline: "Entrevista simulada",
@@ -875,10 +909,10 @@ extension UIStrings {
         paywallHeadlineLockedLevel: "¿Listo para preguntas\nmás difíciles?",
         paywallHeadlineMockInterview: "Simula la entrevista\nreal de USCIS",
         paywallSubheadlineDefault: "Accede a todas las funciones y aprueba con confianza.",
-        paywallSubheadlineLockedLevel: "Las preguntas difíciles te preparan para el examen real. Desbloquea los 5 niveles.",
+        paywallSubheadlineLockedLevel: "Las preguntas difíciles te preparan para el examen real. Desbloquea los 8 niveles.",
         paywallSubheadlineMockInterview: "Ya probaste tu entrevista gratuita. Desbloquea intentos ilimitados para seguir mejorando.",
         paywallFeaturesDefault: [
-            "Los 5 niveles de práctica",
+            "Los 8 niveles de práctica",
             "Entrevistas simuladas ilimitadas",
             "Domina las preguntas difíciles y expertas",
             "Seguimiento completo de progreso"
@@ -995,8 +1029,10 @@ extension UIStrings {
         readinessNotStarted: "Aún no iniciado",
 
         navInterviewChecklist: "Lista para la entrevista",
+        checklistProgressFormat: "%d de %d completados",
         navExamReadiness: "Preparación para el examen",
         navReviewMistakes: "Revisar errores",
+        navCivicsPractice: "Práctica de Civismo",
         navReadingPractice: "Práctica de lectura",
         navWritingPractice: "Práctica de escritura",
         navAudioOnly: "Solo audio",
@@ -1095,6 +1131,8 @@ extension UIStrings {
         reviewMistakesSubtitleFormat: "%d प्रश्नहरू समीक्षाका लागि",
         reviewMistakesEmpty: "पहिले केही अभ्यास गर्नुहोस्",
         practiceLevels: "अभ्यास स्तरहरू",
+        civicsPractice: "नागरिक अभ्यास",
+        civicsPracticeSubtitle: "१२८ आधिकारिक प्रश्न • ८ अभ्यास तह",
         readingWriting: "पढाइ र लेखाइ",
         handsFree: "हात-मुक्त",
         readingPractice: "पढाइ अभ्यास",
@@ -1109,11 +1147,16 @@ extension UIStrings {
         levelHard: "कठिन",
         levelAdvanced: "उन्नत",
         levelExpert: "विज्ञ",
+        levelMaster: "निपुण",
+        levelElite: "विशिष्ट",
+        levelGrandmaster: "महाविज्ञ",
         daysUntilInterviewFormat: "तपाईंको अन्तर्वार्तामा %d दिन बाँकी",
         dailyTargetSubtitleFormat: "%d%% तयार · दैनिक %d सिक्नुहोस्",
-        interviewReadyLabel: "100%% तयार · तपाईं तयार हुनुहुन्छ",
+        interviewReadyLabel: "100% तयार · तपाईं तयार हुनुहुन्छ",
         interviewTodayTitle: "तपाईंको अन्तर्वार्ता आज छ!",
         interviewTodaySubtitle: "शान्त रहनुहोस् — तपाईं सक्नुहुन्छ",
+        firstTimeHeroTitle: "अभ्यास १ बाट सुरु गर्नुहोस्",
+        firstTimeHeroSubtitle: "आफ्नो पहिलो पाठ सुरु गर्न यहाँ थिच्नुहोस्",
 
         navMockInterview: "नक्कली अन्तर्वार्ता",
         mockHeadline: "नक्कली अन्तर्वार्ता",
@@ -1187,10 +1230,10 @@ extension UIStrings {
         paywallHeadlineLockedLevel: "कठिन प्रश्नहरूका\nलागि तयार?",
         paywallHeadlineMockInterview: "वास्तविक USCIS\nअन्तर्वार्ता अनुकरण",
         paywallSubheadlineDefault: "सबै सुविधामा पूर्ण पहुँच पाउनुहोस् र विश्वासका साथ पास गर्नुहोस्।",
-        paywallSubheadlineLockedLevel: "कठिन प्रश्नले तपाईंलाई वास्तविक परीक्षाका लागि तयार पार्छ। सबै ५ स्तर अनलक गर्नुहोस्।",
+        paywallSubheadlineLockedLevel: "कठिन प्रश्नले तपाईंलाई वास्तविक परीक्षाका लागि तयार पार्छ। सबै ८ स्तर अनलक गर्नुहोस्।",
         paywallSubheadlineMockInterview: "तपाईंले आफ्नो निःशुल्क अन्तर्वार्ता गरिसक्नुभयो। असीमित प्रयास अनलक गर्नुहोस्।",
         paywallFeaturesDefault: [
-            "सबै ५ अभ्यास स्तर",
+            "सबै ८ अभ्यास स्तर",
             "असीमित नक्कली अन्तर्वार्ता",
             "कठिन र विज्ञ प्रश्नमा दक्षता",
             "पूर्ण प्रगति ट्र्याकिङ"
@@ -1307,8 +1350,10 @@ extension UIStrings {
         readinessNotStarted: "अझै सुरु गरिएको छैन",
 
         navInterviewChecklist: "अन्तर्वार्ता चेकलिस्ट",
+        checklistProgressFormat: "%d मध्ये %d पूरा",
         navExamReadiness: "परीक्षा तयारी",
         navReviewMistakes: "गल्तीहरू समीक्षा",
+        navCivicsPractice: "नागरिक अभ्यास",
         navReadingPractice: "पढाइ अभ्यास",
         navWritingPractice: "लेखाइ अभ्यास",
         navAudioOnly: "अडियो-मात्र",
@@ -1407,6 +1452,8 @@ extension UIStrings {
         reviewMistakesSubtitleFormat: "%d 道题待复习",
         reviewMistakesEmpty: "请先完成一些练习",
         practiceLevels: "练习等级",
+        civicsPractice: "公民练习",
+        civicsPracticeSubtitle: "128 道官方题 • 8 个练习等级",
         readingWriting: "阅读与写作",
         handsFree: "免提模式",
         readingPractice: "阅读练习",
@@ -1421,11 +1468,16 @@ extension UIStrings {
         levelHard: "困难",
         levelAdvanced: "进阶",
         levelExpert: "专家",
+        levelMaster: "大师",
+        levelElite: "精英",
+        levelGrandmaster: "宗师",
         daysUntilInterviewFormat: "距离面试还有 %d 天",
         dailyTargetSubtitleFormat: "%d%% 就绪 · 每天掌握 %d 题",
-        interviewReadyLabel: "100%% 就绪 · 你已经准备好了",
+        interviewReadyLabel: "100% 就绪 · 你已经准备好了",
         interviewTodayTitle: "今天就是面试日！",
         interviewTodaySubtitle: "保持冷静 — 你可以的",
+        firstTimeHeroTitle: "从练习 1 开始",
+        firstTimeHeroSubtitle: "点此开始你的第一课",
 
         navMockInterview: "模拟面试",
         mockHeadline: "模拟面试",
@@ -1499,10 +1551,10 @@ extension UIStrings {
         paywallHeadlineLockedLevel: "准备好更难的\n题目了吗?",
         paywallHeadlineMockInterview: "模拟真实的\nUSCIS 面试",
         paywallSubheadlineDefault: "解锁全部功能, 自信通过面试.",
-        paywallSubheadlineLockedLevel: "难题帮你为真实考试做准备. 解锁全部 5 个等级.",
+        paywallSubheadlineLockedLevel: "难题帮你为真实考试做准备. 解锁全部 8 个等级.",
         paywallSubheadlineMockInterview: "你已试过免费面试. 解锁无限次数继续提升.",
         paywallFeaturesDefault: [
-            "全部 5 个练习等级",
+            "全部 8 个练习等级",
             "无限模拟面试",
             "掌握困难与专家题目",
             "完整进度追踪"
@@ -1619,8 +1671,10 @@ extension UIStrings {
         readinessNotStarted: "尚未开始",
 
         navInterviewChecklist: "面试清单",
+        checklistProgressFormat: "已完成 %d/%d",
         navExamReadiness: "考试准备",
         navReviewMistakes: "复习错题",
+        navCivicsPractice: "公民练习",
         navReadingPractice: "阅读练习",
         navWritingPractice: "写作练习",
         navAudioOnly: "纯音频",

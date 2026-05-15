@@ -148,19 +148,41 @@ final class LocalSTTService: NSObject, SpeechToTextService {
             self?.request?.append(buf)
         }
 
-        try? engine.start()
+        // If the engine can't start (mic in use by another process, audio
+        // route flap, hardware error), the previous `try? engine.start()`
+        // swallowed the error but still emitted `rec.send(true)` — leaving
+        // the UI showing "recording" while no audio was ever captured.
+        // Tear down the installed tap and report the truth.
+        do {
+            try engine.start()
+        } catch {
+            node.removeTap(onBus: 0)
+            request = nil
+            rec.send(false)
+            return
+        }
         rec.send(true)
 
         guard let request else { rec.send(false); return }
         task = recognizer.recognitionTask(with: request) { [weak self] res, err in
-            guard let self else { return }
-
-            if let res {
-                let txt = res.bestTranscription.formattedString
-                trans.send(txt)
-                if res.isFinal { stopRecording(); return }
+            // Recognition callbacks deliver on SF's private background
+            // queue. `stopRecording()` mutates `engine`/`request`/`task`
+            // and emits on `rec`, and other callers of `stopRecording`
+            // (UI End/Back/Skip taps, `.onDisappear`) run on main. Without
+            // hopping to main here, those mutations interleave and TSAN
+            // flags a data race; on real devices the engine can be left
+            // half-torn (tap installed, request nil) and the next
+            // `startRecording` fails. Wrapping the whole callback body
+            // serializes through the main runloop with every other writer.
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let res {
+                    let txt = res.bestTranscription.formattedString
+                    self.trans.send(txt)
+                    if res.isFinal { self.stopRecording(); return }
+                }
+                if err != nil { self.stopRecording() }
             }
-            if err != nil { stopRecording() }
         }
     }
 

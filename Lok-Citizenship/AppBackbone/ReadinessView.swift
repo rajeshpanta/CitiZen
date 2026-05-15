@@ -7,10 +7,24 @@ struct ReadinessView: View {
 
     private let tracker = QuestionTracker.shared
     private let progress = ProgressManager.shared
-    private let totalPerLevel = 15
-    private let levelCount = 5
 
-    private var totalQuestions: Int { totalPerLevel * levelCount }
+    /// Per-language practice level count. All four supported languages are now
+    /// on the official 2025 USCIS 8-practice layout (16 questions each = 128).
+    /// Kept as a per-language computed property in case a future language ships
+    /// with a different layout. Drives the level-breakdown row count below.
+    private var levelCount: Int {
+        switch language {
+        case .english, .spanish, .chinese, .nepali: return 8
+        }
+    }
+
+    /// Per-language total — all four supported languages (English, Spanish,
+    /// Chinese, Nepali) now have the full 128-question 2025 USCIS bank
+    /// (16 per level × 8 levels). Reading from `QuestionPool` keeps the
+    /// readiness math correct as more languages are added.
+    private var totalQuestions: Int {
+        QuestionPool.allQuestions(for: language).count
+    }
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
@@ -76,7 +90,11 @@ struct ReadinessView: View {
     // MARK: - Readiness Ring
 
     private var readinessRing: some View {
-        let mastered = tracker.masteredCount(for: localeKey)
+        // Pass the current pool so legacy records (e.g., the old 75-question
+        // English IDs that no longer exist after the 2025 USCIS migration)
+        // don't inflate mastery for returning users.
+        let pool = QuestionPool.allQuestions(for: language)
+        let mastered = tracker.masteredCount(for: localeKey, inPool: pool)
         let pct = totalQuestions > 0 ? Double(mastered) / Double(totalQuestions) : 0
 
         return VStack(spacing: 8) {
@@ -110,9 +128,11 @@ struct ReadinessView: View {
     private var statsRow: some View {
         // Per-language counts: mistakes in another language must NOT
         // pull these numbers down. Computed from per-locale buckets in
-        // `QuestionTracker`.
-        let mastered = tracker.masteredCount(for: localeKey)
-        let learning = tracker.learningCount(for: localeKey)
+        // `QuestionTracker`. Pass the current pool so orphaned records
+        // from a prior question-bank layout don't skew the totals.
+        let pool = QuestionPool.allQuestions(for: language)
+        let mastered = tracker.masteredCount(for: localeKey, inPool: pool)
+        let learning = tracker.learningCount(for: localeKey, inPool: pool)
         return HStack(spacing: 0) {
             statItem(value: "\(mastered)", label: s.readinessStatMastered, color: .green)
             Divider().frame(height: 36).background(Color.white.opacity(0.2))
@@ -147,23 +167,36 @@ struct ReadinessView: View {
         let masteredInLevel = levelQuestions.filter { q in
             (tracker.record(for: q.id, language: localeKey)?.consecutiveCorrect ?? 0) >= 3
         }.count
-        let pct = Double(masteredInLevel) / Double(totalPerLevel)
-        let labels = ["", s.levelEasy, s.levelMedium, s.levelHard, s.levelAdvanced, s.levelExpert]
-        let colors: [Color] = [.clear, .green, .green, .yellow, .orange, .red]
+        // Per-level total is now per-language too (English has 26 in level 1,
+        // legacy languages have 15). `levelQuestions.count` reflects the
+        // actual practice array size.
+        let levelTotal = levelQuestions.count
+        let pct = levelTotal > 0 ? Double(masteredInLevel) / Double(levelTotal) : 0
+        // 9 entries (indices 0…8): index 0 is unused padding so `level` (1-based)
+        // can be used directly as a subscript. Levels 6-8 are English/Spanish-only
+        // — the 8-practice 2025 USCIS layout. Without these, ReadinessView would
+        // crash with an out-of-bounds subscript the moment a user reached
+        // practice 6.
+        let labels = ["", s.levelEasy, s.levelMedium, s.levelHard, s.levelAdvanced,
+                      s.levelExpert, s.levelMaster, s.levelElite, s.levelGrandmaster]
+        let colors: [Color] = [.clear, .green, .green, .yellow, .orange, .red,
+                               .purple, .indigo, .brown]
+        let levelLabel = labels[safe: level] ?? ""
+        let levelColor = colors[safe: level] ?? .gray
 
         return HStack(spacing: 12) {
             Text("L\(level)")
                 .font(.caption.bold())
-                .foregroundColor(colors[level])
+                .foregroundColor(levelColor)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(labels[level])
+                    Text(levelLabel)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                     Spacer()
-                    Text("\(masteredInLevel)/\(totalPerLevel)")
+                    Text("\(masteredInLevel)/\(levelTotal)")
                         .font(.caption2)
                         .foregroundColor(.white.opacity(0.5))
                 }
@@ -172,7 +205,7 @@ struct ReadinessView: View {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Color.white.opacity(0.1))
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(colors[level])
+                            .fill(levelColor)
                             .frame(width: geo.size.width * pct)
                     }
                 }
@@ -218,7 +251,10 @@ struct ReadinessView: View {
     }
 
     private func interviewFutureCard(days: Int, date: Date) -> some View {
-        let mastered = tracker.masteredCount(for: localeKey)
+        // Pool-aware mastery count so legacy records from the pre-2025
+        // English layout don't inflate the % for returning users.
+        let pool = QuestionPool.allQuestions(for: language)
+        let mastered = tracker.masteredCount(for: localeKey, inPool: pool)
         let pct = totalQuestions > 0 ? (mastered * 100) / totalQuestions : 0
         let remaining = max(0, totalQuestions - mastered)
         // Ceiling division: 17 questions over 5 days → 4/day, not 3
@@ -227,7 +263,7 @@ struct ReadinessView: View {
         let accent = interviewAccent(daysOut: days, pct: pct)
 
         return NavigationLink(
-            destination: InterviewChecklistView().navigationTitle(s.navInterviewChecklist)
+            destination: InterviewChecklistView(language: language).navigationTitle(s.navInterviewChecklist)
         ) {
             HStack(spacing: 14) {
                 Image(systemName: "calendar.badge.clock")
@@ -260,7 +296,7 @@ struct ReadinessView: View {
 
     private var interviewTodayCard: some View {
         NavigationLink(
-            destination: InterviewChecklistView().navigationTitle(s.navInterviewChecklist)
+            destination: InterviewChecklistView(language: language).navigationTitle(s.navInterviewChecklist)
         ) {
             HStack(spacing: 14) {
                 Image(systemName: "star.circle.fill")
@@ -343,17 +379,42 @@ struct ReadinessView: View {
     private func questionsForLevel(_ level: Int) -> [UnifiedQuestion] {
         switch language {
         case .english:
-            return [EnglishQuestions.practice1, EnglishQuestions.practice2, EnglishQuestions.practice3,
-                    EnglishQuestions.practice4, EnglishQuestions.practice5][level - 1]
+            // 8-practice 2025 USCIS layout. `levelCount` for English is 8,
+            // so `level - 1` is always in [0..7].
+            let arrays = [
+                EnglishQuestions.practice1, EnglishQuestions.practice2,
+                EnglishQuestions.practice3, EnglishQuestions.practice4,
+                EnglishQuestions.practice5, EnglishQuestions.practice6,
+                EnglishQuestions.practice7, EnglishQuestions.practice8
+            ]
+            return arrays[safe: level - 1] ?? []
         case .nepali:
-            return [NepaliQuestions.practice1, NepaliQuestions.practice2, NepaliQuestions.practice3,
-                    NepaliQuestions.practice4, NepaliQuestions.practice5][level - 1]
+            // Nepali matches English's 8-practice 2025 USCIS layout.
+            let arrays = [
+                NepaliQuestions.practice1, NepaliQuestions.practice2,
+                NepaliQuestions.practice3, NepaliQuestions.practice4,
+                NepaliQuestions.practice5, NepaliQuestions.practice6,
+                NepaliQuestions.practice7, NepaliQuestions.practice8
+            ]
+            return arrays[safe: level - 1] ?? []
         case .spanish:
-            return [SpanishQuestions.practice1, SpanishQuestions.practice2, SpanishQuestions.practice3,
-                    SpanishQuestions.practice4, SpanishQuestions.practice5][level - 1]
+            // Spanish matches English's 8-practice 2025 USCIS layout.
+            let arrays = [
+                SpanishQuestions.practice1, SpanishQuestions.practice2,
+                SpanishQuestions.practice3, SpanishQuestions.practice4,
+                SpanishQuestions.practice5, SpanishQuestions.practice6,
+                SpanishQuestions.practice7, SpanishQuestions.practice8
+            ]
+            return arrays[safe: level - 1] ?? []
         case .chinese:
-            return [ChineseQuestions.practice1, ChineseQuestions.practice2, ChineseQuestions.practice3,
-                    ChineseQuestions.practice4, ChineseQuestions.practice5][level - 1]
+            // Chinese matches English's 8-practice 2025 USCIS layout.
+            let arrays = [
+                ChineseQuestions.practice1, ChineseQuestions.practice2,
+                ChineseQuestions.practice3, ChineseQuestions.practice4,
+                ChineseQuestions.practice5, ChineseQuestions.practice6,
+                ChineseQuestions.practice7, ChineseQuestions.practice8
+            ]
+            return arrays[safe: level - 1] ?? []
         }
     }
 

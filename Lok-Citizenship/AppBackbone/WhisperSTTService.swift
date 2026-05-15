@@ -164,6 +164,15 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         _ = offlineOnly
 
         stopEngineAndSF()                                  // clean slate
+        // Cancel any in-flight Whisper upload from a prior question.
+        // Without this, a stale upload can complete AFTER startRecording
+        // and its `finishWith` will emit `trans.send(text)` + `rec.send(false)`
+        // against the NEW question's STT cycle, polluting transcription
+        // and potentially auto-advancing on the wrong text. We don't
+        // observe the cancelled task's result — `defer` in `upload` still
+        // removes the temp file, so no orphaned WAVs.
+        uploadTask?.cancel()
+        uploadTask = nil
         didTriggerStop = false
         lastPartial = ""
         quizOptions = options
@@ -452,10 +461,19 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
     /// `isRecording` publisher — that happens after the upload resolves so
     /// `VoiceQuizController` evaluates the final transcript.
     private func stopEngineAndSF() {
+        // Order matters: remove the tap BEFORE stopping the engine, then
+        // nil the shared state the tap touches. The tap closure (installed
+        // in startRecording) runs on the realtime audio thread and writes
+        // to `sfRequest` and `audioFile`. `engine.stop()` does NOT
+        // synchronously drain pending tap callbacks — removing the tap
+        // first is Apple's documented way to stop new buffers being
+        // scheduled before we touch the state those callbacks reference.
+        // Without this order, a callback already in flight could deref
+        // `audioFile` mid-write while main niles it below.
+        engine.inputNode.removeTap(onBus: 0)
         if engine.isRunning {
             engine.stop()
         }
-        engine.inputNode.removeTap(onBus: 0)
         sfRequest?.endAudio()
         sfTask?.cancel()
         sfRequest = nil

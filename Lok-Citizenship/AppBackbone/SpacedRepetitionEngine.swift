@@ -8,6 +8,13 @@ enum SpacedRepetitionEngine {
     /// 0 correct → always due, 1 → 1 day, 2 → 3 days, 3 → 7 days, 4+ → 30 days.
     private static let intervals: [Int] = [0, 1, 3, 7, 30]
 
+    /// Default interval for streaks beyond the table. Matches the final
+    /// entry in `intervals` so the in-table and out-of-table paths produce
+    /// the same answer at the boundary. Centralized so the two call sites
+    /// (`dueQuestions`, `dueCount`) can't drift if `intervals` is ever
+    /// rebalanced.
+    private static let defaultInterval = 30
+
     /// Returns questions that are "due" for review, sorted by urgency (most overdue first).
     /// - Parameters:
     ///   - allQuestions: The full pool of questions to consider.
@@ -30,7 +37,7 @@ enum SpacedRepetitionEngine {
             let streak = record.consecutiveCorrect
             let intervalDays = streak < intervals.count
                 ? intervals[streak]
-                : intervals.last!
+                : defaultInterval
 
             // If never answered correctly, always due
             guard let lastCorrect = record.lastCorrect else {
@@ -66,7 +73,7 @@ enum SpacedRepetitionEngine {
             let streak = record.consecutiveCorrect
             let intervalDays = streak < intervals.count
                 ? intervals[streak]
-                : intervals.last!
+                : defaultInterval
             let daysSince = now.timeIntervalSince(lastCorrect) / 86400
             return daysSince >= Double(intervalDays) ? count + 1 : count
         }

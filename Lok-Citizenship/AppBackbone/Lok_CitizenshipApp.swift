@@ -15,7 +15,13 @@ import UIKit                           // ← NEW: needed for UIColor
 struct Lok_CitizenshipApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
-    @State private var hasCompletedOnboarding = ProgressManager.shared.hasCompletedOnboarding
+    /// Observes the same UserDefaults key (`pm_hasCompletedOnboarding`) that
+    /// `ProgressManager.hasCompletedOnboarding` reads/writes. Using
+    /// `@AppStorage` rather than a one-shot `@State` means the App reacts to
+    /// the flag changing from anywhere — OnboardingView's completion path,
+    /// SettingsView's DEBUG "Reset Onboarding" button, or any future toggle
+    /// — without needing a relaunch.
+    @AppStorage("pm_hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     /// Resolve saved language preference to AppLanguage enum. Falls back to English.
     private var savedLanguage: AppLanguage {
@@ -76,7 +82,7 @@ struct Lok_CitizenshipApp: App {
         WindowGroup {
             Group {
                 if hasCompletedOnboarding {
-                    NavigationView {
+                    NavigationStack {
                         PracticeSelectionView(language: savedLanguage)
                     }
                 } else {

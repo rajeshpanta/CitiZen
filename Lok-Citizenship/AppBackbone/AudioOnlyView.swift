@@ -58,6 +58,14 @@ struct AudioOnlyView: View {
     /// dead session. Reassigning this property auto-cancels the previous
     /// subscription, which is the right behavior on Try-Again.
     @State private var summaryAnnouncement: AnyCancellable?
+    /// First-launch recovery: when the user taps Start while mic auth is
+    /// `.notDetermined`, the OS prompt fires asynchronously. We arm this
+    /// flag, kick off `requestAuthorization()`, and complete the start
+    /// from the `onChange(of: voice.authorizationStatus)` handler once
+    /// the user has granted permission. Without this, a fresh-install
+    /// user's first Start tap silently no-ops behind the OS dialog.
+    /// Mirrors `MockInterviewView.pendingStartInterview`.
+    @State private var pendingStartSession = false
 
     init(language: AppLanguage) {
         self.language = language
@@ -129,10 +137,19 @@ struct AudioOnlyView: View {
             voice.requestAuthorization()
             UIApplication.shared.isIdleTimerDisabled = true
         }
-        .onChange(of: voice.authorizationStatus) { _ in
+        .onChange(of: voice.authorizationStatus) { status in
             if isMicBlocked {
                 voice.stop()
                 voice.cancelPendingInterruptionResume()
+                // Drop any stale pending start so a later auth flip
+                // doesn't accidentally fire startSession on a denied mic.
+                pendingStartSession = false
+            } else if pendingStartSession && status == .authorized {
+                // OS prompt resolved with grant after the user tapped
+                // Start while still `.notDetermined`. Run the start flow
+                // now that the mic is actually available.
+                pendingStartSession = false
+                startSession()
             }
         }
         .onChange(of: scenePhase) { phase in
@@ -372,18 +389,32 @@ struct AudioOnlyView: View {
     }
 
     private func startSession() {
-        guard voice.authorizationStatus == .authorized else { return }
-        AudioSessionPrewarmer.prewarm {
-            let pool = QuestionPool.allQuestions(for: language)
-            quizLogic.languageTag = language.rawValue
-            // SessionLength.full's rawValue (999) is greater than any
-            // realistic pool, so `startAudioOnly` caps it to the actual
-            // pool size — full-pool means "every question once, in
-            // shuffled order."
-            quizLogic.startAudioOnly(from: pool, questionCount: pickedLength.rawValue)
-            didAnnounceFinish = false
-            stage = .session
-            voice.start()
+        switch voice.authorizationStatus {
+        case .authorized:
+            AudioSessionPrewarmer.prewarm {
+                let pool = QuestionPool.allQuestions(for: language)
+                quizLogic.languageTag = language.rawValue
+                // SessionLength.full's rawValue (999) is greater than any
+                // realistic pool, so `startAudioOnly` caps it to the actual
+                // pool size — full-pool means "every question once, in
+                // shuffled order."
+                quizLogic.startAudioOnly(from: pool, questionCount: pickedLength.rawValue)
+                didAnnounceFinish = false
+                stage = .session
+                voice.start()
+            }
+        case .notDetermined:
+            // First-launch path: arm the pending flag so the
+            // authorizationStatus onChange handler can complete the start
+            // once the user grants mic permission. Without this, the
+            // user's first Start tap goes nowhere while the OS prompt
+            // is up and they have no idea why.
+            pendingStartSession = true
+            voice.requestAuthorization()
+        default:
+            // .denied / .restricted are handled by `permissionScreen` —
+            // the user shouldn't be able to tap Start in those states.
+            break
         }
     }
 
@@ -636,7 +667,7 @@ private struct ReviewMissedSheet: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 LinearGradient(
                     colors: [Color(red: 0, green: 0.08, blue: 0.25), .black],
@@ -697,9 +728,14 @@ private struct ReviewMissedSheet: View {
                 Text(s.audioOnlyReviewYouSaidLabel)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.5))
-                Text(entry.userSpokenText?.isEmpty == false
-                     ? entry.userSpokenText!
-                     : s.audioOnlyReviewNoAnswerCaptured)
+                // Bind once so the empty-string check and the displayed
+                // value can't disagree across optional rebinds. The prior
+                // form (`?.isEmpty == false ? entry.userSpokenText! : …`)
+                // force-unwrapped a value the guard had already proven
+                // non-nil, which is technically safe but flagged as
+                // fragile by the static analyzer.
+                let spoken = entry.userSpokenText ?? ""
+                Text(spoken.isEmpty ? s.audioOnlyReviewNoAnswerCaptured : spoken)
                     .font(.subheadline)
                     .foregroundColor(.red.opacity(0.85))
                     .italic()

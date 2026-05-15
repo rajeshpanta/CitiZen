@@ -82,7 +82,11 @@ struct SettingsView: View {
                     DatePicker(
                         s.settingsInterviewDate,
                         selection: $interviewDate,
-                        in: Date()...,
+                        // Two-year ceiling — see the matching comment in
+                        // OnboardingView. Stops the readiness "X days until
+                        // your interview" copy from rendering nonsense
+                        // when a user picks a far-future date.
+                        in: Date()...(Calendar.current.date(byAdding: .year, value: 2, to: Date()) ?? Date()),
                         displayedComponents: .date
                     )
                     .onChange(of: interviewDate) { date in
