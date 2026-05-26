@@ -111,6 +111,14 @@ struct UIStrings {
     let resultShareResult: String          // "Share Result"
     let resultTryAgain: String             // "Try Again"
     let resultDone: String                 // "Done"
+    let resultPracticeCivics: String       // "Practice Civics" — Mock result button, sends user to civics practice
+    /// "Review %d misses" — Phase 2: post-quiz button that opens a fresh
+    /// quiz containing only the questions the user got wrong this session.
+    /// %d is the count (already > 0 by the time the button is shown).
+    let resultReviewMissesFormat: String
+    /// Phase 2: Reading↔Writing transition buttons.
+    let tryWritingPracticeBtn: String
+    let tryReadingPracticeBtn: String
     let resultReviewHeader: String         // "Question review"
     let resultReviewYouAnswered: String    // "Your answer:"
     let resultReviewCorrectAnswer: String  // "Correct answer:"
@@ -178,6 +186,16 @@ struct UIStrings {
     let paywallTerms: String
     /// Body text shown in the "Verification Issue" alert when receipt verification fails.
     let paywallErrorVerificationFailed: String
+
+    /// Social-proof line shown under the headline. Pairs with 5 filled stars.
+    let paywallRated5Stars: String
+    /// Trust badges shown above the CTA. Universal claims — all factually true.
+    let paywallTrustApple: String
+    let paywallTrustNoTracking: String
+    let paywallTrustCancel: String
+    /// "SAVE %@" — %@ is a computed percentage like "83%". Shown on the lifetime card
+    /// when both products are loaded and lifetime is cheaper than 12 months of monthly.
+    let paywallSaveFormat: String
 
     // MARK: - Audio-only spoken feedback
 
@@ -561,6 +579,10 @@ extension UIStrings {
         resultShareResult: "Share Result",
         resultTryAgain: "Try Again",
         resultDone: "Done",
+        resultPracticeCivics: "Practice Civics",
+        resultReviewMissesFormat: "Review %d misses",
+        tryWritingPracticeBtn: "Try Writing Practice",
+        tryReadingPracticeBtn: "Try Reading Practice",
         resultReviewHeader: "Question review",
         resultReviewYouAnswered: "Your answer:",
         resultReviewCorrectAnswer: "Correct answer:",
@@ -584,29 +606,29 @@ extension UIStrings {
         onboardingStartAtLevelFormat: "Start at Level %d",
         recommendedBadge: "Recommended",
 
-        paywallHeadlineDefault: "Pass Your Citizenship\nInterview",
-        paywallHeadlineLockedLevel: "Ready for Harder\nQuestions?",
-        paywallHeadlineMockInterview: "Simulate the Real\nUSCIS Interview",
-        paywallSubheadlineDefault: "Get full access to every feature and pass with confidence.",
-        paywallSubheadlineLockedLevel: "Harder questions prepare you for the real test. Unlock all 8 levels.",
-        paywallSubheadlineMockInterview: "You've tried your free interview. Unlock unlimited attempts to keep improving.",
+        paywallHeadlineDefault: "Walk In Ready.\nPass With Confidence.",
+        paywallHeadlineLockedLevel: "The Real Test\nWon't Go Easy On You.",
+        paywallHeadlineMockInterview: "Practice Until It\nFeels Automatic.",
+        paywallSubheadlineDefault: "Master every official USCIS question with voice-powered mock interviews — in your language.",
+        paywallSubheadlineLockedLevel: "Easy questions won't prepare you. Unlock all 8 levels and master the ones that actually trip people up.",
+        paywallSubheadlineMockInterview: "One free interview shows where you stand. Unlimited attempts is how you build the muscle memory to pass.",
         paywallFeaturesDefault: [
-            "All 8 practice levels",
-            "Unlimited mock interviews",
-            "Master hard & expert questions",
-            "Full progress tracking"
+            "100+ official USCIS civics questions",
+            "Unlimited voice-powered mock interviews",
+            "Practice in English, Spanish, Nepali or Chinese",
+            "Track scores, weak spots, and daily streaks"
         ],
         paywallFeaturesLockedLevel: [
-            "Advanced & Expert difficulty levels",
-            "Unlimited mock interview practice",
+            "All 8 difficulty levels — easy to expert",
+            "Unlimited mock interviews with realistic voice AI",
             "Master the hardest questions first",
-            "Track your improvement over time"
+            "Smart progress tracking finds your weak spots"
         ],
         paywallFeaturesMockInterview: [
             "Unlimited mock interview attempts",
-            "Advanced & Expert practice levels",
-            "Voice-powered interview simulation",
-            "Track scores, streaks, and progress"
+            "Realistic USCIS-style voice questioning",
+            "All 100+ official civics questions",
+            "Detailed scoring after every interview"
         ],
         paywallLifetime: "Lifetime",
         paywallLifetimeSubtitle: "One payment, forever yours",
@@ -633,6 +655,11 @@ extension UIStrings {
         paywallPrivacy: "Privacy Policy",
         paywallTerms: "Terms of Use",
         paywallErrorVerificationFailed: "Purchase could not be verified. Please try restoring purchases.",
+        paywallRated5Stars: "Rated 5 stars",
+        paywallTrustApple: "Secure Apple payment",
+        paywallTrustNoTracking: "No ads, no tracking",
+        paywallTrustCancel: "Cancel anytime",
+        paywallSaveFormat: "SAVE %@",
 
         audioFeedbackCorrect: "Correct",
         audioFeedbackCorrectAnswerIsFormat: "Correct! The answer is %@",
@@ -882,6 +909,10 @@ extension UIStrings {
         resultShareResult: "Compartir resultado",
         resultTryAgain: "Intentar de nuevo",
         resultDone: "Listo",
+        resultPracticeCivics: "Practicar Cívica",
+        resultReviewMissesFormat: "Repasar %d errores",
+        tryWritingPracticeBtn: "Probar práctica de escritura",
+        tryReadingPracticeBtn: "Probar práctica de lectura",
         resultReviewHeader: "Revisión de preguntas",
         resultReviewYouAnswered: "Tu respuesta:",
         resultReviewCorrectAnswer: "Respuesta correcta:",
@@ -954,6 +985,11 @@ extension UIStrings {
         paywallPrivacy: "Política de privacidad",
         paywallTerms: "Términos de uso",
         paywallErrorVerificationFailed: "No se pudo verificar la compra. Intenta restaurar compras.",
+        paywallRated5Stars: "Calificada 5 estrellas",
+        paywallTrustApple: "Pago seguro con Apple",
+        paywallTrustNoTracking: "Sin anuncios ni rastreo",
+        paywallTrustCancel: "Cancela cuando quieras",
+        paywallSaveFormat: "AHORRA %@",
 
         audioFeedbackCorrect: "Correcto",
         audioFeedbackCorrectAnswerIsFormat: "¡Correcto! La respuesta es %@",
@@ -1203,6 +1239,10 @@ extension UIStrings {
         resultShareResult: "परिणाम साझा गर्नुहोस्",
         resultTryAgain: "फेरि प्रयास गर्नुहोस्",
         resultDone: "सकियो",
+        resultPracticeCivics: "नागरिक अभ्यास",
+        resultReviewMissesFormat: "%d गल्ती समीक्षा गर्नुहोस्",
+        tryWritingPracticeBtn: "लेखन अभ्यास प्रयास गर्नुहोस्",
+        tryReadingPracticeBtn: "पढाइ अभ्यास प्रयास गर्नुहोस्",
         resultReviewHeader: "प्रश्न समीक्षा",
         resultReviewYouAnswered: "तपाईंको उत्तर:",
         resultReviewCorrectAnswer: "सही उत्तर:",
@@ -1275,6 +1315,11 @@ extension UIStrings {
         paywallPrivacy: "गोपनीयता नीति",
         paywallTerms: "प्रयोगका सर्तहरू",
         paywallErrorVerificationFailed: "खरिद प्रमाणित गर्न सकिएन। कृपया खरिदहरू पुनर्स्थापना गर्ने प्रयास गर्नुहोस्।",
+        paywallRated5Stars: "५ स्टार मूल्याङ्कन",
+        paywallTrustApple: "Apple द्वारा सुरक्षित भुक्तानी",
+        paywallTrustNoTracking: "विज्ञापन र ट्र्याकिङ छैन",
+        paywallTrustCancel: "जहिले पनि रद्द गर्नुहोस्",
+        paywallSaveFormat: "%@ बचत",
 
         audioFeedbackCorrect: "सही",
         audioFeedbackCorrectAnswerIsFormat: "सही! जवाफ %@ हो",
@@ -1524,6 +1569,10 @@ extension UIStrings {
         resultShareResult: "分享结果",
         resultTryAgain: "再试一次",
         resultDone: "完成",
+        resultPracticeCivics: "练习公民题",
+        resultReviewMissesFormat: "复习 %d 道错题",
+        tryWritingPracticeBtn: "试试写作练习",
+        tryReadingPracticeBtn: "试试阅读练习",
         resultReviewHeader: "题目回顾",
         resultReviewYouAnswered: "你的回答:",
         resultReviewCorrectAnswer: "正确答案:",
@@ -1596,6 +1645,11 @@ extension UIStrings {
         paywallPrivacy: "隐私政策",
         paywallTerms: "使用条款",
         paywallErrorVerificationFailed: "无法验证购买. 请尝试恢复购买.",
+        paywallRated5Stars: "五星好评",
+        paywallTrustApple: "Apple 安全支付",
+        paywallTrustNoTracking: "无广告, 无追踪",
+        paywallTrustCancel: "随时取消",
+        paywallSaveFormat: "省 %@",
 
         audioFeedbackCorrect: "正确",
         audioFeedbackCorrectAnswerIsFormat: "正确！答案是 %@",

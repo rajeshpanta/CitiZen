@@ -807,6 +807,7 @@ final class VoiceQuizController: ObservableObject {
 
     private func currentVariant() -> UnifiedQuestion.Variant {
         let q = quizLogic.currentQuestion
+        guard !q.variants.isEmpty else { return .init(text: "", options: []) }
         let idx = min(variantIndex, q.variants.count - 1)
         return q.variants[max(idx, 0)]
     }

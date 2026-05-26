@@ -99,14 +99,150 @@ final class ConsoleAnalytics: AnalyticsTracking {
 }
 
 // ═════════════════════════════════════════════════════════════════
+// MARK: - Supabase Analytics (Production)
+// ═════════════════════════════════════════════════════════════════
+
+/// Posts each event to a Supabase `analytics_events` table over REST.
+/// Zero new dependencies — reuses the existing `SupabaseConfig` URL
+/// and anon key already used by the Whisper edge function.
+///
+/// All events are fire-and-forget background POSTs. Network failures
+/// are silently dropped — analytics must never break the app or
+/// surface as a user-visible failure.
+///
+/// Privacy: events carry only the anonymous `DeviceID.current`
+/// (Keychain-stored UUID, not linkable to any third party). Per
+/// Apple's ATT definition, this is not "tracking" — the paywall's
+/// "No ads, no tracking" claim remains defensible.
+///
+/// ─────────────────────────────────────────────────────────────────
+/// One-time Supabase setup (run once in the SQL Editor):
+///
+///     CREATE TABLE analytics_events (
+///         id BIGSERIAL PRIMARY KEY,
+///         event_name TEXT NOT NULL,
+///         properties JSONB,
+///         device_id TEXT,
+///         app_version TEXT,
+///         platform TEXT,
+///         created_at TIMESTAMPTZ DEFAULT now()
+///     );
+///     ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+///     CREATE POLICY "anon insert" ON analytics_events
+///         FOR INSERT TO anon WITH CHECK (true);
+///     CREATE INDEX idx_analytics_events_name_created
+///         ON analytics_events (event_name, created_at DESC);
+///
+/// That's it — the table is now write-only for the public anon key.
+/// Reads use your service-role key in the SQL Editor for analysis.
+/// ─────────────────────────────────────────────────────────────────
+final class SupabaseAnalytics: AnalyticsTracking {
+
+    private let endpoint: URL
+    private let session: URLSession
+    private let appVersion: String
+
+    init() {
+        self.endpoint = SupabaseConfig.url.appendingPathComponent("rest/v1/analytics_events")
+        let config = URLSessionConfiguration.default
+        // Short timeout — analytics is best-effort. If the network is
+        // slow we'd rather drop the event than queue up a backlog of
+        // long-running requests during a user's quiz session.
+        config.timeoutIntervalForRequest = 5
+        config.timeoutIntervalForResource = 10
+        self.session = URLSession(configuration: config)
+
+        let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let b = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        self.appVersion = "\(v) (\(b))"
+    }
+
+    func track(_ event: AnalyticsEvent) {
+        // Snapshot the event into a value type before the async hop so
+        // we don't pull any unexpected references across the boundary.
+        let name = event.name
+        let props = event.properties
+        let deviceID = DeviceID.current
+        let version = appVersion
+        let url = endpoint
+        let apikey = SupabaseConfig.anonKey
+        let urlSession = session
+
+        Task.detached(priority: .background) {
+            await Self.send(
+                url: url,
+                apikey: apikey,
+                session: urlSession,
+                name: name,
+                props: props,
+                deviceID: deviceID,
+                version: version
+            )
+        }
+    }
+
+    private static func send(
+        url: URL,
+        apikey: String,
+        session: URLSession,
+        name: String,
+        props: [String: String],
+        deviceID: String,
+        version: String
+    ) async {
+        let payload: [String: Any] = [
+            "event_name": name,
+            "properties": props,
+            "device_id": deviceID,
+            "app_version": version,
+            "platform": "ios"
+        ]
+        guard let body = try? JSONSerialization.data(withJSONObject: payload) else { return }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(apikey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(apikey)", forHTTPHeaderField: "Authorization")
+        // `return=minimal` tells PostgREST not to echo the inserted row
+        // back, which saves bandwidth on a write-only table.
+        req.setValue("return=minimal", forHTTPHeaderField: "Prefer")
+        req.httpBody = body
+
+        // Silent failure is the contract — analytics never surfaces a
+        // user-visible error. _ = on `try?` is intentional.
+        _ = try? await session.data(for: req)
+    }
+}
+
+// ═════════════════════════════════════════════════════════════════
 // MARK: - Analytics Singleton
 // ═════════════════════════════════════════════════════════════════
 
-/// Global access point. Swap `shared.backend` to change implementations.
+/// Global access point. The backend is selected at init based on
+/// build configuration and whether Supabase credentials are present:
+///
+///   - DEBUG builds: `ConsoleAnalytics` (prints to console, no
+///     network). Prevents dev sessions from polluting production
+///     analytics. Override `Analytics.shared.backend` manually if
+///     you want to test the Supabase path end-to-end.
+///   - Release with Supabase configured: `SupabaseAnalytics`.
+///   - Release without Supabase: `ConsoleAnalytics`, which is a
+///     no-op in release (its body is `#if DEBUG`-gated).
 final class Analytics {
     static let shared = Analytics()
-    var backend: AnalyticsTracking = ConsoleAnalytics()
-    private init() {}
+    var backend: AnalyticsTracking
+    private init() {
+        #if DEBUG
+        self.backend = ConsoleAnalytics()
+        #else
+        if SupabaseConfig.isConfigured {
+            self.backend = SupabaseAnalytics()
+        } else {
+            self.backend = ConsoleAnalytics()
+        }
+        #endif
+    }
 
     static func track(_ event: AnalyticsEvent) {
         shared.backend.track(event)

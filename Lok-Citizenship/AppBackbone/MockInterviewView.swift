@@ -51,8 +51,17 @@ struct MockInterviewView: View {
     /// but once inside this view there was no second check.
     @ObservedObject private var store = StoreManager.shared
 
+    /// Phase 2: drives the "Review N misses" push from the result screen.
+    @State private var showReviewMisses = false
+
     @Environment(\.presentationMode) private var presentationMode
     @Environment(\.scenePhase) private var scenePhase
+
+    /// SwiftUI-managed App Store review prompt. Fired only at peak
+    /// satisfaction (a passed Mock Interview) and rate-limited via
+    /// `RatingPrompt`. iOS also enforces a hard 3-per-365-day cap on
+    /// top of our throttle.
+    @Environment(\.requestReview) private var requestReview
 
     private let interviewQuestionCount = 10
     private let requiredCorrect = 8
@@ -192,6 +201,21 @@ struct MockInterviewView: View {
             if finished && !mockRecorded && quizLogic.attemptedQuestions > 0 {
                 mockRecorded = true
                 ProgressManager.shared.recordMockInterviewCompleted()
+
+                // Ask for an App Store review at peak satisfaction.
+                // Conditions:
+                //   1. The user PASSED (we don't want to prompt on a
+                //      failed interview — bad emotional moment).
+                //   2. `RatingPrompt` says it's the first pass or a
+                //      milestone, and we're outside the 120-day floor.
+                // The 1.5 s defer lets the PASSED celebration animate
+                // in first so the prompt doesn't fight with it for
+                // visual attention.
+                if quizLogic.status == .passed && RatingPrompt.registerMockPassAndCheckPrompt() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        requestReview()
+                    }
+                }
             }
         }
         .onChange(of: voice.isRecording) { recording in
@@ -256,6 +280,22 @@ struct MockInterviewView: View {
             // (e.g. "mock_interview_card") so analytics can distinguish
             // post-attempt retry conversion from the initial gate.
             PaywallView(trigger: "mock_interview_retry", language: language)
+        }
+        // Phase 2: Review-Misses push from the mock result screen. Reuses
+        // the same QuizView with .reviewMistakes config and level: 0 so
+        // the review's own result screen falls back to "Back to Levels"
+        // and dismisses cleanly to the mock result without leaking a
+        // practice-level intent.
+        .navigationDestination(isPresented: $showReviewMisses) {
+            QuizView(
+                config: .reviewMistakes(
+                    questions: quizLogic.answerLog.filter { !$0.isCorrect }.map { $0.question },
+                    language: language
+                ),
+                level: 0
+            )
+            .navigationTitle(s.navReviewMistakes)
+            .navigationBarTitleDisplayMode(.inline)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -1153,6 +1193,62 @@ struct MockInterviewView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
+
+                // Phase 2: Review Misses (only when there are wrong
+                // answers to review). Same orange-accent treatment as
+                // the practice quiz, so users learn the visual pattern
+                // across the two flows.
+                if quizLogic.answerLog.contains(where: { !$0.isCorrect }) {
+                    let missCount = quizLogic.answerLog.filter { !$0.isCorrect }.count
+                    Button {
+                        voice.stop()
+                        showReviewMisses = true
+                    } label: {
+                        Label(
+                            String(format: s.resultReviewMissesFormat, missCount),
+                            systemImage: "magnifyingglass"
+                        )
+                        .font(.subheadline.bold())
+                        .foregroundColor(.orange)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.orange.opacity(0.08))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.orange.opacity(0.4), lineWidth: 1)
+                        )
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 2)
+                }
+
+                // Forward path off the mock-result dead-end: drops the
+                // user one level up (PracticeSelectionView), where
+                // Civics Practice is one tap away. Free users finishing
+                // their one free interview land here naturally — gives
+                // them somewhere to go besides the paywall behind Try
+                // Again.
+                Button {
+                    voice.stop()
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    Label(s.resultPracticeCivics, systemImage: "book.fill")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.06))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 2)
 
                 Spacer(minLength: 20)
             }

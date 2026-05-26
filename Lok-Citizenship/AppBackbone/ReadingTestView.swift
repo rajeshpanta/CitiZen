@@ -36,6 +36,10 @@ struct ReadingTestView: View {
     /// once — even if SwiftUI fires `onChange(of: session.isFinished)` multiple times.
     @State private var sessionRecorded: Bool = false
 
+    /// Phase 2: dismisses the entire Reading flow back to PracticeSelectionView
+    /// when the user taps "Try Writing Practice" on the result summary.
+    @Environment(\.dismiss) private var dismiss
+
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     init(language: AppLanguage,
@@ -358,6 +362,28 @@ struct ReadingTestView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(RoundedRectangle(cornerRadius: 14).fill(Color.blue))
+            }
+            .padding(.horizontal, 24)
+
+            // Phase 2: Forward path off the reading-result dead-end. Sets the
+            // intent and dismisses the whole Reading flow; PracticeSelectionView
+            // consumes the intent on .onAppear and pushes WritingPracticeView.
+            Button {
+                NavigationIntent.shared.pendingReadingWriting = .writing
+                dismiss()
+            } label: {
+                Label(s.tryWritingPracticeBtn, systemImage: "pencil.line")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.06))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 30)

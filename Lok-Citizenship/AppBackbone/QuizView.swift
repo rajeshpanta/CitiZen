@@ -40,6 +40,22 @@ struct QuizView: View {
     @State private var pendingMicAutoStart = false
     @Environment(\.presentationMode) private var presentationMode
 
+    // MARK: - Next-Level button state
+
+    /// Used by the result-screen "Next Level" button. The button checks
+    /// `store.isPro` to decide whether the next level is paywalled.
+    @ObservedObject private var store = StoreManager.shared
+    /// Set when the user taps Next Level on a locked level. Drives the
+    /// paywall sheet so the user converts in-flow without losing the
+    /// result-screen context.
+    @State private var showPaywall = false
+
+    /// Phase 2: set when the user taps "Review N misses" on the result
+    /// screen. Drives a `.navigationDestination(isPresented:)` push to
+    /// a fresh QuizView containing only the questions they got wrong
+    /// in this session.
+    @State private var showReviewMisses = false
+
     // MARK: - Init (wire voice controller to quiz logic in manual mode)
 
     init(config: QuizConfig, level: Int) {
@@ -92,6 +108,48 @@ struct QuizView: View {
     private var mistakesRemaining: Int {
         max(0, 4 - quizLogic.incorrectAnswers)
     }
+
+    /// The app-level language for this quiz, derived from the QuizConfig's
+    /// primary variant locale. Used to render the paywall in the correct
+    /// language when the user taps Next Level on a locked level. Stable
+    /// across variant toggles (the user's mid-quiz language switch doesn't
+    /// change which AppLanguage owns the quiz).
+    private var appLanguage: AppLanguage {
+        switch config.localeForVariant(config.defaultVariantIndex) {
+        case "ne-NP": return .nepali
+        case "es-ES": return .spanish
+        case "zh-CN", "zh-TW": return .chinese
+        default: return .english
+        }
+    }
+
+    /// Next level number if one exists. Defined only for the normal
+    /// practice path (level 1-8). Returns nil for level 0 — the
+    /// "Review Mistakes" entry from PracticeSelectionView — and for
+    /// level 8 (already the hardest). nil triggers the "Back to Levels"
+    /// button label, and crucially prevents leaking a stale
+    /// `NavigationIntent` into PracticeLevelsView from non-practice
+    /// entry points.
+    private var nextLevelNumber: Int? {
+        (level >= 1 && level < 8) ? level + 1 : nil
+    }
+
+    /// True when the next level is paywalled for the current user.
+    /// Levels 3+ require Pro — same gate `PracticeLevelsView` enforces
+    /// on the list. Defensive duplication so a user landing in QuizView
+    /// via any future entry-point still hits the paywall correctly.
+    private var nextLevelLocked: Bool {
+        guard let next = nextLevelNumber else { return false }
+        return next >= 3 && !store.isPro
+    }
+
+    /// Phase 2: Questions the user got wrong in this session. Powers the
+    /// "Review N misses" button on the result screen.
+    private var missedQuestions: [UnifiedQuestion] {
+        quizLogic.answerLog.filter { !$0.isCorrect }.map { $0.question }
+    }
+
+    private var missedCount: Int { missedQuestions.count }
 
     /// Sync voice controller config when variant changes.
     ///
@@ -180,6 +238,20 @@ struct QuizView: View {
         }
         .alert(strings.micPermissionAlert, isPresented: $micPermissionDenied) {
             Button("OK", role: .cancel) { }
+        }
+        // Phase 2: Review-Misses push. Opens a fresh QuizView containing
+        // only the wrong answers from this session. Uses `level: 0` so
+        // the review's own result screen has `nextLevelNumber == nil`,
+        // which makes its forward-action button read "Back to Levels"
+        // and dismiss cleanly back to this original result screen
+        // without leaking a level-push intent.
+        .navigationDestination(isPresented: $showReviewMisses) {
+            QuizView(
+                config: .reviewMistakes(questions: missedQuestions, language: appLanguage),
+                level: 0
+            )
+            .navigationTitle(UIStrings.forLocaleCode(localeCode).navReviewMistakes)
+            .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear {
             quizLogic.selectedVariantIndex = config.defaultVariantIndex
@@ -798,6 +870,83 @@ private extension QuizView {
                 passed: quizLogic.status != .failed
             )
 
+            // Primary action: Next Level (or Back to Levels on the last
+            // level). Hides the dead-end feel of "you finished, here's
+            // restart" by giving an obvious forward path. On a paywalled
+            // next level we present PaywallView in-place so the user
+            // converts at peak motivation instead of being bounced out.
+            Button {
+                if let next = nextLevelNumber {
+                    if nextLevelLocked {
+                        showPaywall = true
+                    } else {
+                        voice.stop()
+                        NavigationIntent.shared.pendingPracticeLevel = next
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                } else {
+                    // Last level — no "next" exists, just go back.
+                    voice.stop()
+                    presentationMode.wrappedValue.dismiss()
+                }
+            } label: {
+                Label(
+                    nextLevelNumber == nil ? strings.backToLevels : strings.nextLevel,
+                    systemImage: nextLevelNumber == nil ? "list.bullet" : "arrow.right.circle.fill"
+                )
+                .font(.headline.bold())
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 0.18, green: 0.78, blue: 0.36),
+                                         Color(red: 0.10, green: 0.62, blue: 0.28)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                )
+            }
+            .padding(.top, 4)
+
+            // Phase 2: Review Misses (only when there's at least one wrong
+            // answer to review). Opens a fresh QuizView with just the
+            // missed questions via .navigationDestination(isPresented:).
+            // Orange accent so the eye separates "go back and fix this"
+            // from the green forward path and the neutral restart.
+            //
+            // Hidden when `level < 1` — we're already INSIDE a review
+            // (the push from this very button uses level: 0). Without
+            // the guard, a user who gets new questions wrong inside the
+            // review would see "Review N misses" again and start
+            // spawning ever-deeper review pushes, each allocating a
+            // fresh QuizView with its own STT/TTS services.
+            if missedCount > 0 && level >= 1 {
+                Button {
+                    voice.stop()
+                    showReviewMisses = true
+                } label: {
+                    Label(
+                        String(format: UIStrings.forLocaleCode(localeCode).resultReviewMissesFormat, missedCount),
+                        systemImage: "magnifyingglass"
+                    )
+                    .font(.subheadline.bold())
+                    .foregroundColor(.orange)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange.opacity(0.08))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.orange.opacity(0.4), lineWidth: 1)
+                    )
+                }
+            }
+
+            // Secondary action: Restart (re-run the same level). Visually
+            // demoted to outline so the eye lands on Next Level first.
             Button {
                 voice.stop()
 
@@ -809,15 +958,18 @@ private extension QuizView {
                 resetPerQuestionState()
             } label: {
                 Label(strings.restartQuiz, systemImage: "arrow.clockwise")
-                    .font(.headline.bold())
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(maxWidth: .infinity, minHeight: 44)
                     .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.blue)
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.06))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     )
             }
-            .padding(.top, 4)
         }
         .padding(20)
         .background(
@@ -828,6 +980,9 @@ private extension QuizView {
             RoundedRectangle(cornerRadius: 20)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(trigger: "next_level_from_quiz", language: appLanguage)
+        }
     }
 
     func statPill(value: String, label: String, color: Color) -> some View {

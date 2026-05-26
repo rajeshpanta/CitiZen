@@ -40,6 +40,8 @@ struct QuizStrings {
     let correctLabel: String        // "Correct:" / "सही:" / "Correctas:" / etc.
     let incorrectLabel: String      // "Incorrect:" / "गलत:" / "Incorrectas:" / etc.
     let restartQuiz: String         // "Restart Quiz" / "पुनः सुरु" / etc.
+    let nextLevel: String           // "Next Level" / "अर्को स्तर" / "Siguiente Nivel" / "下一关"
+    let backToLevels: String        // "Back to Levels" / shown on the last level instead of Next Level
 
     // -- Mic permission alert --
     let micPermissionAlert: String  // localized mic-denied message
@@ -71,6 +73,8 @@ extension QuizStrings {
         correctLabel:       "Correct:",
         incorrectLabel:     "Incorrect:",
         restartQuiz:        "Restart Quiz",
+        nextLevel:          "Next Level",
+        backToLevels:       "Back to Levels",
         micPermissionAlert: "Speech Recognition Disabled"
     )
 
@@ -98,6 +102,8 @@ extension QuizStrings {
         correctLabel:       "Correct:",
         incorrectLabel:     "Incorrect:",
         restartQuiz:        "Restart Quiz",
+        nextLevel:          "Next Level",
+        backToLevels:       "Back to Levels",
         micPermissionAlert: "Speech Recognition Disabled"
     )
 
@@ -123,6 +129,8 @@ extension QuizStrings {
         correctLabel:       "सही:",
         incorrectLabel:     "गलत:",
         restartQuiz:        "पुनः सुरु",
+        nextLevel:          "अर्को स्तर",
+        backToLevels:       "स्तरहरूमा फर्कनुहोस्",
         micPermissionAlert: "🎙️ माइक्रोफोन अनुमति छैन"
     )
 
@@ -148,6 +156,8 @@ extension QuizStrings {
         correctLabel:       "Correctas:",
         incorrectLabel:     "Incorrectas:",
         restartQuiz:        "Reiniciar",
+        nextLevel:          "Siguiente Nivel",
+        backToLevels:       "Volver a Niveles",
         micPermissionAlert: "🎙️ Speech recognition not allowed"
     )
 
@@ -173,6 +183,8 @@ extension QuizStrings {
         correctLabel:       "正确：",
         incorrectLabel:     "错误：",
         restartQuiz:        "重新开始",
+        nextLevel:          "下一关",
+        backToLevels:       "返回关卡",
         micPermissionAlert: "🎙️ 语音识别受限"
     )
 
@@ -198,6 +210,8 @@ extension QuizStrings {
         correctLabel:       "正確：",
         incorrectLabel:     "錯誤：",
         restartQuiz:        "重新開始",
+        nextLevel:          "下一關",
+        backToLevels:       "返回關卡",
         micPermissionAlert: "🎙️ 語音識別受限"
     )
 }

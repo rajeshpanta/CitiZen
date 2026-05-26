@@ -47,9 +47,10 @@ struct PaywallView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
 
-                    // Icon
+                    // Icon with soft glow. Glow uses the same gradient so it
+                    // reads as ambient light, not a drop shadow.
                     Image(systemName: iconName)
-                        .font(.system(size: 50))
+                        .font(.system(size: 56, weight: .semibold))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [.blue, .cyan],
@@ -57,18 +58,25 @@ struct PaywallView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .padding(.top, 8)
+                        .shadow(color: .cyan.opacity(0.45), radius: 18, x: 0, y: 0)
+                        .padding(.top, 4)
 
                     // Headline
                     Text(headline)
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.system(size: 30, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
 
+                    // 5-star social proof. Honest claim — all current ratings
+                    // are 5★. Sample size not quoted on purpose; the visual
+                    // is the signal, the label confirms.
+                    ratingRow
+                        .padding(.top, -4)
+
                     Text(subheadline)
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
 
@@ -168,7 +176,8 @@ struct PaywallView: View {
                         title: s.paywallLifetime,
                         subtitle: s.paywallLifetimeSubtitle,
                         price: lifetime.displayPrice,
-                        badge: s.paywallBestValue
+                        badge: s.paywallBestValue,
+                        savingsBadge: savingsBadgeText
                     )
                 }
 
@@ -178,32 +187,46 @@ struct PaywallView: View {
                         title: s.paywallMonthly,
                         subtitle: String(format: s.paywallMonthlySubtitleFormat, monthly.displayPrice),
                         price: s.paywallFree,
-                        badge: s.paywall3DaysFree
+                        badge: s.paywall3DaysFree,
+                        savingsBadge: nil
                     )
                 }
 
-                // Single CTA button
+                // Trust-badge row. Sits directly above the CTA so the trust
+                // signal is the last thing the user reads before tapping.
+                trustBadgesRow
+                    .padding(.top, 6)
+
+                // Single CTA button — gradient + arrow + soft glow.
                 Button {
                     Task {
                         guard let product = store.products.first(where: { $0.id == selectedProductID }) else { return }
                         await purchase(product)
                     }
                 } label: {
-                    Text(ctaButtonLabel)
-                        .font(.title3.bold())
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(
-                                colors: [.green, .green.opacity(0.75)],
-                                startPoint: .leading, endPoint: .trailing
-                            )
+                    HStack(spacing: 8) {
+                        Text(ctaButtonLabel)
+                            .font(.title3.bold())
+                        if !purchasing {
+                            Image(systemName: "arrow.right")
+                                .font(.headline.weight(.bold))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.18, green: 0.78, blue: 0.36),
+                                     Color(red: 0.10, green: 0.62, blue: 0.28)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
                         )
-                        .cornerRadius(14)
+                    )
+                    .cornerRadius(14)
+                    .shadow(color: .green.opacity(0.35), radius: 14, x: 0, y: 6)
                 }
                 .disabled(purchasing)
-                .padding(.top, 4)
+                .padding(.top, 2)
 
                 // Subscription disclosure (Apple Guideline 3.1.2(c))
                 if selectedProductID == StoreManager.monthlyID,
@@ -285,36 +308,39 @@ struct PaywallView: View {
     // MARK: - Dynamic Content
     // ═════════════════════════════════════════════════════════════
 
+    /// Triggers that map to the same content bucket. Kept as computed
+    /// vars (not stored constants) so the switch cases stay co-located
+    /// with the content selection below — easier to spot a missing case
+    /// in code review than a divergent constant.
+    private var isMockTrigger: Bool {
+        trigger == "mock_interview" || trigger == "mock_interview_retry"
+    }
+    private var isLockedLevelTrigger: Bool {
+        trigger == "locked_level" || trigger == "next_level_from_quiz"
+    }
+
     private var iconName: String {
-        switch trigger {
-        case "mock_interview": return "mic.badge.plus"
-        case "locked_level":   return "lock.open.fill"
-        default:               return "star.fill"
-        }
+        if isMockTrigger        { return "mic.badge.plus" }
+        if isLockedLevelTrigger { return "lock.open.fill" }
+        return "star.fill"
     }
 
     private var headline: String {
-        switch trigger {
-        case "locked_level":   return s.paywallHeadlineLockedLevel
-        case "mock_interview": return s.paywallHeadlineMockInterview
-        default:               return s.paywallHeadlineDefault
-        }
+        if isLockedLevelTrigger { return s.paywallHeadlineLockedLevel }
+        if isMockTrigger        { return s.paywallHeadlineMockInterview }
+        return s.paywallHeadlineDefault
     }
 
     private var subheadline: String {
-        switch trigger {
-        case "locked_level":   return s.paywallSubheadlineLockedLevel
-        case "mock_interview": return s.paywallSubheadlineMockInterview
-        default:               return s.paywallSubheadlineDefault
-        }
+        if isLockedLevelTrigger { return s.paywallSubheadlineLockedLevel }
+        if isMockTrigger        { return s.paywallSubheadlineMockInterview }
+        return s.paywallSubheadlineDefault
     }
 
     private var paywallFeatures: [String] {
-        switch trigger {
-        case "mock_interview": return s.paywallFeaturesMockInterview
-        case "locked_level":   return s.paywallFeaturesLockedLevel
-        default:               return s.paywallFeaturesDefault
-        }
+        if isMockTrigger        { return s.paywallFeaturesMockInterview }
+        if isLockedLevelTrigger { return s.paywallFeaturesLockedLevel }
+        return s.paywallFeaturesDefault
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -337,7 +363,7 @@ struct PaywallView: View {
         purchasing = false
     }
 
-    private func planCard(id: String, title: String, subtitle: String, price: String, badge: String?) -> some View {
+    private func planCard(id: String, title: String, subtitle: String, price: String, badge: String?, savingsBadge: String?) -> some View {
         let isSelected = selectedProductID == id
 
         return Button {
@@ -356,7 +382,7 @@ struct PaywallView: View {
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(title)
                             .font(.headline)
@@ -368,6 +394,17 @@ struct PaywallView: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.yellow)
+                                .cornerRadius(4)
+                        }
+                        // Dynamic savings badge — only shown when computed
+                        // from real StoreKit prices (never faked).
+                        if let savingsBadge {
+                            Text(savingsBadge)
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.green.opacity(0.85))
                                 .cornerRadius(4)
                         }
                     }
@@ -404,5 +441,77 @@ struct PaywallView: View {
                 .font(.subheadline)
             Spacer(minLength: 0)
         }
+    }
+
+    // ═════════════════════════════════════════════════════════════
+    // MARK: - Trust signals
+    // ═════════════════════════════════════════════════════════════
+
+    /// 5 filled yellow stars + label. Sits under the headline.
+    /// Sample size deliberately not quoted — current rating is 5★, the
+    /// stars are the signal.
+    private var ratingRow: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<5, id: \.self) { _ in
+                Image(systemName: "star.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.yellow)
+            }
+            Text(s.paywallRated5Stars)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.white.opacity(0.8))
+                .padding(.leading, 4)
+        }
+    }
+
+    /// Three compact trust pills above the CTA. All claims verified
+    /// against current code: StoreKit payment (Apple), no third-party
+    /// analytics/ads (ConsoleAnalytics only), monthly is cancel-anytime
+    /// per Apple subscription rules.
+    private var trustBadgesRow: some View {
+        HStack(spacing: 10) {
+            trustBadge(icon: "lock.shield.fill", text: s.paywallTrustApple)
+            trustBadge(icon: "hand.raised.fill", text: s.paywallTrustNoTracking)
+            trustBadge(icon: "arrow.clockwise", text: s.paywallTrustCancel)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func trustBadge(icon: String, text: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.85))
+            Text(text)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.65))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(10)
+    }
+
+    /// Computes "SAVE NN%" for the lifetime card by comparing lifetime
+    /// price against 12 months of the monthly subscription. Returns nil
+    /// if either product isn't loaded, prices look wrong, or lifetime
+    /// isn't actually cheaper (defensive — never show a misleading badge).
+    private var savingsBadgeText: String? {
+        guard let monthly = store.products.first(where: { $0.id == StoreManager.monthlyID }),
+              let lifetime = store.products.first(where: { $0.id == StoreManager.lifetimeID }) else {
+            return nil
+        }
+        let m = NSDecimalNumber(decimal: monthly.price).doubleValue
+        let l = NSDecimalNumber(decimal: lifetime.price).doubleValue
+        guard m > 0, l > 0 else { return nil }
+        let yearOfMonthly = m * 12
+        guard yearOfMonthly > l else { return nil }
+        let pct = Int(((yearOfMonthly - l) / yearOfMonthly) * 100)
+        guard pct >= 10 else { return nil }   // don't show a piddly "save 4%"
+        return String(format: s.paywallSaveFormat, "\(pct)%")
     }
 }

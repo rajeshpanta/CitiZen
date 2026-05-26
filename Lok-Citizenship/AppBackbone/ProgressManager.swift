@@ -262,3 +262,53 @@ final class ProgressManager {
         return dayDiff >= 1
     }
 }
+
+// MARK: - Rating prompt scheduling
+//
+// Strategy: ask for a review at the moment of peak satisfaction — when
+// the user passes a Mock Interview. The first pass is the strongest
+// signal (they just experienced the core value), so we always ask
+// there if iOS's per-year quota allows. After that we wait for every
+// 5th passed mock, with a 120-day floor so we don't burn through
+// iOS's 3-per-year limit chasing low-impact moments.
+//
+// Why a separate enum (not a method on ProgressManager): the rating
+// gate is policy, not progress. ProgressManager owns user-progress
+// state; this owns when-to-nag state. Keeping them separated avoids
+// `ProgressManager.recordX()` accidentally growing review side effects.
+enum RatingPrompt {
+    private static let defaults = UserDefaults.standard
+    private static let lastRequestKey   = "rp_lastRequestDate"
+    private static let mockPassCountKey = "rp_mockPassCount"
+    private static let minDaysBetweenPrompts: TimeInterval = 120 * 24 * 3600
+
+    /// Call ONCE when the user passes a Mock Interview. Returns true
+    /// if the calling view should now invoke
+    /// `@Environment(\.requestReview)`. Has the side effect of
+    /// advancing the pass counter and (when returning true) stamping
+    /// the last-request date — so a single call site is enough; no
+    /// separate "record" call needed afterward.
+    @discardableResult
+    static func registerMockPassAndCheckPrompt() -> Bool {
+        let newCount = defaults.integer(forKey: mockPassCountKey) + 1
+        defaults.set(newCount, forKey: mockPassCountKey)
+
+        // First pass is the highest-converting moment. After that,
+        // only every 5th pass is a candidate — anything more frequent
+        // and we'd waste iOS's 3-per-year display quota on
+        // ho-hum repeat sessions.
+        guard newCount == 1 || newCount % 5 == 0 else { return false }
+
+        // Our own 120-day floor between prompts. iOS already enforces
+        // a 3-per-365-day cap silently, but a too-frequent caller
+        // would let those 3 fire in the same week and leave the rest
+        // of the year empty.
+        if let last = defaults.object(forKey: lastRequestKey) as? Date,
+           Date().timeIntervalSince(last) < minDaysBetweenPrompts {
+            return false
+        }
+
+        defaults.set(Date(), forKey: lastRequestKey)
+        return true
+    }
+}

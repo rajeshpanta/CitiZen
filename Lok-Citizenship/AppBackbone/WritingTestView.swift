@@ -31,6 +31,10 @@ struct WritingTestView: View {
     @State private var isSpeakerLoading: Bool = false
     @State private var speakerLoadNonce: Int = 0
 
+    /// Phase 2: dismisses the entire Writing flow back to PracticeSelectionView
+    /// when the user taps "Try Reading Practice" on the result summary.
+    @Environment(\.dismiss) private var dismiss
+
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     init(language: AppLanguage,
@@ -321,6 +325,28 @@ struct WritingTestView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(RoundedRectangle(cornerRadius: 14).fill(Color.blue))
+            }
+            .padding(.horizontal, 24)
+
+            // Phase 2: Symmetric forward path. Sets the intent and dismisses
+            // the whole Writing flow; PracticeSelectionView consumes on
+            // .onAppear and pushes ReadingPracticeView.
+            Button {
+                NavigationIntent.shared.pendingReadingWriting = .reading
+                dismiss()
+            } label: {
+                Label(s.tryReadingPracticeBtn, systemImage: "book.fill")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.06))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 30)

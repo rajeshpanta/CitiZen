@@ -293,8 +293,9 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     private static let cacheDirName = "openai_tts"
 
     private func cacheFileURL(for text: String) -> URL {
-        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(Self.cacheDirName, isDirectory: true)
+        let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let dir = base.appendingPathComponent(Self.cacheDirName, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let key = "\(Self.model)|\(Self.voice)|\(text)"
         let hash = SHA256.hash(data: Data(key.utf8))
@@ -314,8 +315,8 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     /// under disk pressure so we won't crash, but App Review has flagged
     /// unbounded caches before, and low-storage users notice.
     static func trimCache(maxBytes: Int = 100 * 1024 * 1024) {
-        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(cacheDirName, isDirectory: true)
+        guard let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
+        let dir = base.appendingPathComponent(cacheDirName, isDirectory: true)
 
         let keys: [URLResourceKey] = [.fileSizeKey, .contentModificationDateKey]
         guard let urls = try? FileManager.default.contentsOfDirectory(

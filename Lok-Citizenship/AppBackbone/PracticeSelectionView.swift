@@ -28,6 +28,17 @@ struct PracticeSelectionView: View {
     /// from UserDefaults on every eval is cheap enough; setting when dismissed.
     @State private var voicePackBannerBump = 0  // invalidates the computed property on dismiss
 
+    // MARK: - Phase 2: Reading↔Writing programmatic push state
+    //
+    // After finishing a Reading test, the user can tap "Try Writing
+    // Practice" — that sets `NavigationIntent.shared.pendingReadingWriting`
+    // and dismisses the Reading flow. We consume the intent in
+    // `.onAppear` (running after the pop completes) and programmatically
+    // push the matching destination. Same shape as the Phase 1
+    // PracticeLevelsView pattern.
+    @State private var pendingReadingWritingTarget: NavigationIntent.ReadingWritingTarget?
+    @State private var pushReadingWriting: Bool = false
+
     private var voicePackBannerDismissedKey: String {
         "pm_voicePackWarningDismissed_\(language.rawValue)"
     }
@@ -315,6 +326,7 @@ struct PracticeSelectionView: View {
             // @ObservedObject) avoids the cascading mid-quiz re-renders
             // that previously popped the active QuizView.
             trackerVersion &+= 1
+            consumeReadingWritingIntent()
         }
         .task {
             // Eagerly load StoreKit products so the locked Mock Interview
@@ -326,6 +338,49 @@ struct PracticeSelectionView: View {
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView(trigger: paywallTrigger, language: language)
+        }
+        // Phase 2: programmatic push to the "other" practice (Reading or
+        // Writing) after the user finishes one and taps the transition
+        // button. Coexists with the inline NavigationLinks for the
+        // user-tap path.
+        .navigationDestination(isPresented: $pushReadingWriting) {
+            switch pendingReadingWritingTarget {
+            case .reading: ReadingPracticeView(language: language)
+            case .writing: WritingPracticeView(language: language)
+            case .none:    EmptyView()
+            }
+        }
+    }
+
+    /// Phase 2 helper. Reads `NavigationIntent.shared.pendingReadingWriting`
+    /// (set by ReadingTestView's "Try Writing" or WritingTestView's "Try
+    /// Reading" button) and programmatically pushes the matching
+    /// destination. Intent is cleared on read so it cannot fire twice.
+    /// Safe to call on every appearance — a nil intent is a no-op.
+    ///
+    /// Defensive paywall re-check: Reading/Writing are Pro-only here in
+    /// the same view (lines 202/211 gate the inline tap path). The
+    /// transition button can only be reached *from* Reading/Writing
+    /// itself — which a free user can't enter — so this guard is
+    /// belt-and-braces protection for the corner case where a Pro
+    /// user's entitlement lapses mid-session (StoreKit publishes
+    /// `isPro = false` while they're still on the test result screen).
+    /// Without it, the transition button would silently bypass the
+    /// paywall.
+    private func consumeReadingWritingIntent() {
+        guard let target = NavigationIntent.shared.pendingReadingWriting else { return }
+        NavigationIntent.shared.pendingReadingWriting = nil
+        guard store.isPro else {
+            paywallTrigger = "locked_level"
+            showPaywall = true
+            return
+        }
+        pendingReadingWritingTarget = target
+        // Same 50 ms defer as the Phase 1 practice-level path — lets the
+        // pop animation complete before the push, avoiding a visual jump
+        // on iOS 16.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            pushReadingWriting = true
         }
     }
 

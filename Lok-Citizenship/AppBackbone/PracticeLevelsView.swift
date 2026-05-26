@@ -10,6 +10,35 @@
 
 import SwiftUI
 
+// MARK: - Cross-view navigation intent
+//
+// Lightweight value-passing mechanism so QuizView's result screen can
+// hand an "open level N next" signal back up to PracticeLevelsView
+// without forcing PracticeLevelsView to observe a publisher. The long
+// comment further down in PracticeLevelsView explains why this view
+// must never observe state that mutates during an active quiz: any
+// publish-driven re-render rebuilds the NavigationLink destinations
+// and pops the active QuizView mid-quiz.
+//
+// Therefore this class is intentionally NOT an ObservableObject and
+// the property is NOT @Published. QuizView writes the level; the
+// PracticeLevelsView reads it inside `.onAppear` after the pop has
+// completed, then immediately clears it so it can't re-fire.
+final class NavigationIntent {
+    static let shared = NavigationIntent()
+    /// When set, PracticeLevelsView will programmatically push the
+    /// matching level on its next .onAppear. Cleared on consumption.
+    var pendingPracticeLevel: Int?
+    /// Phase 2: After finishing a Reading or Writing test, the user can
+    /// tap a "Try the other one" button. This carries the target, and
+    /// PracticeSelectionView pushes the matching destination on its next
+    /// .onAppear. Cleared on consumption.
+    var pendingReadingWriting: ReadingWritingTarget?
+    private init() {}
+
+    enum ReadingWritingTarget { case reading, writing }
+}
+
 // MARK: - Helper struct to bundle each destination
 private struct PracticeItem: Identifiable {
     var id: Int { level }
@@ -286,6 +315,16 @@ struct PracticeLevelsView: View {
     @State private var showPaywall = false
     @State private var paywallTrigger = "locked_level"
 
+    // MARK: - Programmatic next-level push state
+    //
+    // Driven by `NavigationIntent.shared.pendingPracticeLevel` consumed
+    // on `.onAppear`. The hidden `.navigationDestination(isPresented:)`
+    // below pushes when `pushNext` flips true. Both reset by SwiftUI
+    // when the user navigates back, so they re-arm cleanly for the
+    // next Next-Level tap from inside QuizView.
+    @State private var pendingPushItem: PracticeItem?
+    @State private var pushNext: Bool = false
+
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     /// Returns the cached per-language items array. The arrays themselves
@@ -374,6 +413,18 @@ struct PracticeLevelsView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView(trigger: paywallTrigger, language: language)
         }
+        // Programmatic push for the "Next Level" intent from QuizView.
+        // Coexists with the inline NavigationLink destinations the
+        // levels list uses — those handle user-initiated taps, this
+        // handles the back-then-forward auto-push.
+        .navigationDestination(isPresented: $pushNext) {
+            if let item = pendingPushItem {
+                LazyView { item.buildView() }
+                    .navigationTitle(item.title)
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+        .onAppear { consumeNavigationIntent() }
         // NOTE: deliberately NOT observing `QuestionTracker.shared` here.
         // Every quiz answer publishes a `records` change; if this view
         // observed it, the resulting re-render would rebuild the
@@ -383,6 +434,36 @@ struct PracticeLevelsView: View {
         // reads from `ProgressManager.recommendedLevel`, which is set
         // once during onboarding and never mutated by quiz answers, so
         // no live observation is needed.
+    }
+
+    /// Reads `NavigationIntent.shared.pendingPracticeLevel` (set by
+    /// QuizView's "Next Level" button) and either programmatically
+    /// pushes the matching level or shows the paywall if locked. The
+    /// intent is cleared on read so it cannot fire twice.
+    ///
+    /// Called from `.onAppear`, which runs after a child QuizView pops.
+    /// Safe to call on every appearance — a nil intent is a no-op so
+    /// the initial appearance (and any normal back-navigation) doesn't
+    /// trigger anything.
+    private func consumeNavigationIntent() {
+        guard let nextLevel = NavigationIntent.shared.pendingPracticeLevel else { return }
+        NavigationIntent.shared.pendingPracticeLevel = nil
+        guard let match = items.first(where: { $0.level == nextLevel }) else { return }
+        // Defensive paywall re-check (QuizView already gates, but a
+        // belt-and-braces guard ensures any future entry-point that
+        // forgets to gate still hits the paywall here).
+        if match.level >= 3 && !store.isPro {
+            paywallTrigger = "locked_level"
+            showPaywall = true
+            return
+        }
+        pendingPushItem = match
+        // Tiny defer so the pop animation completes before the push.
+        // Without it, on iOS 16 the two collisions occasionally render
+        // as a visual jump.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            pushNext = true
+        }
     }
 
     private func levelRow(item: PracticeItem, meta: (label: String, color: Color, icon: String), locked: Bool) -> some View {
