@@ -155,7 +155,42 @@ struct OnboardingView: View {
                         )
                 }
                 .padding(.horizontal, 24)
+                .accessibilityLabel(s.onboardingContinue)
+
+                // Fast-path: skip onboarding and drop the user at the
+                // main practice menu with safe defaults. Crucial for
+                // the "let me see what this is before I commit" user —
+                // historically the biggest source of onboarding drop-
+                // off. We still persist language (detected from the
+                // device locale) and `hasCompletedOnboarding`, so the
+                // user isn't shown the funnel again on next launch.
+                // They can complete a full placement quiz later from
+                // Settings if they want a recommended level.
+                Button {
+                    let gen = UIImpactFeedbackGenerator(style: .light); gen.impactOccurred()
+                    stopDemo()
+                    skipToFreePractice()
+                } label: {
+                    Text(s.onboardingExploreFree)
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white.opacity(0.85))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .padding(.vertical, 4)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.06))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 4)
                 .padding(.bottom, 30)
+                .accessibilityLabel(s.onboardingExploreFree)
             }
         }
         .scrollIndicators(.hidden)
@@ -273,6 +308,8 @@ struct OnboardingView: View {
             Text(languageSubtitle)
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.5))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
 
             Spacer().frame(height: 8)
 
@@ -661,6 +698,33 @@ struct OnboardingView: View {
         onComplete(lang)
     }
 
+    /// Fast-path completion. Detect the device locale → pick the
+    /// matching AppLanguage (English fallback for any locale we don't
+    /// support). Persist sensible defaults so the user lands at Level
+    /// 1 of the practice menu without seeing onboarding again. They
+    /// can still adjust language and interview date later in Settings.
+    private func skipToFreePractice() {
+        let lang = detectedAppLanguage()
+        ProgressManager.shared.preferredLanguage = lang.rawValue
+        ProgressManager.shared.interviewDate = nil
+        ProgressManager.shared.recommendedLevel = 1
+        ProgressManager.shared.hasCompletedOnboarding = true
+        onComplete(lang)
+    }
+
+    /// Maps the device's preferred language code to one of our
+    /// supported AppLanguages. Returns .english for anything we don't
+    /// localize so the user gets a usable app instead of a broken one.
+    private func detectedAppLanguage() -> AppLanguage {
+        let code = Locale.current.language.languageCode?.identifier ?? "en"
+        switch code {
+        case "es": return .spanish
+        case "ne", "hi": return .nepali   // Nepali speakers' devices often default to Hindi
+        case "zh": return .chinese
+        default:   return .english
+        }
+    }
+
     private func resetQuestionState() {
         selectedAnswer = nil
         isAnswered = false
@@ -814,11 +878,16 @@ struct OnboardingView: View {
     }
 
     private var languageSubtitle: String {
+        // Updated copy: name BOTH the question text and audio (voice
+        // is the differentiator) and add a reassurance about being
+        // able to change later. The previous copy ("We'll show
+        // questions in your language") was true but didn't address
+        // the common hesitation — "what if I pick wrong?"
         switch lang {
-        case .english: return "We'll show questions in your language"
-        case .nepali:  return "हामी तपाईंको भाषामा प्रश्न देखाउनेछौं"
-        case .spanish: return "Te mostraremos las preguntas en tu idioma"
-        case .chinese: return "我们会用你的语言显示问题"
+        case .english: return "Questions and voice in your language.\nYou can change this anytime in Settings."
+        case .nepali:  return "तपाईंको भाषामा प्रश्न र आवाज।\nसेटिङ्समा जहिले पनि परिवर्तन गर्न सक्नुहुन्छ।"
+        case .spanish: return "Preguntas y voz en tu idioma.\nPuedes cambiarlo en Configuración."
+        case .chinese: return "用你的语言显示问题和语音。\n随时可以在设置中更改。"
         }
     }
 

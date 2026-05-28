@@ -350,14 +350,24 @@ struct PaywallView: View {
     private func purchase(_ product: Product) async {
         purchasing = true
         errorMessage = nil
-        do {
-            let success = try await store.purchase(product)
-            if success {
-                dismiss()
-            } else {
-                errorMessage = s.paywallPurchaseIncomplete
-            }
-        } catch {
+        // Switch on the typed outcome so each failure mode gets copy
+        // that tells the user what to actually do next — rather than
+        // a generic "Purchase failed" that drives them to either
+        // retry endlessly or give up.
+        switch await store.purchase(product) {
+        case .success:
+            dismiss()
+        case .cancelled:
+            // User dismissed the sheet on purpose. Don't shame them
+            // with an error banner — just clear state.
+            break
+        case .pending:
+            errorMessage = s.paywallErrorPending
+        case .networkError:
+            errorMessage = s.paywallErrorNetwork
+        case .verificationFailed:
+            errorMessage = s.paywallErrorVerificationFailed
+        case .unknown:
             errorMessage = s.paywallPurchaseFailed
         }
         purchasing = false

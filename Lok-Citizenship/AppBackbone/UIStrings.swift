@@ -119,6 +119,18 @@ struct UIStrings {
     /// Phase 2: Reading↔Writing transition buttons.
     let tryWritingPracticeBtn: String
     let tryReadingPracticeBtn: String
+    /// "Open Settings" — secondary button on the mic-permission-denied
+    /// alert. Sends the user straight to the iOS Settings page for our
+    /// bundle so they can flip mic + speech recognition without
+    /// hunting through the system Settings hierarchy.
+    let openSettings: String
+    /// Settings → About section additions.
+    let settingsContactSupport: String
+    let settingsRateApp: String
+    /// Paywall purchase-failure copy, distinguished by cause so the
+    /// user gets actionable guidance instead of a generic "try again".
+    let paywallErrorNetwork: String
+    let paywallErrorPending: String
     let resultReviewHeader: String         // "Question review"
     let resultReviewYouAnswered: String    // "Your answer:"
     let resultReviewCorrectAnswer: String  // "Correct answer:"
@@ -135,6 +147,12 @@ struct UIStrings {
     let onboardingFeatureMock: String        // "Real test simulation"
     let onboardingFeatureMockSub: String     // "10-question mock interview"
     let onboardingContinue: String           // "Continue"
+    /// "Explore for Free" — secondary button on the intro screen.
+    /// Skips the 5-step onboarding and drops the user at the main
+    /// practice menu with safe defaults (detected language, no
+    /// interview date, recommended level 1). Reduces drop-off from
+    /// curious users who want to try before committing.
+    let onboardingExploreFree: String
     let onboardingHearSample: String         // "Hear a sample"
     /// A short sentence used for the TTS demo button in onboarding.
     let onboardingSampleText: String
@@ -583,6 +601,11 @@ extension UIStrings {
         resultReviewMissesFormat: "Review %d misses",
         tryWritingPracticeBtn: "Try Writing Practice",
         tryReadingPracticeBtn: "Try Reading Practice",
+        openSettings: "Open Settings",
+        settingsContactSupport: "Contact Support",
+        settingsRateApp: "Rate CitiZen",
+        paywallErrorNetwork: "Check your connection and try again.",
+        paywallErrorPending: "Your purchase is waiting for approval.",
         resultReviewHeader: "Question review",
         resultReviewYouAnswered: "Your answer:",
         resultReviewCorrectAnswer: "Correct answer:",
@@ -597,6 +620,7 @@ extension UIStrings {
         onboardingFeatureMock: "Real test simulation",
         onboardingFeatureMockSub: "10-question mock interview",
         onboardingContinue: "Continue",
+        onboardingExploreFree: "Explore for Free",
         onboardingHearSample: "Hear a sample",
         onboardingSampleText: "What is the capital of the United States?",
         notificationsTitle: "Stay on track",
@@ -913,6 +937,11 @@ extension UIStrings {
         resultReviewMissesFormat: "Repasar %d errores",
         tryWritingPracticeBtn: "Probar práctica de escritura",
         tryReadingPracticeBtn: "Probar práctica de lectura",
+        openSettings: "Abrir Configuración",
+        settingsContactSupport: "Contactar soporte",
+        settingsRateApp: "Calificar CitiZen",
+        paywallErrorNetwork: "Revisa tu conexión e intenta de nuevo.",
+        paywallErrorPending: "Tu compra está esperando aprobación.",
         resultReviewHeader: "Revisión de preguntas",
         resultReviewYouAnswered: "Tu respuesta:",
         resultReviewCorrectAnswer: "Respuesta correcta:",
@@ -927,6 +956,7 @@ extension UIStrings {
         onboardingFeatureMock: "Simulación real del examen",
         onboardingFeatureMockSub: "Entrevista simulada de 10 preguntas",
         onboardingContinue: "Continuar",
+        onboardingExploreFree: "Explorar gratis",
         onboardingHearSample: "Escuchar ejemplo",
         onboardingSampleText: "¿Cuál es la capital de los Estados Unidos?",
         notificationsTitle: "Mantente al día",
@@ -1243,6 +1273,11 @@ extension UIStrings {
         resultReviewMissesFormat: "%d गल्ती समीक्षा गर्नुहोस्",
         tryWritingPracticeBtn: "लेखन अभ्यास प्रयास गर्नुहोस्",
         tryReadingPracticeBtn: "पढाइ अभ्यास प्रयास गर्नुहोस्",
+        openSettings: "सेटिङ्स खोल्नुहोस्",
+        settingsContactSupport: "सहायता सम्पर्क",
+        settingsRateApp: "CitiZen लाई मूल्याङ्कन गर्नुहोस्",
+        paywallErrorNetwork: "तपाईंको इन्टरनेट जाँच गरेर फेरि प्रयास गर्नुहोस्।",
+        paywallErrorPending: "तपाईंको खरिद अनुमोदनको पर्खाइमा छ।",
         resultReviewHeader: "प्रश्न समीक्षा",
         resultReviewYouAnswered: "तपाईंको उत्तर:",
         resultReviewCorrectAnswer: "सही उत्तर:",
@@ -1257,6 +1292,7 @@ extension UIStrings {
         onboardingFeatureMock: "वास्तविक परीक्षा अनुकरण",
         onboardingFeatureMockSub: "१० प्रश्नको नक्कली अन्तर्वार्ता",
         onboardingContinue: "जारी राख्नुहोस्",
+        onboardingExploreFree: "नि:शुल्क अन्वेषण गर्नुहोस्",
         onboardingHearSample: "नमूना सुन्नुहोस्",
         onboardingSampleText: "संयुक्त राज्य अमेरिकाको राजधानी के हो?",
         notificationsTitle: "नियमित रहनुहोस्",
@@ -1573,6 +1609,11 @@ extension UIStrings {
         resultReviewMissesFormat: "复习 %d 道错题",
         tryWritingPracticeBtn: "试试写作练习",
         tryReadingPracticeBtn: "试试阅读练习",
+        openSettings: "打开设置",
+        settingsContactSupport: "联系支持",
+        settingsRateApp: "评价 CitiZen",
+        paywallErrorNetwork: "请检查网络连接后重试。",
+        paywallErrorPending: "你的购买正在等待批准。",
         resultReviewHeader: "题目回顾",
         resultReviewYouAnswered: "你的回答:",
         resultReviewCorrectAnswer: "正确答案:",
@@ -1587,6 +1628,7 @@ extension UIStrings {
         onboardingFeatureMock: "真实考试模拟",
         onboardingFeatureMockSub: "10 道题模拟面试",
         onboardingContinue: "继续",
+        onboardingExploreFree: "免费探索",
         onboardingHearSample: "听一个示例",
         onboardingSampleText: "美国的首都是哪里?",
         notificationsTitle: "保持进度",

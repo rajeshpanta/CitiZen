@@ -34,7 +34,12 @@ enum SpacedRepetitionEngine {
             }
 
             // Perfect mastery (3+ consecutive correct) AND not yet due
-            let streak = record.consecutiveCorrect
+            // `max(0, ...)` is defensive — `consecutiveCorrect` is
+            // only incremented or reset to 0 in current code, but a
+            // corrupted UserDefaults blob or a future migration bug
+            // could yield a negative value, and `intervals[-1]` is
+            // a hard crash. Cheap insurance.
+            let streak = max(0, record.consecutiveCorrect)
             let intervalDays = streak < intervals.count
                 ? intervals[streak]
                 : defaultInterval
@@ -70,7 +75,12 @@ enum SpacedRepetitionEngine {
             guard let lastCorrect = record.lastCorrect else {
                 return count + 1 // Never correct → due
             }
-            let streak = record.consecutiveCorrect
+            // `max(0, ...)` is defensive — `consecutiveCorrect` is
+            // only incremented or reset to 0 in current code, but a
+            // corrupted UserDefaults blob or a future migration bug
+            // could yield a negative value, and `intervals[-1]` is
+            // a hard crash. Cheap insurance.
+            let streak = max(0, record.consecutiveCorrect)
             let intervalDays = streak < intervals.count
                 ? intervals[streak]
                 : defaultInterval

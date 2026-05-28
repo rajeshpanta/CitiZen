@@ -9,9 +9,6 @@ struct QuizConfig {
     /// The questions for this practice set.
     let questions: [UnifiedQuestion]
 
-    /// Background image asset name (e.g. "BackgroundImage", "USANepal", "USAChina").
-    let backgroundImage: String
-
     /// Language toggle buttons shown at the top of the quiz.
     /// Empty array means no toggle (English-only quizzes).
     let languageToggles: [LanguageToggle]
@@ -48,7 +45,6 @@ extension QuizConfig {
     static func english(questions: [UnifiedQuestion]) -> QuizConfig {
         QuizConfig(
             questions:              questions,
-            backgroundImage:        "BackgroundImage",
             languageToggles:        [],
             defaultVariantIndex:    0,
             stringsForVariant:      { _ in .english },
@@ -62,7 +58,6 @@ extension QuizConfig {
     static func nepali(questions: [UnifiedQuestion]) -> QuizConfig {
         QuizConfig(
             questions:              questions,
-            backgroundImage:        "USANepal",
             languageToggles: [
                 LanguageToggle(label: "🇺🇸 English", variantIndex: 0),
                 LanguageToggle(label: "🇳🇵 नेपाली",  variantIndex: 1)
@@ -82,7 +77,6 @@ extension QuizConfig {
     static func spanish(questions: [UnifiedQuestion]) -> QuizConfig {
         QuizConfig(
             questions:              questions,
-            backgroundImage:        "BackgroundImage",
             languageToggles: [
                 LanguageToggle(label: "🇺🇸 English", variantIndex: 0),
                 LanguageToggle(label: "🇪🇸 Español", variantIndex: 1)
@@ -111,7 +105,6 @@ extension QuizConfig {
     static func chinese(questions: [UnifiedQuestion]) -> QuizConfig {
         QuizConfig(
             questions:              questions,
-            backgroundImage:        "BackgroundImage",
             languageToggles: [
                 LanguageToggle(label: "🇺🇸 English", variantIndex: 0),
                 LanguageToggle(label: "🇨🇳 简体",     variantIndex: 1),

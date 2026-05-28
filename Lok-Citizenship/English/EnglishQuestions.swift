@@ -338,8 +338,8 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_054", correctAnswer: 1, variants: [
             .init(text: "How many Supreme Court justices are usually needed to decide a case?",
-                  options: ["3", "5 (a majority)", "9 (all)", "7"],
-                  explanation: "A simple majority — at least 5 of the 9 Justices — is needed to decide a Supreme Court case.")
+                  options: ["3", "6 (a quorum)", "9 (all)", "5"],
+                  explanation: "Per 28 U.S.C. §1, six (6) Justices constitute a quorum — the minimum number required to hear and decide a Supreme Court case. This is the official USCIS answer.")
         ]),
         UnifiedQuestion(id: "q_25_055", correctAnswer: 3, variants: [
             .init(text: "How long do Supreme Court justices serve?",

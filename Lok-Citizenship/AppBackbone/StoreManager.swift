@@ -103,30 +103,75 @@ final class StoreManager: ObservableObject {
 
     // MARK: - Purchase
 
-    func purchase(_ product: Product) async throws -> Bool {
+    /// Distinct outcomes from a purchase attempt. Lets the paywall
+    /// surface actionable copy ("check your connection") instead of
+    /// a generic "try again" — reduces frustrated retries on the
+    /// failure paths that aren't actually the user's fault.
+    enum PurchaseOutcome {
+        case success            // dismiss paywall
+        case cancelled          // silent — user dismissed the sheet
+        case pending            // ask-to-buy / parental approval queued
+        case verificationFailed // signed-transaction check failed
+        case networkError       // URLError / StoreKit network failure
+        case unknown            // anything else
+    }
+
+    func purchase(_ product: Product) async -> PurchaseOutcome {
         Analytics.track(.purchaseStarted(productID: product.id))
 
-        let result = try await product.purchase()
+        do {
+            let result = try await product.purchase()
+            switch result {
+            case .success(let verification):
+                do {
+                    let transaction = try checkVerified(verification)
+                    await transaction.finish()
+                    await refreshEntitlements()
+                    Analytics.track(.purchaseCompleted(productID: product.id))
+                    return .success
+                } catch {
+                    Analytics.track(.purchaseFailed(productID: product.id))
+                    return .verificationFailed
+                }
 
-        switch result {
-        case .success(let verification):
-            let transaction = try checkVerified(verification)
-            await transaction.finish()
-            await refreshEntitlements()
-            Analytics.track(.purchaseCompleted(productID: product.id))
-            return true
+            case .userCancelled:
+                // No analytics event — user-cancelled isn't a failure
+                // we want to track as friction. Surfacing it would
+                // bias the funnel toward looking worse than reality.
+                return .cancelled
 
-        case .userCancelled:
+            case .pending:
+                Analytics.track(.purchaseFailed(productID: product.id))
+                return .pending
+
+            @unknown default:
+                Analytics.track(.purchaseFailed(productID: product.id))
+                return .unknown
+            }
+        } catch {
             Analytics.track(.purchaseFailed(productID: product.id))
-            return false
-
-        case .pending:
-            Analytics.track(.purchaseFailed(productID: product.id))
-            return false
-
-        @unknown default:
-            Analytics.track(.purchaseFailed(productID: product.id))
-            return false
+            // Recognise the two network-y error shapes StoreKit can
+            // surface. Anything else falls to .unknown so the user
+            // sees the generic "try again" copy.
+            if let storeError = error as? StoreKitError {
+                switch storeError {
+                case .networkError: return .networkError
+                case .userCancelled: return .cancelled
+                default: return .unknown
+                }
+            }
+            if let urlError = error as? URLError {
+                switch urlError.code {
+                case .notConnectedToInternet,
+                     .networkConnectionLost,
+                     .timedOut,
+                     .cannotConnectToHost:
+                    return .networkError
+                default:
+                    return .unknown
+                }
+            }
+            return .unknown
         }
     }
 

@@ -237,6 +237,15 @@ struct QuizView: View {
             )
         }
         .alert(strings.micPermissionAlert, isPresented: $micPermissionDenied) {
+            // Primary action: drop the user straight at the iOS Settings
+            // page for our bundle. Without this, a denied user has no
+            // path to re-enable mic/speech short of uninstalling — a
+            // major trust hit for users who tap deny by accident.
+            Button(UIStrings.forLocaleCode(localeCode).openSettings) {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
             Button("OK", role: .cancel) { }
         }
         // Phase 2: Review-Misses push. Opens a fresh QuizView containing
@@ -896,6 +905,15 @@ private extension QuizView {
                 )
                 .font(.headline.bold())
                 .foregroundColor(.white)
+                // Defend against runaway text on Accessibility text
+                // sizes — bound to 2 lines and allow a modest shrink
+                // so longer translations (Nepali especially) don't
+                // overflow the gradient pill. minHeight (not height)
+                // already lets the button grow if text wraps to 2
+                // lines, so we keep that property as-is.
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, minHeight: 52)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
@@ -909,6 +927,7 @@ private extension QuizView {
                 )
             }
             .padding(.top, 4)
+            .accessibilityLabel(nextLevelNumber == nil ? strings.backToLevels : strings.nextLevel)
 
             // Phase 2: Review Misses (only when there's at least one wrong
             // answer to review). Opens a fresh QuizView with just the
@@ -933,6 +952,9 @@ private extension QuizView {
                     )
                     .font(.subheadline.bold())
                     .foregroundColor(.orange)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .padding(.vertical, 4)
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
@@ -943,6 +965,7 @@ private extension QuizView {
                             .stroke(Color.orange.opacity(0.4), lineWidth: 1)
                     )
                 }
+                .accessibilityLabel(String(format: UIStrings.forLocaleCode(localeCode).resultReviewMissesFormat, missedCount))
             }
 
             // Secondary action: Restart (re-run the same level). Visually
@@ -960,6 +983,9 @@ private extension QuizView {
                 Label(strings.restartQuiz, systemImage: "arrow.clockwise")
                     .font(.subheadline.bold())
                     .foregroundColor(.white.opacity(0.85))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .padding(.vertical, 4)
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 12)

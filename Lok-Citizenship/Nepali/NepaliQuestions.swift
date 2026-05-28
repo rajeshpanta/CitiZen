@@ -532,11 +532,11 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_054", correctAnswer: 1, variants: [
             .init(text: "How many Supreme Court justices are usually needed to decide a case?",
-                  options: ["3", "5 (a majority)", "9 (all)", "7"],
-                  explanation: "A simple majority — at least 5 of the 9 Justices — is needed to decide a Supreme Court case."),
+                  options: ["3", "6 (a quorum)", "9 (all)", "5"],
+                  explanation: "Per 28 U.S.C. §1, six (6) Justices constitute a quorum — the minimum number required to hear and decide a Supreme Court case. This is the official USCIS answer."),
             .init(text: "मुद्दा निर्णय गर्न सर्वोच्च अदालतका कति न्यायाधीशहरू सामान्यतया आवश्यक हुन्छन्?",
-                  options: ["३", "५ (बहुमत)", "९ (सबै)", "७"],
-                  explanation: "सर्वोच्च अदालतको मुद्दा निर्णय गर्न साधारण बहुमत — ९ मध्ये कम्तीमा ५ न्यायाधीशहरू — आवश्यक हुन्छ।")
+                  options: ["३", "६ (कोरम)", "९ (सबै)", "५"],
+                  explanation: "२८ U.S.C. §१ अनुसार, सर्वोच्च अदालतमा मुद्दा सुन्न र निर्णय गर्न आवश्यक न्यूनतम न्यायाधीशको संख्या — कोरम — ६ हो। यो USCIS को आधिकारिक उत्तर हो।")
         ]),
         UnifiedQuestion(id: "q_25_055", correctAnswer: 3, variants: [
             .init(text: "How long do Supreme Court justices serve?",

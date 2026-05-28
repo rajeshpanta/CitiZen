@@ -1210,6 +1210,9 @@ struct MockInterviewView: View {
                         )
                         .font(.subheadline.bold())
                         .foregroundColor(.orange)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .padding(.vertical, 4)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
@@ -1222,6 +1225,7 @@ struct MockInterviewView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 2)
+                    .accessibilityLabel(String(format: s.resultReviewMissesFormat, missCount))
                 }
 
                 // Forward path off the mock-result dead-end: drops the
@@ -1237,6 +1241,9 @@ struct MockInterviewView: View {
                     Label(s.resultPracticeCivics, systemImage: "book.fill")
                         .font(.subheadline.bold())
                         .foregroundColor(.white.opacity(0.85))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .padding(.vertical, 4)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
@@ -1249,6 +1256,7 @@ struct MockInterviewView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 2)
+                .accessibilityLabel(s.resultPracticeCivics)
 
                 Spacer(minLength: 20)
             }

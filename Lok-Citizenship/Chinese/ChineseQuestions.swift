@@ -717,14 +717,14 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_054", correctAnswer: 1, variants: [
             .init(text: "How many Supreme Court justices are usually needed to decide a case?",
-                  options: ["3", "5 (a majority)", "9 (all)", "7"],
-                  explanation: "A simple majority — at least 5 of the 9 Justices — is needed to decide a Supreme Court case."),
+                  options: ["3", "6 (a quorum)", "9 (all)", "5"],
+                  explanation: "Per 28 U.S.C. §1, six (6) Justices constitute a quorum — the minimum number required to hear and decide a Supreme Court case. This is the official USCIS answer."),
             .init(text: "通常需要多少位最高法院大法官才能裁决一个案件？",
-                  options: ["3", "5（多数）", "9（全部）", "7"],
-                  explanation: "需要简单多数——9 位大法官中至少 5 位——才能裁决最高法院的案件。"),
+                  options: ["3", "6（法定人数）", "9（全部）", "5"],
+                  explanation: "根据《美国法典》第28编第1条，6 位大法官构成法定人数——即最高法院审理并裁决一个案件所需的最低人数。这是 USCIS 的官方答案。"),
             .init(text: "通常需要多少位最高法院大法官才能裁決一個案件？",
-                  options: ["3", "5（多數）", "9（全部）", "7"],
-                  explanation: "需要簡單多數——9 位大法官中至少 5 位——才能裁決最高法院的案件。")
+                  options: ["3", "6（法定人數）", "9（全部）", "5"],
+                  explanation: "根據《美國法典》第28編第1條，6 位大法官構成法定人數——即最高法院審理並裁決一個案件所需的最低人數。這是 USCIS 的官方答案。")
         ]),
         UnifiedQuestion(id: "q_25_055", correctAnswer: 3, variants: [
             .init(text: "How long do Supreme Court justices serve?",

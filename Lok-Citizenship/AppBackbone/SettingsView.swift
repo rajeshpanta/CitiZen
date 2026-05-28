@@ -17,6 +17,10 @@ struct SettingsView: View {
     @State private var hasInterview: Bool = ProgressManager.shared.interviewDate != nil
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
+    /// Triggers the App Store review prompt from the "Rate CitiZen" row.
+    /// Same iOS-managed prompt as the one fired from MockInterviewView's
+    /// post-pass moment, so iOS's 3-per-365-day quota covers both.
+    @Environment(\.requestReview) private var requestReview
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
@@ -159,6 +163,24 @@ struct SettingsView: View {
                     Spacer()
                     Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
                         .foregroundColor(.secondary)
+                }
+                // Persistent rating entry point. Complements the
+                // post-mock-pass auto-prompt by giving users who
+                // already decided to leave a review a one-tap path.
+                // Same iOS-managed sheet, same 3-per-year cap.
+                Button(s.settingsRateApp) {
+                    requestReview()
+                }
+                // Contact support — surfaces the email that's
+                // otherwise buried in the Privacy Policy text.
+                // Pre-fills subject so inbound tickets are easier
+                // to triage.
+                Button(s.settingsContactSupport) {
+                    let subject = "CitiZen App Feedback"
+                    let encoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject
+                    if let url = URL(string: "mailto:support@citizenapp.us?subject=\(encoded)") {
+                        openURL(url)
+                    }
                 }
             } header: {
                 Text(s.settingsAboutHeader)
