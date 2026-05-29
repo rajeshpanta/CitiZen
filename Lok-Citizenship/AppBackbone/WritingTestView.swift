@@ -35,6 +35,10 @@ struct WritingTestView: View {
     /// when the user taps "Try Reading Practice" on the result summary.
     @Environment(\.dismiss) private var dismiss
 
+    /// SwiftUI-managed App Store review prompt — fires once on the
+    /// first PASSED writing session. Symmetric to ReadingTestView.
+    @Environment(\.requestReview) private var requestReview
+
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     init(language: AppLanguage,
@@ -118,6 +122,15 @@ struct WritingTestView: View {
             if finished && !sessionRecorded {
                 sessionRecorded = true
                 ProgressManager.shared.recordWritingTestSession(passed: session.sessionPassed)
+
+                // Ask for an App Store review on the first PASSED
+                // writing session. Symmetric to ReadingTestView and
+                // throttled identically.
+                if session.sessionPassed && RatingPrompt.shouldPrompt(for: .writingTestPassed) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        requestReview()
+                    }
+                }
             }
         }
     }

@@ -40,6 +40,12 @@ struct QuizView: View {
     @State private var pendingMicAutoStart = false
     @Environment(\.presentationMode) private var presentationMode
 
+    /// SwiftUI-managed App Store review prompt, fired on the first time
+    /// the user passes a practice level with a ≥80% score. iOS rate-
+    /// limits to 3 displays per 365 days; our `RatingPrompt.Trigger`
+    /// further limits to the first occurrence of this specific trigger.
+    @Environment(\.requestReview) private var requestReview
+
     // MARK: - Next-Level button state
 
     /// Used by the result-screen "Next Level" button. The button checks
@@ -325,6 +331,31 @@ struct QuizView: View {
                 micPermissionDenied = true
             default:
                 break
+            }
+        }
+        .onChange(of: quizLogic.isFinished) { finished in
+            // Ask for an App Store review on the first time the user
+            // passes a level with a strong score. Peak satisfaction
+            // moment for the core study journey. iOS + our
+            // RatingPrompt.Trigger throttle prevent overuse — this
+            // fires at most once per user lifetime for this trigger.
+            //
+            // Gating:
+            //   - Only on natural transition to finished.
+            //   - Only on a passing run (status != .failed) — never on
+            //     a forced quit or a 4-mistake-fail.
+            //   - Only when the score is ≥ 80% — sets a higher bar than
+            //     "didn't quite fail," so the prompt lands on a moment
+            //     the user actually feels good about.
+            //   - Only on real practice levels (level >= 1), not the
+            //     Review Mistakes session (level 0).
+            guard finished,
+                  quizLogic.status != .failed,
+                  quizLogic.scorePercentage >= 80,
+                  level >= 1,
+                  RatingPrompt.shouldPrompt(for: .practiceLevelMastered) else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                requestReview()
             }
         }
     }

@@ -265,12 +265,15 @@ final class ProgressManager {
 
 // MARK: - Rating prompt scheduling
 //
-// Strategy: ask for a review at the moment of peak satisfaction — when
-// the user passes a Mock Interview. The first pass is the strongest
-// signal (they just experienced the core value), so we always ask
-// there if iOS's per-year quota allows. After that we wait for every
-// 5th passed mock, with a 120-day floor so we don't burn through
-// iOS's 3-per-year limit chasing low-impact moments.
+// Strategy: ask for a review at the moment of peak satisfaction. Each
+// user has a different "wow" moment — some love passing mock interviews,
+// others love mastering practice levels, others love building streaks.
+// So we have 5 distinct trigger points and ask at the FIRST occurrence
+// of each. iOS caps `requestReview()` at 3 displays per 365 days per
+// user (silently no-ops past that), so 5 trigger candidates × first-
+// occurrence-only × a global 120-day floor between any two prompts
+// naturally fits within Apple's quota while maximising the chance we
+// catch each user at their personal peak.
 //
 // Why a separate enum (not a method on ProgressManager): the rating
 // gate is policy, not progress. ProgressManager owns user-progress
@@ -278,36 +281,64 @@ final class ProgressManager {
 // `ProgressManager.recordX()` accidentally growing review side effects.
 enum RatingPrompt {
     private static let defaults = UserDefaults.standard
-    private static let lastRequestKey   = "rp_lastRequestDate"
-    private static let mockPassCountKey = "rp_mockPassCount"
+    private static let lastRequestKey = "rp_lastRequestDate"
     private static let minDaysBetweenPrompts: TimeInterval = 120 * 24 * 3600
 
-    /// Call ONCE when the user passes a Mock Interview. Returns true
-    /// if the calling view should now invoke
-    /// `@Environment(\.requestReview)`. Has the side effect of
-    /// advancing the pass counter and (when returning true) stamping
-    /// the last-request date — so a single call site is enough; no
-    /// separate "record" call needed afterward.
+    /// All meaningful satisfaction events the app can request a review
+    /// on. Each case has its own UserDefaults key so the "first time
+    /// this specific journey delighted the user" moment is captured
+    /// even if a different trigger already fired earlier in the user's
+    /// lifetime. The raw values double as the UserDefaults keys.
+    enum Trigger: String {
+        case mockInterviewPassed   = "rp_trigger_mockPassed"
+        case practiceLevelMastered = "rp_trigger_levelMastered"
+        case readingTestPassed     = "rp_trigger_readingPassed"
+        case writingTestPassed     = "rp_trigger_writingPassed"
+        case threeDayStreak        = "rp_trigger_streak3"
+    }
+
+    /// Call when one of the `Trigger` events fires (mock pass, level
+    /// mastered, etc.). Returns true if the calling view should now
+    /// invoke `@Environment(\.requestReview)`.
+    ///
+    /// Returns true only when ALL of:
+    ///   1. This is the FIRST time this specific trigger has fired
+    ///      for this user (so we never re-prompt for the same journey).
+    ///   2. We're outside the global 120-day cooldown from the last
+    ///      prompt we asked for (any trigger).
+    ///
+    /// Side effects: the trigger's first-occurrence flag and the
+    /// last-request stamp are ONLY written when the function returns
+    /// true (i.e., when the prompt actually fires). This is important:
+    /// if a trigger fires during another trigger's cooldown, it must
+    /// remain available for a future call so the user still gets a
+    /// chance to be prompted at that journey's peak moment after the
+    /// cooldown lifts.
     @discardableResult
-    static func registerMockPassAndCheckPrompt() -> Bool {
-        let newCount = defaults.integer(forKey: mockPassCountKey) + 1
-        defaults.set(newCount, forKey: mockPassCountKey)
+    static func shouldPrompt(for trigger: Trigger) -> Bool {
+        // First-occurrence check. If we've already asked for THIS
+        // trigger, never ask for it again — we want to catch the
+        // peak moment for that journey, not nag every time it
+        // recurs.
+        guard !defaults.bool(forKey: trigger.rawValue) else { return false }
 
-        // First pass is the highest-converting moment. After that,
-        // only every 5th pass is a candidate — anything more frequent
-        // and we'd waste iOS's 3-per-year display quota on
-        // ho-hum repeat sessions.
-        guard newCount == 1 || newCount % 5 == 0 else { return false }
-
-        // Our own 120-day floor between prompts. iOS already enforces
-        // a 3-per-365-day cap silently, but a too-frequent caller
-        // would let those 3 fire in the same week and leave the rest
-        // of the year empty.
+        // Global cooldown. iOS itself caps displays at 3 per 365
+        // days; without our own floor, the 3 would fire in the
+        // first week and leave the rest of the year empty.
+        // Return WITHOUT consuming the trigger flag — see the doc
+        // comment above. Otherwise a trigger that happens to hit
+        // during another trigger's cooldown would be permanently
+        // lost, even if its journey recurs months later.
         if let last = defaults.object(forKey: lastRequestKey) as? Date,
            Date().timeIntervalSince(last) < minDaysBetweenPrompts {
             return false
         }
 
+        // Both gates passed — consume the trigger AND stamp the
+        // cooldown clock. Order matters less here since both writes
+        // succeed together, but doing them only on the success path
+        // keeps the "fairness" guarantee in the doc comment intact.
+        defaults.set(true, forKey: trigger.rawValue)
         defaults.set(Date(), forKey: lastRequestKey)
         return true
     }

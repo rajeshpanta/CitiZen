@@ -40,6 +40,12 @@ struct ReadingTestView: View {
     /// when the user taps "Try Writing Practice" on the result summary.
     @Environment(\.dismiss) private var dismiss
 
+    /// SwiftUI-managed App Store review prompt, fired the first time
+    /// the user passes a reading session. Throttled by
+    /// `RatingPrompt.Trigger.readingTestPassed` (lifetime-once) plus
+    /// the global 120-day cooldown.
+    @Environment(\.requestReview) private var requestReview
+
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
     init(language: AppLanguage,
@@ -103,6 +109,17 @@ struct ReadingTestView: View {
             if finished && !sessionRecorded {
                 sessionRecorded = true
                 ProgressManager.shared.recordReadingTestSession(passed: session.sessionPassed)
+
+                // Ask for an App Store review on the first PASSED
+                // reading session — peak satisfaction for the
+                // literacy track. Only on pass (never on fail) and
+                // only via the throttled RatingPrompt trigger so
+                // we never re-prompt for the same journey.
+                if session.sessionPassed && RatingPrompt.shouldPrompt(for: .readingTestPassed) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        requestReview()
+                    }
+                }
             }
         }
         // C2: after the OS permission prompt resolves, if a mic tap was pending,

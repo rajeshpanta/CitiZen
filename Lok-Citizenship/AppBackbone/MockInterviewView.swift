@@ -211,7 +211,7 @@ struct MockInterviewView: View {
                 // The 1.5 s defer lets the PASSED celebration animate
                 // in first so the prompt doesn't fight with it for
                 // visual attention.
-                if quizLogic.status == .passed && RatingPrompt.registerMockPassAndCheckPrompt() {
+                if quizLogic.status == .passed && RatingPrompt.shouldPrompt(for: .mockInterviewPassed) {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         requestReview()
                     }

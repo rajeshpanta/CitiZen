@@ -39,6 +39,13 @@ struct PracticeSelectionView: View {
     @State private var pendingReadingWritingTarget: NavigationIntent.ReadingWritingTarget?
     @State private var pushReadingWriting: Bool = false
 
+    /// iOS-managed App Store review prompt. Fired from two sites in
+    /// this view: the 3-day-streak milestone check in `.onAppear`, and
+    /// the Settings → Rate CitiZen row (passed by the inner Settings
+    /// sheet that constructs its own @Environment value). iOS's
+    /// 3-per-365-day quota governs both.
+    @Environment(\.requestReview) private var requestReview
+
     private var voicePackBannerDismissedKey: String {
         "pm_voicePackWarningDismissed_\(language.rawValue)"
     }
@@ -327,6 +334,7 @@ struct PracticeSelectionView: View {
             // that previously popped the active QuizView.
             trackerVersion &+= 1
             consumeReadingWritingIntent()
+            maybeAskForReviewOnStreakMilestone()
         }
         .task {
             // Eagerly load StoreKit products so the locked Mock Interview
@@ -367,6 +375,28 @@ struct PracticeSelectionView: View {
     /// `isPro = false` while they're still on the test result screen).
     /// Without it, the transition button would silently bypass the
     /// paywall.
+    /// Ask for an App Store review when the user returns to the main
+    /// menu after building a 3-day study streak — the moment they've
+    /// proven the app stuck as a habit. Peak satisfaction for the
+    /// returning-user journey, distinct from the "I just passed a
+    /// mock" or "I just mastered a level" moments. Throttled by
+    /// `RatingPrompt.Trigger.threeDayStreak` (first occurrence only)
+    /// plus the global 120-day cooldown.
+    private func maybeAskForReviewOnStreakMilestone() {
+        guard ProgressManager.shared.currentStreak >= 3 else { return }
+        guard RatingPrompt.shouldPrompt(for: .threeDayStreak) else { return }
+        // Defer 1.0 s — the practice menu only needs to draw before the
+        // sheet animates in on top. This is shorter than the 1.5 s used
+        // by QuizView / MockInterviewView / ReadingTestView /
+        // WritingTestView because those fire after a heavy "PASSED"
+        // celebration animation that needs more time to read; the
+        // streak prompt fires from a quiet main-menu .onAppear with no
+        // competing animation. Intentional, not a typo.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            requestReview()
+        }
+    }
+
     private func consumeReadingWritingIntent() {
         guard let target = NavigationIntent.shared.pendingReadingWriting else { return }
         NavigationIntent.shared.pendingReadingWriting = nil
