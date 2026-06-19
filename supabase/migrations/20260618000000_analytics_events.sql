@@ -23,7 +23,12 @@ create table public.analytics_events (
     device_id text,
     app_version text,
     platform text,
-    created_at timestamptz default now()
+    created_at timestamptz default now(),
+    -- Shared between CitiZen and Semora (same Supabase project).
+    -- Defaults to 'citizen' so CitiZen's existing AnalyticsService
+    -- needs no code change; Semora explicitly sends 'semora' in its
+    -- POST body to override the default.
+    app_name text not null default 'citizen'
 );
 
 -- RLS: anon role can INSERT only. No SELECT/UPDATE/DELETE from the
@@ -39,3 +44,8 @@ create policy "anon insert" on public.analytics_events
 -- right shape for the analysis workload.
 create index idx_analytics_events_name_created
     on public.analytics_events (event_name, created_at desc);
+
+-- Per-app filtering is the second most common query pattern
+-- (separating CitiZen vs Semora data).
+create index idx_analytics_events_app_name
+    on public.analytics_events (app_name, created_at desc);
