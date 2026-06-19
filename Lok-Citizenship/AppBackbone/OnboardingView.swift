@@ -13,15 +13,18 @@ struct OnboardingView: View {
     // MARK: - State
 
     enum Step: Int, CaseIterable {
-        case intro, language, interviewDate, notifications, quiz, results
+        case intro, language, whyOral, voiceDemo, whatYoullMaster, interviewDate, notifications, quiz, results
         /// Step dot index. Intro and results don't get a dot.
         var dotIndex: Int? {
             switch self {
-            case .intro, .results: return nil
-            case .language:        return 0
-            case .interviewDate:   return 1
-            case .notifications:   return 2
-            case .quiz:            return 3
+            case .intro, .results:    return nil
+            case .language:           return 0
+            case .whyOral:            return 1
+            case .voiceDemo:          return 2
+            case .whatYoullMaster:    return 3
+            case .interviewDate:      return 4
+            case .notifications:      return 5
+            case .quiz:               return 6
             }
         }
     }
@@ -32,6 +35,35 @@ struct OnboardingView: View {
     @State private var selectedLanguage: AppLanguage?
     @State private var interviewDate = Date()
     @State private var dateChoice: DateChoice = .notChosen
+
+    // MARK: - Elegance state (intro screen first-impression polish)
+    //
+    // `hasAppearedIntro` drives the staggered fade-up entry so the
+    // screen feels alive rather than slapped down whole. `heroPulse`
+    // is a slow infinite breathing animation on the cyan circle —
+    // the kind of subtle motion premium apps use to signal life
+    // without being distracting.
+    @State private var hasAppearedIntro = false
+    @State private var heroPulse = false
+
+    // MARK: - Voice demo screen state
+    //
+    // The onboarding voice demo gives users the "wow" moment — they
+    // SPEAK their first answer and see the app understand them. We use
+    // the same LocalSTTService the real quizzes use so the experience
+    // they get here matches the experience they'll get during real
+    // study. Permission is requested inline on first mic tap.
+    enum VoiceDemoStatus {
+        case idle              // Initial state — show mic, no transcript
+        case listening         // Mic active, transcript building
+        case success           // Transcript contained "constitution" — celebrate
+        case retry             // Transcript was off-topic — gentle nudge
+        case permissionDenied  // User said no to mic/speech — show Settings link
+    }
+    @State private var demoStatus: VoiceDemoStatus = .idle
+    @State private var demoTranscript: String = ""
+    @State private var demoMicPulse = false
+    @StateObject private var demoVoiceCtrl = OnboardingVoiceDemoController()
 
     // Quiz state
     @StateObject private var quizLogic = UnifiedQuizLogic()
@@ -72,12 +104,15 @@ struct OnboardingView: View {
             .ignoresSafeArea()
 
             switch step {
-            case .intro:         introScreen
-            case .language:      languageScreen
-            case .interviewDate: dateScreen
-            case .notifications: notificationScreen
-            case .quiz:          quizScreen
-            case .results:       resultsScreen
+            case .intro:           introScreen
+            case .language:        languageScreen
+            case .whyOral:         whyOralScreen
+            case .voiceDemo:       voiceDemoScreen
+            case .whatYoullMaster: whatYoullMasterScreen
+            case .interviewDate:   dateScreen
+            case .notifications:   notificationScreen
+            case .quiz:            quizScreen
+            case .results:         resultsScreen
             }
         }
         .animation(.easeInOut(duration: 0.3), value: step)
@@ -92,42 +127,66 @@ struct OnboardingView: View {
             VStack(spacing: 20) {
                 Spacer(minLength: 40)
 
+                // Hero icon — cyan-glowing star in a soft circle.
+                // Pulses slowly to signal life; glow radius breathes
+                // with the scale so the whole element feels organic
+                // rather than mechanical.
                 ZStack {
+                    // Outer glow ring (drawn behind the circle so it
+                    // bleeds outward without bounding the visible disc).
+                    Circle()
+                        .fill(Color.cyan.opacity(0.18))
+                        .frame(width: 160, height: 160)
+                        .blur(radius: 28)
+                        .scaleEffect(heroPulse ? 1.08 : 0.95)
+
                     Circle()
                         .fill(LinearGradient(
                             colors: [.cyan.opacity(0.35), .cyan.opacity(0.05)],
                             startPoint: .top, endPoint: .bottom))
                         .frame(width: 120, height: 120)
+                        .scaleEffect(heroPulse ? 1.04 : 1.0)
+                        .shadow(color: .cyan.opacity(0.45),
+                                radius: heroPulse ? 28 : 16,
+                                x: 0, y: 0)
+
                     Image(systemName: "star.fill")
                         .font(.system(size: 48))
                         .foregroundColor(.cyan)
+                        .shadow(color: .cyan.opacity(0.6), radius: 8, x: 0, y: 0)
                 }
+                .staggeredEntry(delay: 0.00, appeared: hasAppearedIntro)
 
                 Text(s.onboardingIntroHeadline)
                     .font(.largeTitle.bold())
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
+                    .staggeredEntry(delay: 0.15, appeared: hasAppearedIntro)
 
                 Text(s.onboardingIntroTagline)
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
+                    .staggeredEntry(delay: 0.28, appeared: hasAppearedIntro)
 
                 VStack(spacing: 10) {
                     featureRow(icon: "mic.fill",
                                title: s.onboardingFeatureVoice,
                                subtitle: s.onboardingFeatureVoiceSub,
                                color: .cyan)
+                        .staggeredEntry(delay: 0.42, appeared: hasAppearedIntro)
                     featureRow(icon: "globe",
                                title: s.onboardingFeatureLanguage,
                                subtitle: s.onboardingFeatureLanguageSub,
                                color: .blue)
+                        .staggeredEntry(delay: 0.52, appeared: hasAppearedIntro)
                     featureRow(icon: "checkmark.seal.fill",
                                title: s.onboardingFeatureMock,
                                subtitle: s.onboardingFeatureMockSub,
                                color: .green)
+                        .staggeredEntry(delay: 0.62, appeared: hasAppearedIntro)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 4)
@@ -135,6 +194,7 @@ struct OnboardingView: View {
                 voiceDemoButton
                     .padding(.horizontal, 20)
                     .padding(.top, 4)
+                    .staggeredEntry(delay: 0.76, appeared: hasAppearedIntro)
 
                 Spacer(minLength: 12)
 
@@ -156,6 +216,7 @@ struct OnboardingView: View {
                 }
                 .padding(.horizontal, 24)
                 .accessibilityLabel(s.onboardingContinue)
+                .staggeredEntry(delay: 0.90, appeared: hasAppearedIntro)
 
                 // Fast-path: skip onboarding and drop the user at the
                 // main practice menu with safe defaults. Crucial for
@@ -191,9 +252,28 @@ struct OnboardingView: View {
                 .padding(.top, 4)
                 .padding(.bottom, 30)
                 .accessibilityLabel(s.onboardingExploreFree)
+                .staggeredEntry(delay: 1.00, appeared: hasAppearedIntro)
             }
         }
         .scrollIndicators(.hidden)
+        .onAppear {
+            // Re-arm both animations on every appearance so the polish
+            // replays if the user resets onboarding from Settings (DEBUG
+            // build). A tiny delay before flipping `hasAppearedIntro` to
+            // true ensures the .opacity / .offset baseline is rendered
+            // first — without that, SwiftUI sometimes paints the final
+            // state straight away and skips the fade-in.
+            hasAppearedIntro = false
+            heroPulse = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                hasAppearedIntro = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.40) {
+                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                    heroPulse = true
+                }
+            }
+        }
         // Bind the demo button's visual state to the real TTS engine
         // signal rather than our local flag. The sink in `playDemo`
         // fires only on natural completion of the publisher — an
@@ -317,7 +397,7 @@ struct OnboardingView: View {
                 ForEach(AppLanguage.allCases) { lang in
                     Button {
                         let gen = UISelectionFeedbackGenerator(); gen.selectionChanged()
-                        withAnimation { selectedLanguage = lang; step = .interviewDate }
+                        withAnimation { selectedLanguage = lang; step = .whyOral }
                     } label: {
                         VStack(spacing: 8) {
                             Text(lang.flag).font(.system(size: 36))
@@ -961,5 +1041,693 @@ struct OnboardingView: View {
         case .spanish: return "de"
         case .chinese: return "共"
         }
+    }
+}
+
+// ═════════════════════════════════════════════════════════════════
+// MARK: - New onboarding screens
+// ═════════════════════════════════════════════════════════════════
+//
+// These extend the OnboardingView struct with the 3 informative
+// screens added between Language and Interview Date:
+//
+//   • whyOralScreen          — the differentiation pitch
+//   • voiceDemoScreen        — live voice STT try-it-now moment
+//   • whatYoullMasterScreen  — content scope authority
+//
+// Each screen reuses the staggered-entry modifier introduced earlier
+// so the overall onboarding feels visually consistent.
+private extension OnboardingView {
+
+    // ─────────────────────────────────────────────────────────────
+    // Screen: Why CitiZen — the real interview is oral
+    // ─────────────────────────────────────────────────────────────
+    var whyOralScreen: some View {
+        OnboardingWhyOralView(
+            language: selectedLanguage ?? .english,
+            onContinue: { withAnimation { step = .voiceDemo } }
+        )
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Screen: Live voice demo
+    // ─────────────────────────────────────────────────────────────
+    var voiceDemoScreen: some View {
+        OnboardingVoiceDemoView(
+            language: selectedLanguage ?? .english,
+            controller: demoVoiceCtrl,
+            onSuccess: { withAnimation { step = .whatYoullMaster } },
+            onSkip:    { withAnimation { step = .whatYoullMaster } }
+        )
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Screen: What you'll master
+    // ─────────────────────────────────────────────────────────────
+    var whatYoullMasterScreen: some View {
+        OnboardingMasterView(
+            language: selectedLanguage ?? .english,
+            onContinue: { withAnimation { step = .interviewDate } }
+        )
+    }
+}
+
+// MARK: - Staggered entry modifier
+//
+// One-line modifier so every onboarding element fades and rises into
+// place with a per-element delay. Pulled out of OnboardingView so the
+// intro body reads as a clean list of elements + delays rather than a
+// repeated `.opacity / .offset / .animation` boilerplate at every site.
+//
+// The animation is intentionally short (0.55 s) so the cumulative entry
+// of all elements completes in just over a second — long enough to feel
+// considered, short enough not to make the user wait to read or tap.
+private struct StaggeredEntry: ViewModifier {
+    let delay: Double
+    let appeared: Bool
+    func body(content: Content) -> some View {
+        content
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 22)
+            .animation(.easeOut(duration: 0.55).delay(delay), value: appeared)
+    }
+}
+
+private extension View {
+    /// Fade-up reveal with a per-element delay. Use to compose
+    /// staggered entry across a screen.
+    func staggeredEntry(delay: Double, appeared: Bool) -> some View {
+        modifier(StaggeredEntry(delay: delay, appeared: appeared))
+    }
+}
+
+// ═════════════════════════════════════════════════════════════════
+// MARK: - Onboarding screen components
+// ═════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────
+// Why CitiZen — the real interview is oral
+// ─────────────────────────────────────────────────────────────────
+private struct OnboardingWhyOralView: View {
+    let language: AppLanguage
+    let onContinue: () -> Void
+    @State private var appeared = false
+    @State private var micPulse = false
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Spacer(minLength: 30)
+
+            // Tag chip — small "Why CitiZen" eyebrow
+            Text(s.onboardingWhyOralEyebrow)
+                .font(.caption.bold())
+                .foregroundColor(.cyan)
+                .tracking(2)
+                .textCase(.uppercase)
+                .staggeredEntry(delay: 0.00, appeared: appeared)
+
+            // Main headline — "The real interview is ORAL."
+            Text(s.onboardingWhyOralHeadline)
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+                .staggeredEntry(delay: 0.10, appeared: appeared)
+
+            // Subtitle
+            Text(s.onboardingWhyOralSubtitle)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.65))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 28)
+                .staggeredEntry(delay: 0.22, appeared: appeared)
+
+            Spacer().frame(height: 8)
+
+            // Side-by-side comparison panel
+            HStack(spacing: 12) {
+                comparisonCard(
+                    icon: "hand.tap",
+                    iconColor: .white.opacity(0.5),
+                    title: s.onboardingOtherAppsLabel,
+                    body: s.onboardingOtherAppsDesc,
+                    isPositive: false
+                )
+                .staggeredEntry(delay: 0.36, appeared: appeared)
+
+                comparisonCard(
+                    icon: "mic.fill",
+                    iconColor: .cyan,
+                    title: s.onboardingCitiZenLabel,
+                    body: s.onboardingCitiZenDesc,
+                    isPositive: true,
+                    pulse: micPulse
+                )
+                .staggeredEntry(delay: 0.46, appeared: appeared)
+            }
+            .padding(.horizontal, 20)
+
+            // Stat fact tile
+            HStack(spacing: 12) {
+                Image(systemName: "person.badge.shield.checkmark.fill")
+                    .font(.title3)
+                    .foregroundColor(.cyan)
+                Text(s.onboardingWhyOralFactTile)
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.85))
+                    .multilineTextAlignment(.leading)
+                Spacer()
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.cyan.opacity(0.08))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.cyan.opacity(0.25), lineWidth: 1)
+            )
+            .padding(.horizontal, 20)
+            .padding(.top, 6)
+            .staggeredEntry(delay: 0.60, appeared: appeared)
+
+            Spacer()
+
+            // CTA
+            Button {
+                let gen = UIImpactFeedbackGenerator(style: .medium); gen.impactOccurred()
+                onContinue()
+            } label: {
+                HStack(spacing: 8) {
+                    Text(s.onboardingTryItNow)
+                    Image(systemName: "arrow.right")
+                }
+                .font(.headline.bold())
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(LinearGradient(
+                            colors: [.cyan, .blue],
+                            startPoint: .leading, endPoint: .trailing))
+                )
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 28)
+            .staggeredEntry(delay: 0.74, appeared: appeared)
+        }
+        .onAppear {
+            appeared = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { appeared = true }
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                micPulse = true
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func comparisonCard(icon: String, iconColor: Color, title: String,
+                                body: String, isPositive: Bool, pulse: Bool = false) -> some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(isPositive ? Color.cyan.opacity(0.18) : Color.white.opacity(0.06))
+                    .frame(width: 56, height: 56)
+                    .scaleEffect(pulse ? 1.12 : 1.0)
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(iconColor)
+            }
+
+            Text(title)
+                .font(.caption.bold())
+                .foregroundColor(isPositive ? .cyan : .white.opacity(0.55))
+                .tracking(1)
+                .textCase(.uppercase)
+
+            Text(body)
+                .font(.subheadline.bold())
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(isPositive ? Color.cyan.opacity(0.06) : Color.white.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isPositive ? Color.cyan.opacity(0.4) : Color.white.opacity(0.1),
+                        lineWidth: isPositive ? 1.5 : 1)
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Live voice STT demo
+// ─────────────────────────────────────────────────────────────────
+private struct OnboardingVoiceDemoView: View {
+    let language: AppLanguage
+    @ObservedObject var controller: OnboardingVoiceDemoController
+    let onSuccess: () -> Void
+    let onSkip: () -> Void
+
+    @State private var appeared = false
+    @State private var micPulse = false
+    @State private var didFireSuccess = false
+    @Environment(\.openURL) private var openURL
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Spacer(minLength: 30)
+
+            Text(s.onboardingVoiceDemoEyebrow)
+                .font(.caption.bold())
+                .foregroundColor(.cyan)
+                .tracking(2)
+                .textCase(.uppercase)
+                .staggeredEntry(delay: 0.00, appeared: appeared)
+
+            Text(s.onboardingVoiceDemoTitle)
+                .font(.title.bold())
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+                .staggeredEntry(delay: 0.10, appeared: appeared)
+
+            // Question card
+            VStack(spacing: 8) {
+                Text(s.onboardingVoiceDemoQuestionLabel)
+                    .font(.caption.bold())
+                    .foregroundColor(.cyan)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                Text(s.onboardingVoiceDemoQuestion)
+                    .font(.title3.bold())
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.06))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            )
+            .padding(.horizontal, 20)
+            .staggeredEntry(delay: 0.22, appeared: appeared)
+
+            // Mic button
+            Button {
+                let gen = UIImpactFeedbackGenerator(style: .heavy); gen.impactOccurred()
+                handleMicTap()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(controller.status == .listening
+                              ? Color.red.opacity(0.25)
+                              : Color.cyan.opacity(0.18))
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(micPulse ? 1.08 : 1.0)
+                    Circle()
+                        .stroke(controller.status == .listening ? Color.red : Color.cyan,
+                                lineWidth: 2)
+                        .frame(width: 120, height: 120)
+                    Image(systemName: controller.status == .listening ? "stop.fill" : "mic.fill")
+                        .font(.system(size: 44))
+                        .foregroundColor(controller.status == .listening ? .red : .cyan)
+                }
+            }
+            .padding(.top, 6)
+            .staggeredEntry(delay: 0.36, appeared: appeared)
+
+            // Status / transcript area
+            VStack(spacing: 6) {
+                statusLine
+                if !controller.transcript.isEmpty {
+                    Text("\u{201C}\(controller.transcript)\u{201D}")
+                        .font(.subheadline.italic())
+                        .foregroundColor(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                        .lineLimit(2)
+                }
+            }
+            .frame(minHeight: 70)
+            .padding(.top, 4)
+            .staggeredEntry(delay: 0.48, appeared: appeared)
+
+            Spacer()
+
+            // Skip link
+            Button {
+                controller.stop()
+                onSkip()
+            } label: {
+                Text(s.onboardingVoiceDemoSkip)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.55))
+                    .underline()
+            }
+            .padding(.bottom, 28)
+            .staggeredEntry(delay: 0.66, appeared: appeared)
+        }
+        .onAppear {
+            appeared = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { appeared = true }
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                micPulse = true
+            }
+        }
+        .onDisappear {
+            controller.stop()
+        }
+        .onChange(of: controller.status) { newStatus in
+            // Auto-advance on success after a brief celebration moment.
+            if newStatus == .success && !didFireSuccess {
+                didFireSuccess = true
+                let gen = UINotificationFeedbackGenerator(); gen.notificationOccurred(.success)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+                    onSuccess()
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var statusLine: some View {
+        switch controller.status {
+        case .idle:
+            Text(s.onboardingVoiceDemoHintTap)
+                .font(.footnote)
+                .foregroundColor(.white.opacity(0.6))
+
+        case .listening:
+            HStack(spacing: 6) {
+                Circle().fill(Color.red).frame(width: 6, height: 6)
+                    .scaleEffect(micPulse ? 1.4 : 1.0)
+                Text(s.onboardingVoiceDemoListening)
+                    .font(.footnote.bold())
+                    .foregroundColor(.red)
+            }
+
+        case .success:
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.seal.fill").foregroundColor(.green)
+                Text(s.onboardingVoiceDemoSuccess)
+                    .font(.headline.bold())
+                    .foregroundColor(.green)
+            }
+
+        case .retry:
+            VStack(spacing: 4) {
+                Text(s.onboardingVoiceDemoRetry)
+                    .font(.footnote)
+                    .foregroundColor(.orange)
+                Text(s.onboardingVoiceDemoCorrectAnswerHint)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+
+        case .permissionDenied:
+            VStack(spacing: 6) {
+                Text(s.onboardingVoiceDemoPermissionDenied)
+                    .font(.footnote)
+                    .foregroundColor(.orange)
+                Button(s.openSettings) {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        openURL(url)
+                    }
+                }
+                .font(.footnote.bold())
+                .foregroundColor(.cyan)
+            }
+        }
+    }
+
+    private func handleMicTap() {
+        if controller.status == .listening {
+            controller.stop()
+            return
+        }
+        // Reset and start.
+        didFireSuccess = false
+        controller.start()
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Voice demo controller — wraps the shared SpeechToTextService for
+// the onboarding demo. Kept separate from VoiceQuizController to
+// avoid pulling in quiz-specific logic (timeouts, scoring, audio
+// routing).
+// ─────────────────────────────────────────────────────────────────
+@MainActor
+final class OnboardingVoiceDemoController: ObservableObject {
+    @Published var status: OnboardingView.VoiceDemoStatus = .idle
+    @Published var transcript: String = ""
+
+    private let stt: SpeechToTextService = ServiceLocator.shared.sttService
+    private var transcriptSink: AnyCancellable?
+    private var authSink: AnyCancellable?
+    private var recordingSink: AnyCancellable?
+
+    init() {
+        // Watch authorization changes — if the OS prompt is denied,
+        // transition the screen state so the view shows the Settings
+        // escape link.
+        authSink = stt.authorizationStatusPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                guard let self else { return }
+                if status == .denied || status == .restricted {
+                    if self.status == .listening || self.status == .idle {
+                        self.status = .permissionDenied
+                    }
+                }
+            }
+    }
+
+    func start() {
+        transcript = ""
+        status = .listening
+        // Request auth — startRecording is a no-op until the OS has
+        // granted permission. requestAuthorization is idempotent and
+        // cheap to re-call when already granted.
+        stt.requestAuthorization()
+
+        // Subscribe to the live transcript stream. The publisher emits
+        // partial transcripts as the user speaks so the on-screen quote
+        // builds up in real time.
+        transcriptSink = stt.transcriptionPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] partial in
+                guard let self else { return }
+                self.transcript = partial
+                self.evaluate(partial)
+            }
+
+        // When LocalSTTService finishes (silence detected → engine
+        // stops), `isRecordingPublisher` flips to false. If we still
+        // don't have a match, that's the "retry" moment.
+        recordingSink = stt.isRecordingPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isRecording in
+                guard let self else { return }
+                if !isRecording && self.status == .listening {
+                    // Engine stopped on its own. If transcript still
+                    // empty or off-topic, prompt retry.
+                    if !self.transcript.lowercased().contains("constitution") {
+                        self.status = self.transcript.isEmpty ? .idle : .retry
+                        self.cleanupSubscriptions()
+                    }
+                }
+            }
+
+        // Empty options array = free-form transcription (we're not
+        // matching against fixed answer choices for this demo).
+        stt.startRecording(withOptions: [], localeCode: "en-US", offlineOnly: true)
+    }
+
+    func stop() {
+        stt.cancelRecording()
+        cleanupSubscriptions()
+        if status == .listening { status = .idle }
+    }
+
+    private func evaluate(_ partial: String) {
+        let lower = partial.lowercased()
+        // The USCIS answer is "The Constitution" / "U.S. Constitution".
+        // Match case-insensitive contains so all natural phrasings
+        // succeed: "the constitution", "Constitution of the United
+        // States", "U.S. Constitution", etc.
+        if lower.contains("constitution") {
+            status = .success
+            stt.stopRecording()
+            cleanupSubscriptions()
+        }
+    }
+
+    private func cleanupSubscriptions() {
+        transcriptSink?.cancel(); transcriptSink = nil
+        recordingSink?.cancel();  recordingSink = nil
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// What you'll master — content scope + 8 levels
+// ─────────────────────────────────────────────────────────────────
+private struct OnboardingMasterView: View {
+    let language: AppLanguage
+    let onContinue: () -> Void
+    @State private var appeared = false
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
+
+    private let levelChips: [(label: String, color: Color)] = [
+        ("L1",  .green),
+        ("L2",  .green),
+        ("L3",  .yellow),
+        ("L4",  .orange),
+        ("L5",  .red),
+        ("L6",  .purple),
+        ("L7",  .indigo),
+        ("L8",  .pink)
+    ]
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Spacer(minLength: 30)
+
+            Text(s.onboardingMasterEyebrow)
+                .font(.caption.bold())
+                .foregroundColor(.cyan)
+                .tracking(2)
+                .textCase(.uppercase)
+                .staggeredEntry(delay: 0.00, appeared: appeared)
+
+            Text(s.onboardingMasterHeadline)
+                .font(.system(size: 30, weight: .bold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+                .staggeredEntry(delay: 0.10, appeared: appeared)
+
+            Text(s.onboardingMasterSubtitle)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.65))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .staggeredEntry(delay: 0.22, appeared: appeared)
+
+            // 8-level chip bar
+            VStack(spacing: 8) {
+                Text(s.onboardingMasterLevelsLabel)
+                    .font(.caption.bold())
+                    .foregroundColor(.white.opacity(0.45))
+                    .tracking(1)
+                    .textCase(.uppercase)
+
+                HStack(spacing: 6) {
+                    ForEach(0..<levelChips.count, id: \.self) { i in
+                        let chip = levelChips[i]
+                        Text(chip.label)
+                            .font(.caption.bold())
+                            .foregroundColor(chip.color)
+                            .frame(width: 34, height: 34)
+                            .background(
+                                Circle().fill(chip.color.opacity(0.15))
+                            )
+                            .overlay(
+                                Circle().stroke(chip.color.opacity(0.45), lineWidth: 1)
+                            )
+                    }
+                }
+            }
+            .padding(.top, 6)
+            .staggeredEntry(delay: 0.36, appeared: appeared)
+
+            // 4 feature tiles
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                masterTile(icon: "mic.badge.plus", color: .cyan, title: s.onboardingMasterFeatureMock)
+                masterTile(icon: "book.fill", color: .purple, title: s.onboardingMasterFeatureReading)
+                masterTile(icon: "pencil.line", color: .indigo, title: s.onboardingMasterFeatureWriting)
+                masterTile(icon: "headphones", color: .teal, title: s.onboardingMasterFeatureAudio)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 6)
+            .staggeredEntry(delay: 0.50, appeared: appeared)
+
+            // Footer line
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundColor(.cyan)
+                Text(s.onboardingMasterFooter)
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .padding(.top, 6)
+            .staggeredEntry(delay: 0.64, appeared: appeared)
+
+            Spacer()
+
+            Button {
+                let gen = UIImpactFeedbackGenerator(style: .medium); gen.impactOccurred()
+                onContinue()
+            } label: {
+                Text(s.onboardingContinue)
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(LinearGradient(
+                                colors: [.blue, .blue.opacity(0.75)],
+                                startPoint: .leading, endPoint: .trailing))
+                    )
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 28)
+            .staggeredEntry(delay: 0.78, appeared: appeared)
+        }
+        .onAppear {
+            appeared = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { appeared = true }
+        }
+    }
+
+    private func masterTile(icon: String, color: Color, title: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(color)
+                .frame(width: 28)
+            Text(title)
+                .font(.subheadline.bold())
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+            Spacer()
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }

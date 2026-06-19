@@ -153,6 +153,43 @@ struct UIStrings {
     /// interview date, recommended level 1). Reduces drop-off from
     /// curious users who want to try before committing.
     let onboardingExploreFree: String
+
+    // MARK: - Onboarding: Why CitiZen is different (Screen 3)
+    let onboardingWhyOralEyebrow: String       // "Why CitiZen"
+    let onboardingWhyOralHeadline: String      // "The real interview is ORAL."
+    let onboardingWhyOralSubtitle: String      // "Most apps make you tap. CitiZen makes you SPEAK..."
+    let onboardingWhyOralFactTile: String      // "USCIS officers ask 10 questions..."
+    let onboardingOtherAppsLabel: String       // "Other apps"
+    let onboardingOtherAppsDesc: String        // "Tap A, B, C, D"
+    let onboardingCitiZenLabel: String         // "CitiZen"
+    let onboardingCitiZenDesc: String          // "Speak your answer"
+    let onboardingTryItNow: String             // "Try it now"
+
+    // MARK: - Onboarding: Live voice demo (Screen 4)
+    let onboardingVoiceDemoEyebrow: String          // "Live demo"
+    let onboardingVoiceDemoTitle: String            // "Try it yourself"
+    let onboardingVoiceDemoQuestionLabel: String    // "Question"
+    /// One of the simplest USCIS questions — safe success case for the demo.
+    let onboardingVoiceDemoQuestion: String         // "What is the supreme law of the land?"
+    let onboardingVoiceDemoHintTap: String          // "Tap the mic and say your answer"
+    let onboardingVoiceDemoListening: String        // "Listening…"
+    let onboardingVoiceDemoSuccess: String          // "Correct!"
+    let onboardingVoiceDemoRetry: String            // "Almost — try again"
+    let onboardingVoiceDemoCorrectAnswerHint: String // "Answer: The U.S. Constitution"
+    let onboardingVoiceDemoPermissionDenied: String // "Microphone access required."
+    let onboardingVoiceDemoSkip: String             // "Skip demo"
+
+    // MARK: - Onboarding: What you'll master (Screen 5)
+    let onboardingMasterEyebrow: String        // "What you'll master"
+    let onboardingMasterHeadline: String       // "All 128 official questions"
+    let onboardingMasterSubtitle: String       // "From the 2025 USCIS civics test, in your language"
+    let onboardingMasterLevelsLabel: String    // "8 difficulty levels"
+    let onboardingMasterFeatureMock: String    // "Mock Interview"
+    let onboardingMasterFeatureReading: String // "Reading"
+    let onboardingMasterFeatureWriting: String // "Writing"
+    let onboardingMasterFeatureAudio: String   // "Audio-Only"
+    let onboardingMasterFooter: String         // "Built around the real USCIS interview format"
+
     let onboardingHearSample: String         // "Hear a sample"
     /// A short sentence used for the TTS demo button in onboarding.
     let onboardingSampleText: String
@@ -621,6 +658,35 @@ extension UIStrings {
         onboardingFeatureMockSub: "10-question mock interview",
         onboardingContinue: "Continue",
         onboardingExploreFree: "Explore for Free",
+        onboardingWhyOralEyebrow: "Why CitiZen",
+        onboardingWhyOralHeadline: "The real interview is ORAL.",
+        onboardingWhyOralSubtitle: "Most apps make you tap. CitiZen makes you SPEAK — just like a USCIS officer.",
+        onboardingWhyOralFactTile: "USCIS officers ask up to 10 civics questions out loud. You must answer 6 correctly.",
+        onboardingOtherAppsLabel: "Other apps",
+        onboardingOtherAppsDesc: "Tap A, B, C, D",
+        onboardingCitiZenLabel: "CitiZen",
+        onboardingCitiZenDesc: "Speak your answer",
+        onboardingTryItNow: "Try it now",
+        onboardingVoiceDemoEyebrow: "Live demo",
+        onboardingVoiceDemoTitle: "Try it yourself",
+        onboardingVoiceDemoQuestionLabel: "Question",
+        onboardingVoiceDemoQuestion: "What is the supreme law of the land?",
+        onboardingVoiceDemoHintTap: "Tap the mic and say your answer",
+        onboardingVoiceDemoListening: "Listening…",
+        onboardingVoiceDemoSuccess: "Correct!",
+        onboardingVoiceDemoRetry: "Almost — try again",
+        onboardingVoiceDemoCorrectAnswerHint: "Answer: The U.S. Constitution",
+        onboardingVoiceDemoPermissionDenied: "Microphone access required.",
+        onboardingVoiceDemoSkip: "Skip demo",
+        onboardingMasterEyebrow: "What you'll master",
+        onboardingMasterHeadline: "All 128 official questions",
+        onboardingMasterSubtitle: "From the 2025 USCIS civics test, in your language.",
+        onboardingMasterLevelsLabel: "8 difficulty levels",
+        onboardingMasterFeatureMock: "Mock Interview",
+        onboardingMasterFeatureReading: "Reading",
+        onboardingMasterFeatureWriting: "Writing",
+        onboardingMasterFeatureAudio: "Audio-Only",
+        onboardingMasterFooter: "Built around the real USCIS interview format",
         onboardingHearSample: "Hear a sample",
         onboardingSampleText: "What is the capital of the United States?",
         notificationsTitle: "Stay on track",
@@ -957,6 +1023,35 @@ extension UIStrings {
         onboardingFeatureMockSub: "Entrevista simulada de 10 preguntas",
         onboardingContinue: "Continuar",
         onboardingExploreFree: "Explorar gratis",
+        onboardingWhyOralEyebrow: "Por qué CitiZen",
+        onboardingWhyOralHeadline: "La entrevista real es ORAL.",
+        onboardingWhyOralSubtitle: "La mayoría de las apps te hacen tocar. CitiZen te hace HABLAR — como un oficial de USCIS.",
+        onboardingWhyOralFactTile: "Los oficiales de USCIS hacen hasta 10 preguntas cívicas en voz alta. Debes responder 6 correctamente.",
+        onboardingOtherAppsLabel: "Otras apps",
+        onboardingOtherAppsDesc: "Tocar A, B, C, D",
+        onboardingCitiZenLabel: "CitiZen",
+        onboardingCitiZenDesc: "Di tu respuesta",
+        onboardingTryItNow: "Pruébalo ahora",
+        onboardingVoiceDemoEyebrow: "Demo en vivo",
+        onboardingVoiceDemoTitle: "Pruébalo tú mismo",
+        onboardingVoiceDemoQuestionLabel: "Pregunta",
+        onboardingVoiceDemoQuestion: "¿Cuál es la ley suprema del país?",
+        onboardingVoiceDemoHintTap: "Toca el micrófono y di tu respuesta",
+        onboardingVoiceDemoListening: "Escuchando…",
+        onboardingVoiceDemoSuccess: "¡Correcto!",
+        onboardingVoiceDemoRetry: "Casi — inténtalo de nuevo",
+        onboardingVoiceDemoCorrectAnswerHint: "Respuesta: La Constitución de EE. UU.",
+        onboardingVoiceDemoPermissionDenied: "Se requiere acceso al micrófono.",
+        onboardingVoiceDemoSkip: "Saltar demo",
+        onboardingMasterEyebrow: "Lo que dominarás",
+        onboardingMasterHeadline: "Las 128 preguntas oficiales",
+        onboardingMasterSubtitle: "De la prueba cívica de USCIS de 2025, en tu idioma.",
+        onboardingMasterLevelsLabel: "8 niveles de dificultad",
+        onboardingMasterFeatureMock: "Entrevista simulada",
+        onboardingMasterFeatureReading: "Lectura",
+        onboardingMasterFeatureWriting: "Escritura",
+        onboardingMasterFeatureAudio: "Solo audio",
+        onboardingMasterFooter: "Diseñada para el formato real de la entrevista de USCIS",
         onboardingHearSample: "Escuchar ejemplo",
         onboardingSampleText: "¿Cuál es la capital de los Estados Unidos?",
         notificationsTitle: "Mantente al día",
@@ -1293,6 +1388,35 @@ extension UIStrings {
         onboardingFeatureMockSub: "१० प्रश्नको नक्कली अन्तर्वार्ता",
         onboardingContinue: "जारी राख्नुहोस्",
         onboardingExploreFree: "नि:शुल्क अन्वेषण गर्नुहोस्",
+        onboardingWhyOralEyebrow: "CitiZen किन?",
+        onboardingWhyOralHeadline: "वास्तविक अन्तर्वार्ता मौखिक हो।",
+        onboardingWhyOralSubtitle: "धेरै एपहरूले छोएर जवाफ दिन लगाउँछन्। CitiZen ले बोलेर जवाफ दिन लगाउँछ — USCIS अधिकारी जस्तै।",
+        onboardingWhyOralFactTile: "USCIS अधिकारीले १० सम्म नागरिक प्रश्न ठूलो स्वरमा सोध्छन्। तपाईंले ६ वटा सही जवाफ दिनुपर्छ।",
+        onboardingOtherAppsLabel: "अन्य एपहरू",
+        onboardingOtherAppsDesc: "A, B, C, D छुनुहोस्",
+        onboardingCitiZenLabel: "CitiZen",
+        onboardingCitiZenDesc: "बोलेर जवाफ दिनुहोस्",
+        onboardingTryItNow: "अहिले प्रयास गर्नुहोस्",
+        onboardingVoiceDemoEyebrow: "प्रत्यक्ष डेमो",
+        onboardingVoiceDemoTitle: "आफैले प्रयास गर्नुहोस्",
+        onboardingVoiceDemoQuestionLabel: "प्रश्न",
+        onboardingVoiceDemoQuestion: "देशको सर्वोच्च कानून के हो?",
+        onboardingVoiceDemoHintTap: "माइक छुनुहोस् र जवाफ बोल्नुहोस्",
+        onboardingVoiceDemoListening: "सुन्दैछ…",
+        onboardingVoiceDemoSuccess: "सही!",
+        onboardingVoiceDemoRetry: "लगभग — फेरि प्रयास गर्नुहोस्",
+        onboardingVoiceDemoCorrectAnswerHint: "उत्तर: अमेरिकी संविधान",
+        onboardingVoiceDemoPermissionDenied: "माइक्रोफोन पहुँच आवश्यक छ।",
+        onboardingVoiceDemoSkip: "डेमो छोड्नुहोस्",
+        onboardingMasterEyebrow: "तपाईंले के सिक्नुहुनेछ",
+        onboardingMasterHeadline: "सबै १२८ आधिकारिक प्रश्न",
+        onboardingMasterSubtitle: "२०२५ USCIS नागरिक परीक्षाबाट, तपाईंको भाषामा।",
+        onboardingMasterLevelsLabel: "८ कठिनाइ स्तर",
+        onboardingMasterFeatureMock: "मक अन्तर्वार्ता",
+        onboardingMasterFeatureReading: "पठन",
+        onboardingMasterFeatureWriting: "लेखन",
+        onboardingMasterFeatureAudio: "केवल अडियो",
+        onboardingMasterFooter: "वास्तविक USCIS अन्तर्वार्ता ढाँचाअनुसार निर्मित",
         onboardingHearSample: "नमूना सुन्नुहोस्",
         onboardingSampleText: "संयुक्त राज्य अमेरिकाको राजधानी के हो?",
         notificationsTitle: "नियमित रहनुहोस्",
@@ -1629,6 +1753,35 @@ extension UIStrings {
         onboardingFeatureMockSub: "10 道题模拟面试",
         onboardingContinue: "继续",
         onboardingExploreFree: "免费探索",
+        onboardingWhyOralEyebrow: "为什么选 CitiZen",
+        onboardingWhyOralHeadline: "真实面试是口头的。",
+        onboardingWhyOralSubtitle: "大多数应用让你点选答案。CitiZen 让你开口说——就像 USCIS 官员的真实面试。",
+        onboardingWhyOralFactTile: "USCIS 官员最多会口头提出 10 道公民常识题。你需要答对 6 道。",
+        onboardingOtherAppsLabel: "其他应用",
+        onboardingOtherAppsDesc: "点选 A、B、C、D",
+        onboardingCitiZenLabel: "CitiZen",
+        onboardingCitiZenDesc: "说出你的答案",
+        onboardingTryItNow: "现在试试",
+        onboardingVoiceDemoEyebrow: "实时演示",
+        onboardingVoiceDemoTitle: "亲自体验",
+        onboardingVoiceDemoQuestionLabel: "问题",
+        onboardingVoiceDemoQuestion: "美国的最高法律是什么？",
+        onboardingVoiceDemoHintTap: "点击麦克风并说出答案",
+        onboardingVoiceDemoListening: "正在聆听…",
+        onboardingVoiceDemoSuccess: "正确!",
+        onboardingVoiceDemoRetry: "差一点——再试一次",
+        onboardingVoiceDemoCorrectAnswerHint: "答案:《美国宪法》",
+        onboardingVoiceDemoPermissionDenied: "需要麦克风权限。",
+        onboardingVoiceDemoSkip: "跳过演示",
+        onboardingMasterEyebrow: "你将掌握",
+        onboardingMasterHeadline: "全部 128 道官方题目",
+        onboardingMasterSubtitle: "来自 2025 USCIS 公民常识考试,用你的语言。",
+        onboardingMasterLevelsLabel: "8 个难度级别",
+        onboardingMasterFeatureMock: "模拟面试",
+        onboardingMasterFeatureReading: "阅读",
+        onboardingMasterFeatureWriting: "写作",
+        onboardingMasterFeatureAudio: "纯音频",
+        onboardingMasterFooter: "按照真实 USCIS 面试形式打造",
         onboardingHearSample: "听一个示例",
         onboardingSampleText: "美国的首都是哪里?",
         notificationsTitle: "保持进度",
