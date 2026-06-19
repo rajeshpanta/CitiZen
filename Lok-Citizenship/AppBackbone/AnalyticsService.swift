@@ -195,7 +195,14 @@ final class SupabaseAnalytics: AnalyticsTracking {
             "properties": props,
             "device_id": deviceID,
             "app_version": version,
-            "platform": "ios"
+            "platform": "ios",
+            // Explicit app tag for the shared `analytics_events` table
+            // (also written to by Semora). The DB column has a default
+            // of `'citizen'`, so technically this is redundant — but
+            // sending it explicitly protects against the unlikely
+            // scenario where someone changes the default later. Mirrors
+            // how Semora's analytics writer explicitly sends 'semora'.
+            "app_name": "citizen"
         ]
         guard let body = try? JSONSerialization.data(withJSONObject: payload) else { return }
 
