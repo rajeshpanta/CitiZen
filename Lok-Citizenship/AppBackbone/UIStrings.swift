@@ -237,6 +237,10 @@ struct UIStrings {
     let paywallVerificationIssue: String
     let paywallDismiss: String
     let paywallRestore: String
+    /// Shown inline under the Restore button when the restore completes
+    /// with no entitlements found (so users don't sit staring at an
+    /// unchanged paywall wondering whether anything happened).
+    let paywallRestoreNothing: String
     let paywallPrivacy: String
     let paywallTerms: String
     /// Body text shown in the "Verification Issue" alert when receipt verification fails.
@@ -742,6 +746,7 @@ extension UIStrings {
         paywallVerificationIssue: "Verification Issue",
         paywallDismiss: "Dismiss",
         paywallRestore: "Restore Purchases",
+        paywallRestoreNothing: "No previous purchases found on this Apple ID.",
         paywallPrivacy: "Privacy Policy",
         paywallTerms: "Terms of Use",
         paywallErrorVerificationFailed: "Purchase could not be verified. Please try restoring purchases.",
@@ -1107,6 +1112,7 @@ extension UIStrings {
         paywallVerificationIssue: "Problema de verificación",
         paywallDismiss: "Cerrar",
         paywallRestore: "Restaurar compras",
+        paywallRestoreNothing: "No se encontraron compras anteriores en este Apple ID.",
         paywallPrivacy: "Política de privacidad",
         paywallTerms: "Términos de uso",
         paywallErrorVerificationFailed: "No se pudo verificar la compra. Intenta restaurar compras.",
@@ -1472,6 +1478,7 @@ extension UIStrings {
         paywallVerificationIssue: "प्रमाणीकरण समस्या",
         paywallDismiss: "बन्द गर्नुहोस्",
         paywallRestore: "खरिदहरू पुनर्स्थापना",
+        paywallRestoreNothing: "यो Apple ID मा पहिलेका कुनै खरिद फेला परेन।",
         paywallPrivacy: "गोपनीयता नीति",
         paywallTerms: "प्रयोगका सर्तहरू",
         paywallErrorVerificationFailed: "खरिद प्रमाणित गर्न सकिएन। कृपया खरिदहरू पुनर्स्थापना गर्ने प्रयास गर्नुहोस्।",
@@ -1837,6 +1844,7 @@ extension UIStrings {
         paywallVerificationIssue: "验证问题",
         paywallDismiss: "关闭",
         paywallRestore: "恢复购买",
+        paywallRestoreNothing: "此 Apple ID 未找到先前的购买记录。",
         paywallPrivacy: "隐私政策",
         paywallTerms: "使用条款",
         paywallErrorVerificationFailed: "无法验证购买. 请尝试恢复购买.",

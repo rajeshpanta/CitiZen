@@ -17,6 +17,14 @@ struct PaywallView: View {
     @State private var showPrivacy = false
     @State private var showTerms = false
     @State private var selectedProductID: String = StoreManager.lifetimeID
+    // Restore button feedback. `restoring` drives the spinner and
+    // disables the button during the AppStore.sync hop (otherwise the
+    // tap looks dead — App Review has historically flagged restore
+    // flows with no visible feedback). `restoreNothing` shows a small
+    // confirmation line when the restore completes but no entitlement
+    // was found, so the user knows the round-trip actually happened.
+    @State private var restoring = false
+    @State private var restoreNothing = false
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
@@ -113,14 +121,45 @@ struct PaywallView: View {
                     // Legal links stay subdued; that's the right hierarchy.
                     VStack(spacing: 14) {
                         Button {
+                            guard !restoring else { return }
+                            restoreNothing = false
+                            restoring = true
                             Task {
                                 await store.restorePurchases()
-                                if store.isPro { dismiss() }
+                                restoring = false
+                                if store.isPro {
+                                    dismiss()
+                                } else if !store.entitlementVerificationFailed {
+                                    // No entitlement and no verification error
+                                    // → genuinely nothing to restore. Show the
+                                    // inline confirmation so the tap has a
+                                    // visible outcome. Verification failures
+                                    // already surface via the existing alert.
+                                    restoreNothing = true
+                                }
                             }
                         } label: {
-                            Label(s.paywallRestore, systemImage: "arrow.clockwise")
-                                .font(.subheadline.bold())
-                                .foregroundColor(.white.opacity(0.9))
+                            HStack(spacing: 8) {
+                                if restoring {
+                                    ProgressView()
+                                        .progressViewStyle(.circular)
+                                        .tint(.white)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                                Text(s.paywallRestore)
+                            }
+                            .font(.subheadline.bold())
+                            .foregroundColor(.white.opacity(restoring ? 0.55 : 0.9))
+                        }
+                        .disabled(restoring)
+
+                        if restoreNothing {
+                            Text(s.paywallRestoreNothing)
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.55))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 24)
                         }
 
                         HStack(spacing: 12) {

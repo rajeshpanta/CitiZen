@@ -933,13 +933,7 @@ struct OnboardingView: View {
 
     // Step indicator dots (4 steps: language, date, notifications, quiz)
     private func stepDots() -> some View {
-        HStack(spacing: 8) {
-            ForEach(0..<4, id: \.self) { i in
-                Circle()
-                    .fill(i == (step.dotIndex ?? -1) ? Color.cyan : Color.white.opacity(0.2))
-                    .frame(width: 8, height: 8)
-            }
-        }
+        OnboardingStepDots(currentIndex: step.dotIndex ?? -1)
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -1121,6 +1115,33 @@ private extension View {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Step-progress dot row
+// ─────────────────────────────────────────────────────────────────
+//
+// 7 dots cover every intermediate screen with a dotIndex:
+// language(0), whyOral(1), voiceDemo(2), whatYoullMaster(3),
+// interviewDate(4), notifications(5), quiz(6). Intro and results
+// don't render dots (their dotIndex is nil).
+//
+// Pulled out as a standalone struct so the 3 informative screens
+// below (which are their own private structs) can render the dots
+// inline — previously only the parent OnboardingView could call
+// `stepDots()`, which left whyOral / voiceDemo / whatYoullMaster
+// with no progress indicator at all.
+private struct OnboardingStepDots: View {
+    let currentIndex: Int
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<7, id: \.self) { i in
+                Circle()
+                    .fill(i == currentIndex ? Color.cyan : Color.white.opacity(0.2))
+                    .frame(width: 8, height: 8)
+            }
+        }
+    }
+}
+
 // ═════════════════════════════════════════════════════════════════
 // MARK: - Onboarding screen components
 // ═════════════════════════════════════════════════════════════════
@@ -1235,8 +1256,12 @@ private struct OnboardingWhyOralView: View {
                 )
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 28)
+            .padding(.bottom, 12)
             .staggeredEntry(delay: 0.74, appeared: appeared)
+
+            OnboardingStepDots(currentIndex: 1)
+                .padding(.bottom, 24)
+                .staggeredEntry(delay: 0.82, appeared: appeared)
         }
         .onAppear {
             appeared = false
@@ -1400,8 +1425,12 @@ private struct OnboardingVoiceDemoView: View {
                     .foregroundColor(.white.opacity(0.55))
                     .underline()
             }
-            .padding(.bottom, 28)
+            .padding(.bottom, 12)
             .staggeredEntry(delay: 0.66, appeared: appeared)
+
+            OnboardingStepDots(currentIndex: 2)
+                .padding(.bottom, 24)
+                .staggeredEntry(delay: 0.74, appeared: appeared)
         }
         .onAppear {
             appeared = false
@@ -1483,7 +1512,7 @@ private struct OnboardingVoiceDemoView: View {
         }
         // Reset and start.
         didFireSuccess = false
-        controller.start()
+        controller.start(language: language)
     }
 }
 
@@ -1503,25 +1532,39 @@ final class OnboardingVoiceDemoController: ObservableObject {
     private var authSink: AnyCancellable?
     private var recordingSink: AnyCancellable?
 
+    // Localized accepted-answer keywords for the current demo run.
+    // Set by start(language:) so the success check matches whatever
+    // language the user picked on the prior screen — previously this
+    // was hard-coded to "constitution", which silently failed for
+    // Spanish / Nepali / Chinese users.
+    private var acceptedKeywords: [String] = ["constitution"]
+
     init() {
         // Watch authorization changes — if the OS prompt is denied,
         // transition the screen state so the view shows the Settings
-        // escape link.
+        // escape link. Also cancel any in-flight recording: revoking
+        // the mic mid-listen leaves the audio engine running, which
+        // burns power and keeps the recording UI in a stuck state.
         authSink = stt.authorizationStatusPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
                 guard let self else { return }
                 if status == .denied || status == .restricted {
                     if self.status == .listening || self.status == .idle {
+                        if self.status == .listening {
+                            self.stt.cancelRecording()
+                        }
+                        self.cleanupSubscriptions()
                         self.status = .permissionDenied
                     }
                 }
             }
     }
 
-    func start() {
+    func start(language: AppLanguage) {
         transcript = ""
         status = .listening
+        acceptedKeywords = Self.keywords(for: language)
         // Request auth — startRecording is a no-op until the OS has
         // granted permission. requestAuthorization is idempotent and
         // cheap to re-call when already granted.
@@ -1548,7 +1591,7 @@ final class OnboardingVoiceDemoController: ObservableObject {
                 if !isRecording && self.status == .listening {
                     // Engine stopped on its own. If transcript still
                     // empty or off-topic, prompt retry.
-                    if !self.transcript.lowercased().contains("constitution") {
+                    if !self.matchesAccepted(self.transcript) {
                         self.status = self.transcript.isEmpty ? .idle : .retry
                         self.cleanupSubscriptions()
                     }
@@ -1557,7 +1600,9 @@ final class OnboardingVoiceDemoController: ObservableObject {
 
         // Empty options array = free-form transcription (we're not
         // matching against fixed answer choices for this demo).
-        stt.startRecording(withOptions: [], localeCode: "en-US", offlineOnly: true)
+        // Locale matches the user's chosen language so STT can
+        // actually recognize the spoken answer.
+        stt.startRecording(withOptions: [], localeCode: language.sttLocale, offlineOnly: true)
     }
 
     func stop() {
@@ -1567,15 +1612,31 @@ final class OnboardingVoiceDemoController: ObservableObject {
     }
 
     private func evaluate(_ partial: String) {
-        let lower = partial.lowercased()
-        // The USCIS answer is "The Constitution" / "U.S. Constitution".
-        // Match case-insensitive contains so all natural phrasings
-        // succeed: "the constitution", "Constitution of the United
-        // States", "U.S. Constitution", etc.
-        if lower.contains("constitution") {
+        // Case-insensitive contains over the localized keyword set so
+        // natural phrasings succeed across languages: "the constitution",
+        // "U.S. Constitution", "la constitución", "संविधान", "宪法",
+        // etc.
+        if matchesAccepted(partial) {
             status = .success
             stt.stopRecording()
             cleanupSubscriptions()
+        }
+    }
+
+    private func matchesAccepted(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        return acceptedKeywords.contains { lower.contains($0.lowercased()) }
+    }
+
+    /// Spoken-answer keywords for "What is the supreme law of the land?".
+    /// Always includes "constitution" as a fallback so a learned English
+    /// term still passes even when STT runs in another locale.
+    private static func keywords(for language: AppLanguage) -> [String] {
+        switch language {
+        case .english: return ["constitution"]
+        case .spanish: return ["constitución", "constitucion", "constitution"]
+        case .nepali:  return ["संविधान", "constitution"]
+        case .chinese: return ["宪法", "憲法", "constitution"]
         }
     }
 
@@ -1698,8 +1759,12 @@ private struct OnboardingMasterView: View {
                     )
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 28)
+            .padding(.bottom, 12)
             .staggeredEntry(delay: 0.78, appeared: appeared)
+
+            OnboardingStepDots(currentIndex: 3)
+                .padding(.bottom, 24)
+                .staggeredEntry(delay: 0.86, appeared: appeared)
         }
         .onAppear {
             appeared = false
