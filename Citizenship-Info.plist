@@ -10,6 +10,7 @@
 		<string>es</string>
 		<string>ne</string>
 		<string>zh-Hans</string>
+		<string>zh-Hant</string>
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
