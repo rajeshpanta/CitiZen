@@ -168,17 +168,4 @@ enum ReadingWritingContent {
         ReadingWritingWord(id: "w_63", word: "white", category: "Other", exampleSentence: "The stars on the flag are white."),
     ]
 
-    /// Grouped reading words by category for display.
-    static var readingByCategory: [(category: String, words: [ReadingWritingWord])] {
-        Dictionary(grouping: readingVocabulary, by: \.category)
-            .sorted { $0.key < $1.key }
-            .map { (category: $0.key, words: $0.value) }
-    }
-
-    /// Grouped writing words by category for display.
-    static var writingByCategory: [(category: String, words: [ReadingWritingWord])] {
-        Dictionary(grouping: writingVocabulary, by: \.category)
-            .sorted { $0.key < $1.key }
-            .map { (category: $0.key, words: $0.value) }
-    }
 }

@@ -46,7 +46,7 @@ struct LanguageSelectionView: View {
                                         .font(.headline)
                                         .foregroundColor(.white)
 
-                                    Text(englishName(for: lang))
+                                    Text(lang.englishName)
                                         .font(.caption)
                                         .foregroundColor(.white.opacity(0.45))
                                 }
@@ -72,12 +72,4 @@ struct LanguageSelectionView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func englishName(for lang: AppLanguage) -> String {
-        switch lang {
-        case .english: return "English"
-        case .nepali:  return "Nepali"
-        case .spanish: return "Spanish"
-        case .chinese: return "Chinese"
-        }
-    }
 }

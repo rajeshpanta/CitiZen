@@ -42,6 +42,7 @@ struct ReadingPracticeView: View {
     // true on tap, clear it the moment `SlowSpeechHelper.isSpeakingPublisher`
     // emits true (audio actually started), and rely on `speakerLoadNonce`
     // to invalidate stale safety-timeout closures across rapid taps.
+    @State private var isAppeared: Bool = false
     @State private var isSpeakerLoading: Bool = false
     @State private var speakerLoadNonce: Int = 0
 
@@ -258,6 +259,7 @@ struct ReadingPracticeView: View {
         // cache already has the file. Runs on appear and on every card
         // advance — see `nextCard`'s onChange below.
         .onAppear {
+            isAppeared = true
             SlowSpeechHelper.shared.prefetch(text: currentWord.exampleSentence)
         }
         .onChange(of: currentIndex) { _ in
@@ -274,6 +276,7 @@ struct ReadingPracticeView: View {
         }
         // C1: stop Learn-mode TTS when user switches to the Test tab or leaves the screen.
         .onDisappear {
+            isAppeared = false
             SlowSpeechHelper.shared.stop()
             isSpeakerLoading = false
         }
@@ -302,6 +305,7 @@ struct ReadingPracticeView: View {
         // so the button doesn't get stuck. The nonce check ensures a
         // newer tap's timeout doesn't cancel its own state.
         DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            guard isAppeared else { return }
             if speakerLoadNonce == myNonce {
                 isSpeakerLoading = false
             }

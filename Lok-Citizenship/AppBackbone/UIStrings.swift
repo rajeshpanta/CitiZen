@@ -232,7 +232,6 @@ struct UIStrings {
     let paywallCostAppBrand: String
     /// "A %@/month subscription after 3-day free trial..." — %@ is the monthly price.
     let paywallDisclosureFormat: String
-    let paywallPurchaseIncomplete: String
     let paywallPurchaseFailed: String
     let paywallVerificationIssue: String
     let paywallDismiss: String
@@ -741,7 +740,6 @@ extension UIStrings {
         paywallCostAttorney: "Immigration attorney",
         paywallCostAppBrand: "CitiZen Pro",
         paywallDisclosureFormat: "A %@/month subscription after 3-day free trial. Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. You can manage and cancel your subscription in your Apple ID Account Settings.",
-        paywallPurchaseIncomplete: "Purchase was not completed.",
         paywallPurchaseFailed: "Purchase failed. Please try again.",
         paywallVerificationIssue: "Verification Issue",
         paywallDismiss: "Dismiss",
@@ -1107,7 +1105,6 @@ extension UIStrings {
         paywallCostAttorney: "Abogado de inmigración",
         paywallCostAppBrand: "CitiZen Pro",
         paywallDisclosureFormat: "Una suscripción de %@/mes después de 3 días de prueba gratuita. El pago se cargará a tu cuenta Apple ID al confirmar la compra. La suscripción se renueva automáticamente a menos que se desactive la renovación automática al menos 24 horas antes del final del período actual. Puedes gestionar y cancelar tu suscripción en la configuración de tu cuenta Apple ID.",
-        paywallPurchaseIncomplete: "La compra no se completó.",
         paywallPurchaseFailed: "La compra falló. Intenta de nuevo.",
         paywallVerificationIssue: "Problema de verificación",
         paywallDismiss: "Cerrar",
@@ -1473,7 +1470,6 @@ extension UIStrings {
         paywallCostAttorney: "अध्यागमन वकिल",
         paywallCostAppBrand: "CitiZen Pro",
         paywallDisclosureFormat: "३-दिनको निःशुल्क परीक्षणपछि %@/महिनाको सदस्यता। भुक्तानी पुष्टि गर्दा तपाईंको Apple ID खातामा शुल्क लाग्नेछ। हालको अवधि सकिनुभन्दा कम्तिमा २४ घण्टा अगाडि स्वत:-नवीकरण बन्द नगरेसम्म सदस्यता स्वत: नवीकरण हुनेछ। तपाईं आफ्नो सदस्यता Apple ID खाता सेटिङमा व्यवस्थापन र रद्द गर्न सक्नुहुन्छ।",
-        paywallPurchaseIncomplete: "खरिद पूरा भएन।",
         paywallPurchaseFailed: "खरिद असफल। कृपया फेरि प्रयास गर्नुहोस्।",
         paywallVerificationIssue: "प्रमाणीकरण समस्या",
         paywallDismiss: "बन्द गर्नुहोस्",
@@ -1562,7 +1558,7 @@ extension UIStrings {
         readinessNotStarted: "अझै सुरु गरिएको छैन",
 
         navInterviewChecklist: "अन्तर्वार्ता चेकलिस्ट",
-        checklistProgressFormat: "%d मध्ये %d पूरा",
+        checklistProgressFormat: "%2$d मध्ये %1$d पूरा",
         navExamReadiness: "परीक्षा तयारी",
         navReviewMistakes: "गल्तीहरू समीक्षा",
         navCivicsPractice: "नागरिक अभ्यास",
@@ -1606,7 +1602,7 @@ extension UIStrings {
 
         audioOnlyDidntHearTryAgain: "मैले तपाईंलाई सुनिनँ। फेरि प्रयास गर्नुहोस्।",
         audioOnlyMovingOn: "अर्को प्रश्नमा जाँदै।",
-        audioOnlySessionAnnouncementFormat: "सत्र सकियो। तपाईंले %d मध्ये %d सही गर्नुभयो। %d प्रतिशत।",
+        audioOnlySessionAnnouncementFormat: "सत्र सकियो। तपाईंले %2$d मध्ये %1$d सही गर्नुभयो। %3$d प्रतिशत।",
 
         audioOnlyReviewMissedBtn: "गल्तीहरू हेर्नुहोस्",
         audioOnlyReviewMissedTitle: "गल्ती गरेका प्रश्नहरू",
@@ -1839,7 +1835,6 @@ extension UIStrings {
         paywallCostAttorney: "移民律师",
         paywallCostAppBrand: "CitiZen Pro",
         paywallDisclosureFormat: "3 天免费试用后为 %@/月订阅. 确认购买时将从你的 Apple ID 账户扣款. 除非在当前周期结束前至少 24 小时关闭自动续订, 订阅将自动续订. 你可以在 Apple ID 账户设置中管理和取消订阅.",
-        paywallPurchaseIncomplete: "购买未完成.",
         paywallPurchaseFailed: "购买失败, 请重试.",
         paywallVerificationIssue: "验证问题",
         paywallDismiss: "关闭",

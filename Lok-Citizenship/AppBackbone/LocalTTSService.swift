@@ -44,7 +44,7 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
     /// delayed `didCancel` for a prior utterance from completing the
     /// freshly-started speech chain (which previously caused TTS to
     /// occasionally skip the next item in a `speakSequence`).
-    private weak var currentUtterance: AVSpeechUtterance?
+    private var currentUtterance: AVSpeechUtterance?
 
     override init() {
         super.init()
@@ -76,7 +76,13 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
         // uses the same category, options, and route override as every
         // other audio path in the app. Idempotent — no-op when the
         // session is already correctly configured.
-        AudioSessionPrewarmer.configureSession()
+        guard AudioSessionPrewarmer.configureSession() else {
+            isSpeaking.send(false)
+            // Return Just(()) so the subscriber receives the value synchronously
+            // after subscribing. PassthroughSubject doesn't replay past sends,
+            // so sending before return would be lost to the caller's .sink.
+            return Just(()).eraseToAnyPublisher()
+        }
 
         currentUtterance = u
         synthesizer.speak(u)

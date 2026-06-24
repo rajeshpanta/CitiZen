@@ -1,5 +1,4 @@
 import SwiftUI
-import Speech
 
 // ═════════════════════════════════════════════════════════════════
 // MARK: - Question Pool Helper
@@ -54,7 +53,7 @@ struct MockInterviewView: View {
     /// Phase 2: drives the "Review N misses" push from the result screen.
     @State private var showReviewMisses = false
 
-    @Environment(\.presentationMode) private var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
 
     /// SwiftUI-managed App Store review prompt. Fired only at peak
@@ -327,7 +326,7 @@ struct MockInterviewView: View {
                 if quizLogic.totalQuestions == 0 || quizLogic.isFinished {
                     Button(backLabel) {
                         voice.stop()
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                     .foregroundColor(.white)
                 }
@@ -1179,7 +1178,7 @@ struct MockInterviewView: View {
                     }
 
                     Button {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     } label: {
                         Text(s.resultDone)
                             .font(.headline.bold())
@@ -1236,7 +1235,7 @@ struct MockInterviewView: View {
                 // Again.
                 Button {
                     voice.stop()
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 } label: {
                     Label(s.resultPracticeCivics, systemImage: "book.fill")
                         .font(.subheadline.bold())

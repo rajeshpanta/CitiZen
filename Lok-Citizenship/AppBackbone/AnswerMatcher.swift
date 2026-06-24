@@ -114,17 +114,6 @@ enum AnswerMatcher {
         return nil
     }
 
-    /// Returns the best local candidate above the offline-fallback threshold (0.5),
-    /// or nil. Kept as a thin convenience for callers that only want the offline
-    /// behavior. Most code should call `match(...)` instead.
-    static func localMatch(spoken: String, options: [String]) -> Int? {
-        let trimmed = spoken.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !options.isEmpty else { return nil }
-        guard let best = scoredCandidates(spoken: trimmed, options: options).first,
-              best.score >= offlineFallbackMin else { return nil }
-        return best.idx
-    }
-
     /// Returns the best local candidate's index, score, and the runner-up's
     /// score (0 when there's only one option). Lets callers like
     /// `WhisperSTTService` apply their own confidence + margin policy without
@@ -275,7 +264,6 @@ enum AnswerMatcher {
         if a.isEmpty || b.isEmpty { return 0 }
         let intersect = a.intersection(b).count
         let union = a.union(b).count
-        guard union > 0 else { return 0 }
         return Double(intersect) / Double(union)
     }
 

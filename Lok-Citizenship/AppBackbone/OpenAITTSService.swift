@@ -35,6 +35,10 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     /// (audible as "speaks the prior question over the new one").
     /// Read & written on the main queue only.
     private var currentRequestId = UUID()
+    /// URL of the file being actively played. Used by
+    /// `audioPlayerDecodeErrorDidOccur` to purge a corrupt cache entry
+    /// that the `AVAudioPlayer` initializer accepted but failed during decode.
+    private var currentPlayURL: URL?
 
     // MARK: - Configuration check
 
@@ -48,8 +52,8 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     func speak(_ text: String, languageCode: String) -> AnyPublisher<Void, Never> {
         stopSpeaking()
         finished = PassthroughSubject<Void, Never>()
-        fetchAndPlay(text: text) { [weak self] _ in
-            self?.finished.send(())
+        fetchAndPlay(text: text) { [weak self] success in
+            if success { self?.finished.send(()) }
             self?.finished.send(completion: .finished)
         }
         return finished.eraseToAnyPublisher()
@@ -186,6 +190,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
             AudioSessionPrewarmer.configureSession()
 
             player = try AVAudioPlayer(contentsOf: url)
+            currentPlayURL = url
             player?.delegate = self
             // Apple requires `enableRate = true` BEFORE `prepareToPlay()`
             // for rate adjustments to take effect. Skip it at default
@@ -280,6 +285,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
         currentTask = nil
         player?.stop()
         player = nil
+        currentPlayURL = nil
         if isSpeaking.value {
             isSpeaking.send(false)
         }
@@ -367,6 +373,12 @@ extension OpenAITTSService: AVAudioPlayerDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.isSpeaking.send(false)
+            // Purge the poisoned cache file so the next speak attempt
+            // re-fetches instead of hitting the same bad bytes.
+            if let url = self.currentPlayURL {
+                try? FileManager.default.removeItem(at: url)
+                self.currentPlayURL = nil
+            }
             self.playCompletion?(false)
             self.playCompletion = nil
         }

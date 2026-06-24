@@ -1,5 +1,4 @@
 import SwiftUI
-import Speech
 
 /// USCIS-style Reading Test simulation.
 ///
@@ -35,6 +34,12 @@ struct ReadingTestView: View {
     /// F6: ensures each completed session is recorded to ProgressManager exactly
     /// once — even if SwiftUI fires `onChange(of: session.isFinished)` multiple times.
     @State private var sessionRecorded: Bool = false
+    // Guards the requestReview delay so it doesn't fire if the view
+    // disappears (e.g., user navigates back) before the 1.5s elapses.
+    @State private var isAppeared: Bool = false
+    // Guards rememberReadingSentences so it only writes to ProgressManager
+    // once per init (not on every re-appear from an alert dismiss etc.).
+    @State private var hasRegisteredSentences: Bool = false
 
     /// Phase 2: dismisses the entire Reading flow back to PracticeSelectionView
     /// when the user taps "Try Writing Practice" on the result summary.
@@ -48,6 +53,8 @@ struct ReadingTestView: View {
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
+    private let pickedWordIDs: [String]
+
     init(language: AppLanguage,
          pool: [ReadingWritingWord],
          sessionActive: Binding<Bool>) {
@@ -60,7 +67,7 @@ struct ReadingTestView: View {
         )
         let sentences = words.map { $0.exampleSentence }
         _session = StateObject(wrappedValue: TestSessionEngine(sentences: sentences))
-        ProgressManager.shared.rememberReadingSentences(words.map { $0.id })
+        self.pickedWordIDs = words.map { $0.id }
     }
 
     var body: some View {
@@ -74,6 +81,11 @@ struct ReadingTestView: View {
             }
         }
         .onAppear {
+            isAppeared = true
+            if !hasRegisteredSentences {
+                hasRegisteredSentences = true
+                ProgressManager.shared.rememberReadingSentences(pickedWordIDs)
+            }
             voice.requestAuthorization()
             // Leave the picker enabled on entry — user hasn't made any
             // progress yet, so switching back to Learn loses nothing.
@@ -83,6 +95,7 @@ struct ReadingTestView: View {
             sessionActive = false
         }
         .onDisappear {
+            isAppeared = false
             voice.stop()
             SlowSpeechHelper.shared.stop()
             // M2: clear the active flag so the parent stops gating the back button.
@@ -117,6 +130,7 @@ struct ReadingTestView: View {
                 // we never re-prompt for the same journey.
                 if session.sessionPassed && RatingPrompt.shouldPrompt(for: .readingTestPassed) {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        guard isAppeared else { return }
                         requestReview()
                     }
                 }
@@ -345,7 +359,7 @@ struct ReadingTestView: View {
 
             // Per-sentence review
             VStack(spacing: 8) {
-                ForEach(Array(session.attempts.enumerated()), id: \.element.id) { (idx, attempt) in
+                ForEach(Array(session.attempts.enumerated()), id: \.element.id) { (_, attempt) in
                     HStack(spacing: 10) {
                         Image(systemName: attempt.passed ? "checkmark.circle.fill" : "xmark.circle.fill")
                             .foregroundColor(attempt.passed ? .green : .red)
@@ -436,8 +450,8 @@ struct ReadingTestView: View {
     }
 
     private func finishSentence() {
-        voice.stop()
         let transcription = voice.transcription.trimmingCharacters(in: .whitespacesAndNewlines)
+        voice.stop()
         // C3: empty transcription (user tapped Done without speaking) doesn't
         // cost them a sentence — show a gentle retry banner and stay on the same one.
         guard !transcription.isEmpty else {

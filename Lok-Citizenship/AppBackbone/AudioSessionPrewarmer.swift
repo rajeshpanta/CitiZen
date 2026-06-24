@@ -109,7 +109,7 @@ enum AudioSessionPrewarmer {
     /// supersede the prior pending continuation — most recent intent wins.
     static func prewarm(then continuation: @escaping () -> Void) {
         cancel()
-        configureSession()
+        guard configureSession() else { return }
 
         let item = DispatchWorkItem {
             pending = nil
@@ -206,7 +206,7 @@ enum AudioSessionPrewarmer {
         let hasExternalOutput = session.currentRoute.outputs.contains { out in
             switch out.portType {
             case .bluetoothA2DP, .bluetoothHFP, .bluetoothLE,
-                 .headphones, .headsetMic,
+                 .headphones,
                  .lineOut, .airPlay, .HDMI, .carAudio,
                  .usbAudio:
                 return true

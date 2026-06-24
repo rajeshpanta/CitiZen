@@ -60,9 +60,6 @@ struct OnboardingView: View {
         case retry             // Transcript was off-topic — gentle nudge
         case permissionDenied  // User said no to mic/speech — show Settings link
     }
-    @State private var demoStatus: VoiceDemoStatus = .idle
-    @State private var demoTranscript: String = ""
-    @State private var demoMicPulse = false
     @StateObject private var demoVoiceCtrl = OnboardingVoiceDemoController()
 
     // Quiz state
@@ -402,7 +399,7 @@ struct OnboardingView: View {
                         VStack(spacing: 8) {
                             Text(lang.flag).font(.system(size: 36))
                             Text(lang.displayName).font(.headline).foregroundColor(.white)
-                            Text(englishName(lang)).font(.caption).foregroundColor(.white.opacity(0.4))
+                            Text(lang.englishName).font(.caption).foregroundColor(.white.opacity(0.4))
                         }
                         .frame(maxWidth: .infinity, minHeight: 110)
                         .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.08)))
@@ -861,7 +858,7 @@ struct OnboardingView: View {
             case 2...3: return "良好的开始！"
             default:    return "基础扎实！"
             }
-        default:
+        case .english:
             switch score {
             case 0...1: return "Let's Get You Ready"
             case 2...3: return "Good Start!"
@@ -891,7 +888,7 @@ struct OnboardingView: View {
             case 2...3: return "你已经有一些基础了。坚持练习，很快就能准备好。"
             default:    return "很棒！你已经知道很多了。让我们继续巩固，确保你通过面试。"
             }
-        default:
+        case .english:
             switch score {
             case 0...1: return "No worries — everyone starts somewhere. CitiZen will help you build your knowledge step by step."
             case 2...3: return "You have some knowledge already. With regular practice, you'll be interview-ready in no time."
@@ -920,15 +917,6 @@ struct OnboardingView: View {
         if idx == quizLogic.currentQuestion.correctAnswer { return .green.opacity(0.5) }
         if idx == selectedAnswer { return .red.opacity(0.5) }
         return .white.opacity(0.05)
-    }
-
-    private func englishName(_ lang: AppLanguage) -> String {
-        switch lang {
-        case .english: return "English"
-        case .nepali:  return "Nepali"
-        case .spanish: return "Spanish"
-        case .chinese: return "Chinese"
-        }
     }
 
     // Step indicator dots (4 steps: language, date, notifications, quiz)
@@ -1537,19 +1525,28 @@ final class OnboardingVoiceDemoController: ObservableObject {
     // language the user picked on the prior screen — previously this
     // was hard-coded to "constitution", which silently failed for
     // Spanish / Nepali / Chinese users.
-    private var acceptedKeywords: [String] = ["constitution"]
+    private var acceptedKeywords: [String] = []
+    // Locale code for the current demo run — stored so the deferred
+    // startRecording (triggered by authSink on first grant) uses the
+    // same locale that start(language:) was called with.
+    private var pendingLocaleCode: String = "en-US"
+    // Tracks whether mic permission has already been granted so start()
+    // can immediately call startRecording instead of waiting for authSink
+    // to re-fire (which only fires on status transitions, not on re-tap).
+    private var isSTTAuthorized: Bool = false
 
     init() {
-        // Watch authorization changes — if the OS prompt is denied,
-        // transition the screen state so the view shows the Settings
-        // escape link. Also cancel any in-flight recording: revoking
-        // the mic mid-listen leaves the audio engine running, which
-        // burns power and keeps the recording UI in a stuck state.
+        // Watch authorization changes:
+        // — .denied/.restricted → show the Settings escape link.
+        // — .authorized after .notDetermined → start the deferred recording
+        //   (start() skips startRecording when auth is not yet granted and
+        //   waits for this sink to fire instead).
         authSink = stt.authorizationStatusPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] status in
+            .sink { [weak self] authStatus in
                 guard let self else { return }
-                if status == .denied || status == .restricted {
+                self.isSTTAuthorized = authStatus == .authorized
+                if authStatus == .denied || authStatus == .restricted {
                     if self.status == .listening || self.status == .idle {
                         if self.status == .listening {
                             self.stt.cancelRecording()
@@ -1557,6 +1554,9 @@ final class OnboardingVoiceDemoController: ObservableObject {
                         self.cleanupSubscriptions()
                         self.status = .permissionDenied
                     }
+                } else if authStatus == .authorized && self.status == .listening {
+                    // Auth just granted — start the recording we deferred in start().
+                    self.stt.startRecording(withOptions: [], localeCode: self.pendingLocaleCode, offlineOnly: true)
                 }
             }
     }
@@ -1565,11 +1565,7 @@ final class OnboardingVoiceDemoController: ObservableObject {
         transcript = ""
         status = .listening
         acceptedKeywords = Self.keywords(for: language)
-        // Request auth — startRecording is a no-op until the OS has
-        // granted permission. requestAuthorization is idempotent and
-        // cheap to re-call when already granted.
-        stt.requestAuthorization()
-
+        pendingLocaleCode = language.rawValue
         // Subscribe to the live transcript stream. The publisher emits
         // partial transcripts as the user speaks so the on-screen quote
         // builds up in real time.
@@ -1584,7 +1580,13 @@ final class OnboardingVoiceDemoController: ObservableObject {
         // When LocalSTTService finishes (silence detected → engine
         // stops), `isRecordingPublisher` flips to false. If we still
         // don't have a match, that's the "retry" moment.
+        // dropFirst(1) skips the CurrentValueSubject's immediate replay of
+        // false — without it the initial false delivery arrives on the next
+        // run-loop while status is already .listening, satisfying the
+        // !isRecording && status == .listening guard and immediately calling
+        // cleanupSubscriptions() before the mic ever records anything.
         recordingSink = stt.isRecordingPublisher
+            .dropFirst(1)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isRecording in
                 guard let self else { return }
@@ -1598,11 +1600,17 @@ final class OnboardingVoiceDemoController: ObservableObject {
                 }
             }
 
-        // Empty options array = free-form transcription (we're not
-        // matching against fixed answer choices for this demo).
-        // Locale matches the user's chosen language so STT can
-        // actually recognize the spoken answer.
-        stt.startRecording(withOptions: [], localeCode: language.sttLocale, offlineOnly: true)
+        // If already authorized start recording immediately. Otherwise request
+        // auth and let authSink (init) call startRecording when the OS dialog
+        // resolves — calling requestAuthorization() when already authorized
+        // re-publishes .authorized, which would trigger authSink's startRecording
+        // branch while start() has also already called startRecording, causing
+        // a double-start on the AVAudioEngine.
+        if isSTTAuthorized {
+            stt.startRecording(withOptions: [], localeCode: language.rawValue, offlineOnly: true)
+        } else {
+            stt.requestAuthorization()
+        }
     }
 
     func stop() {

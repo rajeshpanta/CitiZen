@@ -31,6 +31,9 @@ final class StoreManager: ObservableObject {
     /// True when receipt verification failed for any entitlement. Paywall shows a
     /// localized "verification issue" alert when set.
     @Published private(set) var entitlementVerificationFailed: Bool = false
+    /// Set to a user-facing message when `restorePurchases()` throws. Cleared
+    /// before each restore attempt so callers can check it immediately after await.
+    @Published private(set) var restoreError: String?
 
     // MARK: - Private
 
@@ -141,7 +144,7 @@ final class StoreManager: ObservableObject {
                 return .cancelled
 
             case .pending:
-                Analytics.track(.purchaseFailed(productID: product.id))
+                Analytics.track(.purchasePending(productID: product.id))
                 return .pending
 
             @unknown default:
@@ -178,6 +181,7 @@ final class StoreManager: ObservableObject {
     // MARK: - Restore
 
     func restorePurchases() async {
+        restoreError = nil
         do {
             try await AppStore.sync()
             await refreshEntitlements()
@@ -189,6 +193,7 @@ final class StoreManager: ObservableObject {
             #if DEBUG
             print("[StoreManager] Restore failed: \(error)")
             #endif
+            restoreError = error.localizedDescription
         }
     }
 
@@ -205,8 +210,12 @@ final class StoreManager: ObservableObject {
 
                 if transaction.revocationDate == nil {
                     hasPro = true
-                    activeID = transaction.productID
-                    break
+                    // Prefer lifetime over monthly — only overwrite if we don't
+                    // already have the lifetime product, so a user who holds both
+                    // entitlements always lands on lifetime as authoritative.
+                    if activeID != StoreManager.lifetimeID {
+                        activeID = transaction.productID
+                    }
                 }
             } catch {
                 #if DEBUG

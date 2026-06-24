@@ -27,21 +27,16 @@ struct QuizMode {
     /// Number of correct answers needed for early pass. Nil = no early pass (practice).
     let requiredCorrect: Int?
 
-    /// How many questions to draw from the pool. Nil = use all questions (practice).
-    let questionLimit: Int?
-
     // MARK: - Presets
 
     static let practice = QuizMode(
         maxMistakes: 4,
-        requiredCorrect: nil,
-        questionLimit: nil
+        requiredCorrect: nil
     )
 
     static let audioOnly = QuizMode(
         maxMistakes: .max,
-        requiredCorrect: nil,
-        questionLimit: nil
+        requiredCorrect: nil
     )
 
     static func mockInterview(
@@ -50,8 +45,7 @@ struct QuizMode {
     ) -> QuizMode {
         QuizMode(
             maxMistakes: questionCount - requiredCorrect + 1,
-            requiredCorrect: requiredCorrect,
-            questionLimit: questionCount
+            requiredCorrect: requiredCorrect
         )
     }
 
@@ -194,8 +188,8 @@ final class UnifiedQuizLogic: ObservableObject {
     var isFinished: Bool { status != .inProgress }
 
     var scorePercentage: Int {
-        guard totalQuestions > 0 else { return 0 }
-        return (correctAnswers * 100) / totalQuestions
+        guard attemptedQuestions > 0 else { return 0 }
+        return (correctAnswers * 100) / attemptedQuestions
     }
 
     // MARK: - Language switching
@@ -221,7 +215,8 @@ final class UnifiedQuizLogic: ObservableObject {
         guard !answeredIndices.contains(currentQuestionIndex) else { return false }
 
         let q = currentQuestion
-        let optionCount = q.variants.first?.options.count ?? 0
+        let currentVariant = selectedVariantIndex < q.variants.count ? q.variants[selectedVariantIndex] : q.variants.first
+        let optionCount = currentVariant?.options.count ?? 0
         let validIndex: Int? = (answerIndex >= 0 && answerIndex < optionCount) ? answerIndex : nil
         let isCorrect = answerIndex == q.correctAnswer
         if isCorrect {
@@ -248,7 +243,7 @@ final class UnifiedQuizLogic: ObservableObject {
             // `startQuizIfPossible`, MockInterviewView's English-only
             // default).
             QuestionTracker.shared.recordAnswer(
-                questionID: currentQuestion.id,
+                questionID: q.id,
                 language: languageTag,
                 correct: isCorrect
             )
@@ -349,7 +344,9 @@ final class UnifiedQuizLogic: ObservableObject {
         mode = .audioOnly
         let selected = Array(pool.shuffled().prefix(min(questionCount, pool.count)))
         resetWith(selected)
-        Analytics.track(.quizStarted(mode: "audio_only", language: languageTag, level: 0))
+        if tracksProgress {
+            Analytics.track(.quizStarted(mode: "audio_only", language: languageTag, level: 0))
+        }
     }
 
     /// Force-end the quiz as failed (e.g. user taps "End" in mock interview).

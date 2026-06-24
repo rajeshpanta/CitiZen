@@ -29,13 +29,12 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     /// for TTS
     var ttsLocale: String { rawValue }
 
-    /// for STT
-    var sttLocale: String {
+    var englishName: String {
         switch self {
-        case .english: return "en-US"
-        case .nepali:  return "ne-NP"
-        case .spanish: return "es-ES"
-        case .chinese: return "zh-CN"
+        case .english: return "English"
+        case .nepali:  return "Nepali"
+        case .spanish: return "Spanish"
+        case .chinese: return "Chinese"
         }
     }
 }

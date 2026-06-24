@@ -1,4 +1,3 @@
-import Foundation
 
 /// All Spanish (English ↔ Español) quiz question sets — the 128 official 2025
 /// USCIS naturalization civics questions, regrouped thematically across 8

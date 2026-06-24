@@ -18,6 +18,7 @@ enum AnalyticsEvent {
     case purchaseStarted(productID: String)
     case purchaseCompleted(productID: String)
     case purchaseFailed(productID: String)
+    case purchasePending(productID: String)
     case purchaseRestored
 
     /// Flattened key-value representation for any analytics backend.
@@ -35,6 +36,7 @@ enum AnalyticsEvent {
         case .purchaseStarted:    return "purchase_started"
         case .purchaseCompleted:  return "purchase_completed"
         case .purchaseFailed:     return "purchase_failed"
+        case .purchasePending:    return "purchase_pending"
         case .purchaseRestored:   return "purchase_restored"
         }
     }
@@ -64,6 +66,8 @@ enum AnalyticsEvent {
         case .purchaseCompleted(let productID):
             return ["product_id": productID]
         case .purchaseFailed(let productID):
+            return ["product_id": productID]
+        case .purchasePending(let productID):
             return ["product_id": productID]
         case .purchaseRestored:
             return [:]
@@ -141,6 +145,9 @@ final class SupabaseAnalytics: AnalyticsTracking {
     private let endpoint: URL
     private let session: URLSession
     private let appVersion: String
+    // Cached once at init so concurrent first-calls to track() don't race
+    // on the Keychain write path inside DeviceID.current.
+    private let deviceID: String
 
     init() {
         self.endpoint = SupabaseConfig.url.appendingPathComponent("rest/v1/analytics_events")
@@ -155,6 +162,7 @@ final class SupabaseAnalytics: AnalyticsTracking {
         let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         let b = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
         self.appVersion = "\(v) (\(b))"
+        self.deviceID = DeviceID.current
     }
 
     func track(_ event: AnalyticsEvent) {
@@ -162,7 +170,7 @@ final class SupabaseAnalytics: AnalyticsTracking {
         // we don't pull any unexpected references across the boundary.
         let name = event.name
         let props = event.properties
-        let deviceID = DeviceID.current
+        let deviceID = self.deviceID
         let version = appVersion
         let url = endpoint
         let apikey = SupabaseConfig.anonKey
@@ -238,7 +246,7 @@ final class SupabaseAnalytics: AnalyticsTracking {
 ///     no-op in release (its body is `#if DEBUG`-gated).
 final class Analytics {
     static let shared = Analytics()
-    var backend: AnalyticsTracking
+    let backend: AnalyticsTracking
     private init() {
         #if DEBUG
         self.backend = ConsoleAnalytics()

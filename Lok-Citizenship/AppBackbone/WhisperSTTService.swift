@@ -54,6 +54,10 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
     private var sfRequest: SFSpeechAudioBufferRecognitionRequest?
     private var sfTask: SFSpeechRecognitionTask?
     private var audioFile: AVAudioFile?
+    /// Serializes tap-thread writes to `audioFile` against main-thread nils in
+    /// `stopEngineAndSF`. `removeTap` doesn't drain in-flight tap callbacks, so
+    /// without this lock a callback mid-write races with the nil on main.
+    private let audioFileLock = NSLock()
     private var recordingURL: URL?
     private var languageHint: String?
     private var uploadTask: Task<Void, Never>?
@@ -250,7 +254,10 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             // Real-time audio thread — keep work minimal.
             self?.sfRequest?.append(buffer)
-            try? self?.audioFile?.write(from: buffer)
+            guard let self else { return }
+            audioFileLock.lock()
+            try? audioFile?.write(from: buffer)
+            audioFileLock.unlock()
         }
 
         do {
@@ -264,30 +271,33 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         }
 
         sfTask = recog.recognitionTask(with: req) { [weak self] result, err in
-            guard let self else { return }
-            if let result = result {
-                let text = result.bestTranscription.formattedString
-                self.lastPartial = text
-                DispatchQueue.main.async {
+            // Dispatch to main so all property reads/writes (lastPartial,
+            // quizOptions, listeningStartTime) are on the same actor as
+            // the rest of the service. LocalSTTService does the same.
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if let result = result {
+                    let text = result.bestTranscription.formattedString
+                    self.lastPartial = text
                     self.trans.send(text)
+                    // Early-exit: if the live SF partial already maps to a quiz
+                    // option with high confidence, skip the Whisper upload and
+                    // commit. Cuts ~1–2s of latency on easy answers; falls back
+                    // to the full Whisper pass when the partial is ambiguous.
+                    if self.shouldEarlyExit(partial: text) {
+                        self.handleEarlyExit(partial: text)
+                        return
+                    }
+                    if result.isFinal {
+                        self.handleSilenceDetected()
+                    }
                 }
-                // Early-exit: if the live SF partial already maps to a quiz
-                // option with high confidence, skip the Whisper upload and
-                // commit. Cuts ~1–2s of latency on easy answers; falls back
-                // to the full Whisper pass when the partial is ambiguous.
-                if self.shouldEarlyExit(partial: text) {
-                    self.handleEarlyExit(partial: text)
-                    return
-                }
-                if result.isFinal {
+                if err != nil {
+                    // Common case: SF errors with "no speech detected" after
+                    // initial silence. Treat the same as isFinal — let the user
+                    // retry via the "didn't hear you" banner.
                     self.handleSilenceDetected()
                 }
-            }
-            if err != nil {
-                // Common case: SF errors with "no speech detected" after
-                // initial silence. Treat the same as isFinal — let the user
-                // retry via the "didn't hear you" banner.
-                self.handleSilenceDetected()
             }
         }
 
@@ -445,9 +455,12 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         processing.send(true)
 
         guard let url = urlToUpload else {
-            // Engine never started or already torn down — emit failure so the
-            // controller surfaces the "didn't hear you" banner.
-            Task { [weak self] in await self?.emitFailure() }
+            // Engine never started or already torn down — clear processing
+            // synchronously so a concurrent stopRecording can't race past
+            // the async emitFailure and leave the flag permanently true.
+            processing.send(false)
+            uploadTask?.cancel()
+            uploadTask = Task { [weak self] in await self?.emitFailure() }
             return
         }
 
@@ -479,7 +492,9 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         sfRequest = nil
         sfTask = nil
         sfRecognizer = nil
+        audioFileLock.lock()
         audioFile = nil
+        audioFileLock.unlock()
         recordingURL = nil
         quizOptions = []
         listeningStartTime = nil

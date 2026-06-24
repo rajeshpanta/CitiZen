@@ -13,8 +13,8 @@ struct SettingsView: View {
     @State private var showPrivacy = false
     @State private var showTerms = false
     @State private var showPaywall = false
-    @State private var interviewDate: Date = ProgressManager.shared.interviewDate ?? Date()
-    @State private var hasInterview: Bool = ProgressManager.shared.interviewDate != nil
+    @State private var interviewDate: Date = Date()
+    @State private var hasInterview: Bool = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
     /// Triggers the App Store review prompt from the "Rate CitiZen" row.
@@ -57,6 +57,9 @@ struct SettingsView: View {
                             ),
                             displayedComponents: .hourAndMinute
                         )
+                        Text("Streak reminder: daily at 8:00 PM")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 } else {
                     Button(s.settingsEnableNotifications) {

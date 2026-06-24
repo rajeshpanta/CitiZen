@@ -12,12 +12,15 @@ enum DeviceID {
 
     private static let account = "citizen.device.id.v1"
 
-    static var current: String {
+    // Swift guarantees this lazy initializer runs exactly once regardless of
+    // concurrent first-callers — eliminates the race where two threads each
+    // generate a fresh UUID and write to the Keychain simultaneously.
+    static let current: String = {
         if let existing = read() { return existing }
         let new = UUID().uuidString
         write(new)
         return new
-    }
+    }()
 
     private static func read() -> String? {
         let q: [String: Any] = [
@@ -44,6 +47,9 @@ enum DeviceID {
         var add = q
         add[kSecValueData as String] = data
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-        SecItemAdd(add as CFDictionary, nil)
+        let status = SecItemAdd(add as CFDictionary, nil)
+        #if DEBUG
+        if status != errSecSuccess { print("[DeviceID] Keychain write failed: \(status)") }
+        #endif
     }
 }

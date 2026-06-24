@@ -92,6 +92,9 @@ final class ProgressManager {
             case 1:
                 // Consecutive day — extend streak
                 currentStreak += 1
+            case let d where d < 0:
+                // Clock went backward (timezone change, NTP correction) — preserve streak
+                break
             default:
                 // Gap of 2+ days — streak resets
                 currentStreak = 1
@@ -251,16 +254,6 @@ final class ProgressManager {
         return (totalCorrectAnswers * 100) / totalQuestionsAnswered
     }
 
-    /// True if the streak should be considered "at risk" (last session was yesterday
-    /// or earlier and no session today yet). Useful for future notifications.
-    var streakAtRisk: Bool {
-        guard currentStreak > 0, let lastDate = lastActiveDate else { return false }
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        let lastDay = calendar.startOfDay(for: lastDate)
-        let dayDiff = calendar.dateComponents([.day], from: lastDay, to: today).day ?? 0
-        return dayDiff >= 1
-    }
 }
 
 // MARK: - Rating prompt scheduling

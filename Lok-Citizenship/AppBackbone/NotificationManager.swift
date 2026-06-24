@@ -2,6 +2,7 @@ import Foundation
 import UserNotifications
 
 /// Manages local push notifications for study reminders and streak alerts.
+@MainActor
 final class NotificationManager: ObservableObject {
 
     static let shared = NotificationManager()
@@ -69,9 +70,13 @@ final class NotificationManager: ObservableObject {
             return Calendar.current.date(from: comps) ?? Date()
         }
         set {
+            // Write both values directly to avoid two scheduleAll() calls
+            // (once from reminderHour setter, once from reminderMinute setter).
             let comps = Calendar.current.dateComponents([.hour, .minute], from: newValue)
-            reminderHour = comps.hour ?? 9
-            reminderMinute = comps.minute ?? 0
+            defaults.set(comps.hour ?? 9, forKey: hourKey)
+            defaults.set(comps.minute ?? 0, forKey: minuteKey)
+            objectWillChange.send()
+            if isEnabled { scheduleAll() }
         }
     }
 
@@ -148,6 +153,12 @@ final class NotificationManager: ObservableObject {
     func scheduleAll() {
         let enabled = isEnabled
         let authorized = isAuthorized
+        // Capture time and strings on main before the queue hop so the
+        // scheduling helpers don't need to cross back to the main actor.
+        let hour = reminderHour
+        let minute = reminderMinute
+        let strings = localizedStrings
+        let streak = UserDefaults.standard.integer(forKey: "pm_currentStreak")
         scheduleQueue.async { [weak self] in
             guard let self else { return }
             self.center.removeAllPendingNotificationRequests()
@@ -160,8 +171,13 @@ final class NotificationManager: ObservableObject {
             // on the false→true edge so reminders auto-start when the
             // user grants permission from iOS Settings.
             guard enabled && authorized else { return }
-            self.scheduleDailyReminder()
-            self.scheduleStreakReminder()
+            self.scheduleDailyReminder(strings: strings, hour: hour, minute: minute)
+            // Only fire the streak reminder for users who have actually
+            // started studying — "Don't lose your streak!" before any
+            // quiz session is factually wrong and will mislead new users.
+            if streak >= 1 {
+                self.scheduleStreakReminder(strings: strings)
+            }
         }
     }
 
@@ -184,27 +200,25 @@ final class NotificationManager: ObservableObject {
         return UIStrings.forLanguage(.english)
     }
 
-    private func scheduleDailyReminder() {
-        let s = localizedStrings
+    nonisolated private func scheduleDailyReminder(strings: UIStrings, hour: Int, minute: Int) {
         let content = UNMutableNotificationContent()
-        content.title = s.notifDailyTitle
-        content.body = s.notifDailyBody
+        content.title = strings.notifDailyTitle
+        content.body = strings.notifDailyBody
         content.sound = .default
 
         var dateComps = DateComponents()
-        dateComps.hour = reminderHour
-        dateComps.minute = reminderMinute
+        dateComps.hour = hour
+        dateComps.minute = minute
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComps, repeats: true)
         let request = UNNotificationRequest(identifier: "citizen.daily_reminder", content: content, trigger: trigger)
         center.add(request)
     }
 
-    private func scheduleStreakReminder() {
-        let s = localizedStrings
+    nonisolated private func scheduleStreakReminder(strings: UIStrings) {
         let content = UNMutableNotificationContent()
-        content.title = s.notifStreakTitle
-        content.body = s.notifStreakBody
+        content.title = strings.notifStreakTitle
+        content.body = strings.notifStreakBody
         content.sound = .default
 
         var dateComps = DateComponents()

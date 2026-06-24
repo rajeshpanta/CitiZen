@@ -158,7 +158,7 @@ extension QuizStrings {
         restartQuiz:        "Reiniciar",
         nextLevel:          "Siguiente Nivel",
         backToLevels:       "Volver a Niveles",
-        micPermissionAlert: "🎙️ Speech recognition not allowed"
+        micPermissionAlert: "🎙️ Reconocimiento de voz no permitido"
     )
 
     static let chineseSimplified = QuizStrings(

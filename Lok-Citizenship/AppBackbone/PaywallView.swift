@@ -129,6 +129,8 @@ struct PaywallView: View {
                                 restoring = false
                                 if store.isPro {
                                     dismiss()
+                                } else if let err = store.restoreError {
+                                    errorMessage = err
                                 } else if !store.entitlementVerificationFailed {
                                     // No entitlement and no verification error
                                     // → genuinely nothing to restore. Show the
@@ -180,7 +182,10 @@ struct PaywallView: View {
             await store.loadProducts()
         }
         .onChange(of: store.isPro) { isPro in
-            if isPro { dismiss() }
+            if isPro {
+                restoring = false
+                dismiss()
+            }
         }
         .interactiveDismissDisabled(purchasing)
         .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
@@ -192,7 +197,21 @@ struct PaywallView: View {
                )
         ) {
             Button(s.paywallRestore) {
-                Task { await store.restorePurchases() }
+                restoreNothing = false
+                restoring = true
+                Task {
+                    await store.restorePurchases()
+                    restoring = false
+                    // isPro path: onChange(of: store.isPro) already calls
+                    // dismiss() — no need to call it again here.
+                    if !store.isPro {
+                        if let err = store.restoreError {
+                            errorMessage = err
+                        } else if !store.entitlementVerificationFailed {
+                            restoreNothing = true
+                        }
+                    }
+                }
             }
             Button(s.paywallDismiss, role: .cancel) { }
         } message: {

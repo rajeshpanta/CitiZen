@@ -387,6 +387,7 @@ final class VoiceQuizController: ObservableObject {
 
     /// After a wrong answer, the view calls this when the user taps "Next Question".
     func continueAfterWrong() {
+        guard phase == .awaitingContinue else { return }
         advanceToNextQuestion()
     }
 
@@ -487,7 +488,7 @@ final class VoiceQuizController: ObservableObject {
         didTimeout = false
 
         let text = currentVariant().text
-        guard !text.isEmpty else { return }
+        guard !text.isEmpty else { phase = .idle; return }
 
         ttsChain = tts.speak(text, languageCode: localeCode)
             .sink { _ in }
@@ -897,6 +898,11 @@ final class VoiceQuizController: ObservableObject {
         emptySpokenRetries = 0
         didTimeout = false
         _ = quizLogic.answerQuestion(Int.max)
+        // Clear stale feedback from the previous question so the "Moving on"
+        // TTS and the next question's banner don't show the prior answer state.
+        lastAnswerCorrect = false
+        lastAnswerExplanation = ""
+        lastCorrectIndex = nil
         if quizLogic.isFinished {
             phase = .finished
             return

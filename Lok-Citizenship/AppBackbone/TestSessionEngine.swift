@@ -51,6 +51,7 @@ final class TestSessionEngine: ObservableObject {
     /// Record the result of the current sentence. Does not advance.
     func recordAttempt(userAnswer: String, passed: Bool) {
         guard currentIndex < attempts.count else { return }
+        guard !attempts[currentIndex].attempted else { return }
         attempts[currentIndex].userAnswer = userAnswer
         attempts[currentIndex].passed = passed
         attempts[currentIndex].attempted = true

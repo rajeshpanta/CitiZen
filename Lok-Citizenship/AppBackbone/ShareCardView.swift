@@ -6,10 +6,13 @@ struct ShareCardView: View {
     let total: Int
     let passed: Bool
     let streak: Int
+    var language: AppLanguage = .english
 
     private var pct: Int {
         total > 0 ? (score * 100) / total : 0
     }
+
+    private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -27,7 +30,7 @@ struct ShareCardView: View {
 
             // Score
             VStack(spacing: 8) {
-                Text(passed ? "PASSED" : "KEEP PRACTICING")
+                Text(passed ? s.resultPassed : s.resultFailed)
                     .font(.headline)
                     .foregroundColor(passed ? .green : .orange)
 
@@ -35,7 +38,7 @@ struct ShareCardView: View {
                     .font(.system(size: 48, weight: .bold))
                     .foregroundColor(.white)
 
-                Text("\(pct)% Score")
+                Text("\(pct)% \(s.resultScore)")
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.7))
             }
@@ -44,7 +47,7 @@ struct ShareCardView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "flame.fill")
                         .foregroundColor(.orange)
-                    Text("\(streak)-day streak")
+                    Text("\(streak) \(s.quizStatStreak)")
                         .font(.caption.bold())
                         .foregroundColor(.orange)
                 }
@@ -76,7 +79,7 @@ struct ShareCardView: View {
     @MainActor
     func renderImage() -> UIImage? {
         let renderer = ImageRenderer(content: self)
-        renderer.scale = UIScreen.main.scale
+        renderer.scale = UITraitCollection.current.displayScale
         return renderer.uiImage
     }
 }

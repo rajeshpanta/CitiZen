@@ -16,11 +16,16 @@ import Combine
 /// - One `AVSpeechSynthesizer` and one `OpenAITTSService` instance app-wide.
 /// - A new `speak` interrupts whichever engine is currently playing.
 /// - `stop()` interrupts both engines so callers don't have to know which is in use.
-final class SlowSpeechHelper {
+final class SlowSpeechHelper: NSObject {
 
     static let shared = SlowSpeechHelper()
 
     private let synthesizer = AVSpeechSynthesizer()
+    private let localSpeaking = CurrentValueSubject<Bool, Never>(false)
+    /// Identity-tracks the utterance handed to synthesizer.speak(). Stale
+    /// didCancel callbacks (from a prior utterance interrupted by a new speak)
+    /// are dropped by guarding against this in the delegate — mirrors LocalTTSService.
+    private var currentUtterance: AVSpeechUtterance?
     /// Shared with `TTSRouter` (and therefore the Quiz/Mock/AudioOnly
     /// flows) via `ServiceLocator`. Owning a separate instance here used
     /// to mean Reading-practice TTS and Mock-interview TTS could collide
@@ -29,19 +34,21 @@ final class SlowSpeechHelper {
     /// one in-flight player + one request-id across the whole app.
     private let openAI = ServiceLocator.shared.openAITTS
 
-    private init() {}
+    private override init() {
+        super.init()
+        synthesizer.delegate = self
+    }
 
-    /// Emits `true` while the cloud (OpenAI) playback is active and `false`
-    /// otherwise. Views use this to clear a "buffering…" spinner the moment
-    /// audio actually starts playing — the speaker tap → cloud fetch →
-    /// decode → AVAudioPlayer.play() round-trip can run 300–1500 ms on
-    /// the cold path, and a static speaker icon during that window looks
-    /// like a no-op.
-    ///
-    /// Only mirrors the OpenAI engine. Local AVSpeechSynthesizer (used as
-    /// the fallback when OpenAI is unconfigured or for non-English) starts
-    /// effectively instantly, so a loading indicator there isn't useful.
-    var isSpeakingPublisher: AnyPublisher<Bool, Never> { openAI.isSpeakingPublisher }
+    /// Emits `true` while either the cloud (OpenAI) or local AVSpeechSynthesizer
+    /// is active. Views use this to clear the "buffering…" spinner the moment
+    /// audio starts — the cloud path takes 300–1500 ms on a cold fetch; the
+    /// local fallback fires almost instantly but still needs to clear the spinner.
+    var isSpeakingPublisher: AnyPublisher<Bool, Never> {
+        openAI.isSpeakingPublisher
+            .combineLatest(localSpeaking)
+            .map { $0 || $1 }
+            .eraseToAnyPublisher()
+    }
 
     /// Best-effort cache warm for `text`. No-op when OpenAI is unconfigured
     /// or the language isn't English (the local synthesizer doesn't cache).
@@ -89,13 +96,44 @@ final class SlowSpeechHelper {
 
     private func speakLocal(_ text: String, rateMultiplier: Float, languageCode: String) {
         let utterance = AVSpeechUtterance(string: text)
+        // ne-NP has no iOS voice pack — fall back to hi-IN (same Devanagari
+        // script, intelligible pronunciation) then en-US, matching LocalTTSService.
         utterance.voice = AVSpeechSynthesisVoice(language: languageCode)
+                        ?? (languageCode == "ne-NP" ? AVSpeechSynthesisVoice(language: "hi-IN") : nil)
+                        ?? AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * rateMultiplier
+        currentUtterance = utterance
         synthesizer.speak(utterance)
     }
 
     func stop() {
+        // Eagerly reset localSpeaking so isSpeakingPublisher clears immediately —
+        // stopSpeaking(at: .immediate) only schedules didCancel asynchronously,
+        // which would leave the spinner stuck for up to one run-loop.
+        currentUtterance = nil
+        localSpeaking.send(false)
         synthesizer.stopSpeaking(at: .immediate)
         openAI.stopSpeaking()
+    }
+}
+
+// MARK: - AVSpeechSynthesizerDelegate
+
+extension SlowSpeechHelper: AVSpeechSynthesizerDelegate {
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        guard utterance === currentUtterance else { return }
+        localSpeaking.send(true)
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        guard utterance === currentUtterance else { return }
+        currentUtterance = nil
+        localSpeaking.send(false)
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        guard utterance === currentUtterance else { return }
+        currentUtterance = nil
+        localSpeaking.send(false)
     }
 }

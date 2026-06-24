@@ -1,6 +1,5 @@
 import SwiftUI
 import UIKit
-import Speech
 import Combine
 
 /// Hands-free audio quiz. Three stages, top to bottom:
@@ -39,7 +38,7 @@ struct AudioOnlyView: View {
     @StateObject private var quizLogic = UnifiedQuizLogic()
     @StateObject private var voice: VoiceQuizController
 
-    @Environment(\.presentationMode) private var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var stage: Stage = .lengthPicker
@@ -172,7 +171,7 @@ struct AudioOnlyView: View {
             Button(s.audioOnlyExitConfirmEnd, role: .destructive) {
                 voice.stop()
                 quizLogic.forceEnd()
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             }
             Button(s.audioOnlyExitConfirmCancel, role: .cancel) { }
         } message: {
@@ -209,7 +208,7 @@ struct AudioOnlyView: View {
             switch stage {
             case .lengthPicker, .finished:
                 voice.stop()
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             case .session:
                 showExitConfirm = true
             }
@@ -607,7 +606,7 @@ struct AudioOnlyView: View {
                 }
 
                 Button {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 } label: {
                     Text(s.resultDone)
                         .font(.subheadline)

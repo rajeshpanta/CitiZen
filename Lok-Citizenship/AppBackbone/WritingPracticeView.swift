@@ -337,6 +337,8 @@ struct WritingPracticeView: View {
     }
 
     private func checkAnswer() {
+        SlowSpeechHelper.shared.stop()
+        isSpeakerLoading = false
         lastDiff = WritingDiffRenderer.diff(
             expected: currentWord.exampleSentence,
             input: userInput
@@ -366,6 +368,7 @@ struct WritingPracticeView: View {
         SlowSpeechHelper.shared.speak(text, rateMultiplier: 0.8)
         // Safety net for the local-fallback path — see ReadingPracticeView.speak.
         DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            guard isAppeared else { return }
             if speakerLoadNonce == myNonce {
                 isSpeakerLoading = false
             }

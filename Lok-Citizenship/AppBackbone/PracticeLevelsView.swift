@@ -40,7 +40,7 @@ final class NavigationIntent {
 }
 
 // MARK: - Helper struct to bundle each destination
-private struct PracticeItem: Identifiable {
+private struct PracticeItem: Identifiable, Hashable {
     var id: Int { level }
     let title: String
     /// Builds the destination view on demand. Stored as a closure rather
@@ -50,9 +50,10 @@ private struct PracticeItem: Identifiable {
     /// user actually navigates into a level — not on every body render of
     /// the selection screen.
     let buildView: () -> AnyView
-    let minHeight: CGFloat
-    let fontSize: CGFloat
     let level: Int   // 1-5 (or 1-8 for English), used for gating
+
+    static func == (lhs: PracticeItem, rhs: PracticeItem) -> Bool { lhs.level == rhs.level }
+    func hash(into hasher: inout Hasher) { hasher.combine(level) }
 }
 
 // MARK: - Per-language item caches (file-scope, computed once)
@@ -76,57 +77,41 @@ private let englishPracticeItems: [PracticeItem] = [
     PracticeItem(
         title: "Practice 1 – Government Basics & Symbols",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice1), level: 1)) },
-        minHeight: 20,
-        fontSize: 16,
         level: 1
     ),
     PracticeItem(
         title: "Practice 2 – Constitution & Amendments",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice2), level: 2)) },
-        minHeight: 22,
-        fontSize: 17,
         level: 2
     ),
     PracticeItem(
         title: "Practice 3 – Congress: Structure & Powers",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice3), level: 3)) },
-        minHeight: 26,
-        fontSize: 18,
         level: 3
     ),
     PracticeItem(
         title: "Practice 4 – Congress & Executive",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice4), level: 4)) },
-        minHeight: 30,
-        fontSize: 20,
         level: 4
     ),
     PracticeItem(
         title: "Practice 5 – Judicial, Federalism & Rights",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice5), level: 5)) },
-        minHeight: 33,
-        fontSize: 21,
         level: 5
     ),
     PracticeItem(
         title: "Practice 6 – Founding Era & Revolution",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice6), level: 6)) },
-        minHeight: 36,
-        fontSize: 22,
         level: 6
     ),
     PracticeItem(
         title: "Practice 7 – 1800s & National Identity",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice7), level: 7)) },
-        minHeight: 38,
-        fontSize: 23,
         level: 7
     ),
     PracticeItem(
         title: "Practice 8 – 1900s & Modern History",
         buildView: { AnyView(QuizView(config: .english(questions: EnglishQuestions.practice8), level: 8)) },
-        minHeight: 40,
-        fontSize: 24,
         level: 8
     )
 ]
@@ -135,57 +120,41 @@ private let nepaliPracticeItems: [PracticeItem] = [
     PracticeItem(
         title: "अभ्यास १ – सरकारी आधार र प्रतीकहरू",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice1), level: 1)) },
-        minHeight: 20,
-        fontSize: 16,
         level: 1
     ),
     PracticeItem(
         title: "अभ्यास २ – संविधान र संशोधनहरू",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice2), level: 2)) },
-        minHeight: 22,
-        fontSize: 17,
         level: 2
     ),
     PracticeItem(
         title: "अभ्यास ३ – कांग्रेस: संरचना र शक्ति",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice3), level: 3)) },
-        minHeight: 26,
-        fontSize: 18,
         level: 3
     ),
     PracticeItem(
         title: "अभ्यास ४ – कांग्रेस र कार्यपालिका",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice4), level: 4)) },
-        minHeight: 30,
-        fontSize: 20,
         level: 4
     ),
     PracticeItem(
         title: "अभ्यास ५ – न्यायपालिका, संघीयता र अधिकार",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice5), level: 5)) },
-        minHeight: 33,
-        fontSize: 21,
         level: 5
     ),
     PracticeItem(
         title: "अभ्यास ६ – स्थापना युग र क्रान्ति",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice6), level: 6)) },
-        minHeight: 36,
-        fontSize: 22,
         level: 6
     ),
     PracticeItem(
         title: "अभ्यास ७ – १८०० का दशक र राष्ट्रिय पहिचान",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice7), level: 7)) },
-        minHeight: 38,
-        fontSize: 23,
         level: 7
     ),
     PracticeItem(
         title: "अभ्यास ८ – १९०० का दशक र आधुनिक इतिहास",
         buildView: { AnyView(QuizView(config: .nepali(questions: NepaliQuestions.practice8), level: 8)) },
-        minHeight: 40,
-        fontSize: 24,
         level: 8
     )
 ]
@@ -194,57 +163,41 @@ private let spanishPracticeItems: [PracticeItem] = [
     PracticeItem(
         title: "Práctica 1 – Gobierno básico y símbolos",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice1), level: 1)) },
-        minHeight: 20,
-        fontSize: 16,
         level: 1
     ),
     PracticeItem(
         title: "Práctica 2 – Constitución y enmiendas",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice2), level: 2)) },
-        minHeight: 22,
-        fontSize: 17,
         level: 2
     ),
     PracticeItem(
         title: "Práctica 3 – Congreso: estructura y poderes",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice3), level: 3)) },
-        minHeight: 26,
-        fontSize: 18,
         level: 3
     ),
     PracticeItem(
         title: "Práctica 4 – Congreso y ejecutivo",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice4), level: 4)) },
-        minHeight: 30,
-        fontSize: 20,
         level: 4
     ),
     PracticeItem(
         title: "Práctica 5 – Judicial, federalismo y derechos",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice5), level: 5)) },
-        minHeight: 33,
-        fontSize: 21,
         level: 5
     ),
     PracticeItem(
         title: "Práctica 6 – Era fundacional y revolución",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice6), level: 6)) },
-        minHeight: 36,
-        fontSize: 22,
         level: 6
     ),
     PracticeItem(
         title: "Práctica 7 – Siglo XIX e identidad nacional",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice7), level: 7)) },
-        minHeight: 38,
-        fontSize: 23,
         level: 7
     ),
     PracticeItem(
         title: "Práctica 8 – Siglo XX e historia moderna",
         buildView: { AnyView(QuizView(config: .spanish(questions: SpanishQuestions.practice8), level: 8)) },
-        minHeight: 40,
-        fontSize: 24,
         level: 8
     )
 ]
@@ -253,57 +206,41 @@ private let chinesePracticeItems: [PracticeItem] = [
     PracticeItem(
         title: "练习 1 – 政府基础与符号",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice1), level: 1)) },
-        minHeight: 20,
-        fontSize: 16,
         level: 1
     ),
     PracticeItem(
         title: "练习 2 – 宪法与修正案",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice2), level: 2)) },
-        minHeight: 22,
-        fontSize: 17,
         level: 2
     ),
     PracticeItem(
         title: "练习 3 – 国会:结构与权力",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice3), level: 3)) },
-        minHeight: 26,
-        fontSize: 18,
         level: 3
     ),
     PracticeItem(
         title: "练习 4 – 国会与行政",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice4), level: 4)) },
-        minHeight: 30,
-        fontSize: 20,
         level: 4
     ),
     PracticeItem(
         title: "练习 5 – 司法、联邦制与权利",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice5), level: 5)) },
-        minHeight: 33,
-        fontSize: 21,
         level: 5
     ),
     PracticeItem(
         title: "练习 6 – 建国时期与革命",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice6), level: 6)) },
-        minHeight: 36,
-        fontSize: 22,
         level: 6
     ),
     PracticeItem(
         title: "练习 7 – 19 世纪与国家认同",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice7), level: 7)) },
-        minHeight: 38,
-        fontSize: 23,
         level: 7
     ),
     PracticeItem(
         title: "练习 8 – 20 世纪与现代史",
         buildView: { AnyView(QuizView(config: .chinese(questions: ChineseQuestions.practice8), level: 8)) },
-        minHeight: 40,
-        fontSize: 24,
         level: 8
     )
 ]
@@ -318,10 +255,9 @@ struct PracticeLevelsView: View {
     // MARK: - Programmatic next-level push state
     //
     // Driven by `NavigationIntent.shared.pendingPracticeLevel` consumed
-    // on `.onAppear`. The hidden `.navigationDestination(isPresented:)`
-    // below pushes when `pushNext` flips true. Both reset by SwiftUI
-    // when the user navigates back, so they re-arm cleanly for the
-    // next Next-Level tap from inside QuizView.
+    // on `.onAppear`. Both @State vars are set synchronously in the same
+    // SwiftUI update cycle (no asyncAfter) so there is no window where a
+    // parent re-render can nil pendingPushItem while pushNext is still true.
     @State private var pendingPushItem: PracticeItem?
     @State private var pushNext: Bool = false
 
@@ -457,13 +393,10 @@ struct PracticeLevelsView: View {
             showPaywall = true
             return
         }
+        // Set item and trigger synchronously in the same update cycle so
+        // no parent re-render can nil pendingPushItem before pushNext fires.
         pendingPushItem = match
-        // Tiny defer so the pop animation completes before the push.
-        // Without it, on iOS 16 the two collisions occasionally render
-        // as a visual jump.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            pushNext = true
-        }
+        pushNext = true
     }
 
     private func levelRow(item: PracticeItem, meta: (label: String, color: Color, icon: String), locked: Bool) -> some View {

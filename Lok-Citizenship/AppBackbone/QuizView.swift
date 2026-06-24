@@ -15,7 +15,6 @@ struct QuizView: View {
     // MARK: - Per-question UI state (reset between questions)
 
     @State private var selectedAnswer: Int?
-    @State private var showAnswerFeedback = false
     /// Tap feedback for the speaker button. Set true on tap and cleared
     /// when `voice.isSpeaking` flips true (audio started) or a 4-second
     /// timeout fires (failure fallback). Bridges the silent ~100-400 ms
@@ -38,7 +37,7 @@ struct QuizView: View {
     /// taps the mic before the OS prompt returns saw a misleading
     /// "permission denied" alert despite never being asked.
     @State private var pendingMicAutoStart = false
-    @Environment(\.presentationMode) private var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     /// SwiftUI-managed App Store review prompt, fired on the first time
     /// the user passes a practice level with a ≥80% score. iOS rate-
@@ -101,10 +100,6 @@ struct QuizView: View {
 
     private var localeCode: String {
         config.localeForVariant(quizLogic.selectedVariantIndex)
-    }
-
-    private var quizLevel: String {
-        "practice_\(level)"
     }
 
     private var offlineOnly: Bool {
@@ -237,7 +232,7 @@ struct QuizView: View {
                 message: Text(strings.quitMessage),
                 primaryButton: .destructive(Text(strings.quitYes)) {
                     voice.stop()
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 },
                 secondaryButton: .cancel(Text(strings.quitNo))
             )
@@ -813,7 +808,10 @@ private extension QuizView {
             }
 
             if !isAnswerCorrect {
-                let explanation = quizLogic.currentQuestion.variants.first?.explanation ?? ""
+                let variants = quizLogic.currentQuestion.variants
+                let explanation = (variants.indices.contains(quizLogic.selectedVariantIndex)
+                    ? variants[quizLogic.selectedVariantIndex]
+                    : variants.first)?.explanation ?? ""
                 if !explanation.isEmpty {
                     Text(explanation)
                         .font(.footnote)
@@ -922,12 +920,12 @@ private extension QuizView {
                     } else {
                         voice.stop()
                         NavigationIntent.shared.pendingPracticeLevel = next
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 } else {
                     // Last level — no "next" exists, just go back.
                     voice.stop()
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
             } label: {
                 Label(
@@ -1008,6 +1006,7 @@ private extension QuizView {
                 quizLogic.languageTag = localeCode
                 quizLogic.levelTag = level
 
+                quizLogic.selectedVariantIndex = config.defaultVariantIndex
                 quizLogic.startQuiz()
                 resetPerQuestionState()
             } label: {
@@ -1102,7 +1101,6 @@ private extension QuizView {
         guard !isAnswered else { return }
         selectedAnswer     = idx
         isAnswerCorrect    = quizLogic.answerQuestion(idx)
-        showAnswerFeedback = true
         isAnswered         = true
         showVoicePanel     = false
     }
@@ -1188,8 +1186,8 @@ private extension QuizView {
     func resetPerQuestionState() {
         selectedAnswer     = nil
         isAnswered         = false
-        showAnswerFeedback = false
         showVoicePanel     = false
+        speakerLoading     = false
         voice.resetMatch()
         // Clear stale mic transcription from the previous question. Otherwise
         // the expanded voice panel reappears on Q2 showing Q1's answer text
@@ -1202,7 +1200,8 @@ private extension QuizView {
             score: score,
             total: total,
             passed: passed,
-            streak: ProgressManager.shared.currentStreak
+            streak: ProgressManager.shared.currentStreak,
+            language: appLanguage
         )
         return Button {
             guard let image = card.renderImage() else { return }

@@ -25,6 +25,10 @@ struct WritingTestView: View {
     @State private var isAppeared: Bool = false
     // F6: exactly-once guard for recording this session's outcome to ProgressManager.
     @State private var sessionRecorded: Bool = false
+    // Guards rememberWritingSentences so it only runs once per init, not on
+    // every re-appear (e.g., alert dismiss). restartSession updates it explicitly
+    // with a fresh word set so this guard doesn't need to reset on restart.
+    @State private var hasRegisteredSentences: Bool = false
 
     // Speaker-button loading state — see ReadingPracticeView for full notes.
     // Cloud TTS cold path is 300–1500 ms; spinner shows during that gap.
@@ -41,6 +45,9 @@ struct WritingTestView: View {
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
+    private let pickedWordIDs: [String]
+
+    @MainActor
     init(language: AppLanguage,
          pool: [ReadingWritingWord],
          sessionActive: Binding<Bool>) {
@@ -53,7 +60,7 @@ struct WritingTestView: View {
         )
         let sentences = words.map { $0.exampleSentence }
         _session = StateObject(wrappedValue: TestSessionEngine(sentences: sentences))
-        ProgressManager.shared.rememberWritingSentences(words.map { $0.id })
+        self.pickedWordIDs = words.map { $0.id }
     }
 
     var body: some View {
@@ -68,6 +75,10 @@ struct WritingTestView: View {
         }
         .onAppear {
             isAppeared = true
+            if !hasRegisteredSentences {
+                hasRegisteredSentences = true
+                ProgressManager.shared.rememberWritingSentences(pickedWordIDs)
+            }
             // Warm the cache for the first sentence before auto-dictation.
             // Cuts perceived latency on cold launch when the network
             // round-trip would otherwise stack on top of the 0.5s delay.
@@ -308,7 +319,7 @@ struct WritingTestView: View {
 
             // Per-sentence review
             VStack(spacing: 8) {
-                ForEach(Array(session.attempts.enumerated()), id: \.element.id) { (idx, attempt) in
+                ForEach(Array(session.attempts.enumerated()), id: \.element.id) { (_, attempt) in
                     HStack(spacing: 10) {
                         Image(systemName: attempt.passed ? "checkmark.circle.fill" : "xmark.circle.fill")
                             .foregroundColor(attempt.passed ? .green : .red)
@@ -387,6 +398,7 @@ struct WritingTestView: View {
     private func advanceSession() {
         lastDiff = nil
         userInput = ""
+        inputFocused = false
         isSpeakerLoading = false
         session.advance()
         if !session.isFinished {
@@ -400,6 +412,7 @@ struct WritingTestView: View {
     private func restartSession() {
         lastDiff = nil
         userInput = ""
+        inputFocused = false
         sessionRecorded = false  // F6: new session = new record on completion
         SlowSpeechHelper.shared.stop()
         isSpeakerLoading = false
@@ -415,6 +428,11 @@ struct WritingTestView: View {
             guard isAppeared else { return }
             speak(session.currentSentence)
         }
+        // Re-focus the typing field after restart (mirrors the initial onAppear flow).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            guard isAppeared else { return }
+            inputFocused = true
+        }
     }
 
     private func speak(_ text: String) {
@@ -424,6 +442,7 @@ struct WritingTestView: View {
         SlowSpeechHelper.shared.speak(text, rateMultiplier: 0.8)
         // Safety net for the local-fallback path — see ReadingPracticeView.speak.
         DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            guard isAppeared else { return }
             if speakerLoadNonce == myNonce {
                 isSpeakerLoading = false
             }
