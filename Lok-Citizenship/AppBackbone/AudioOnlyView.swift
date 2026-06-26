@@ -391,7 +391,7 @@ struct AudioOnlyView: View {
         switch voice.authorizationStatus {
         case .authorized:
             AudioSessionPrewarmer.prewarm {
-                let pool = QuestionPool.allQuestions(for: language)
+                let pool = QuestionPool.activePool(for: language)
                 quizLogic.languageTag = language.rawValue
                 // SessionLength.full's rawValue (999) is greater than any
                 // realistic pool, so `startAudioOnly` caps it to the actual

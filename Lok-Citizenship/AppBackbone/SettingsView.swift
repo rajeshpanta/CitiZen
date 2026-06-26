@@ -13,8 +13,10 @@ struct SettingsView: View {
     @State private var showPrivacy = false
     @State private var showTerms = false
     @State private var showPaywall = false
+    @State private var showTrackPicker = false
     @State private var interviewDate: Date = Date()
     @State private var hasInterview: Bool = false
+    @AppStorage("pm_questionSet") private var questionSetRaw: String = "2008"
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
     /// Triggers the App Store review prompt from the "Rate CitiZen" row.
@@ -151,6 +153,28 @@ struct SettingsView: View {
                 Text(s.settingsSubscriptionHeader)
             }
 
+            // MARK: - Study Track
+            Section {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(trackLabel)
+                            .font(.body)
+                        Text(trackDetail)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button(switchTrackLabel) {
+                        showTrackPicker = true
+                    }
+                    .font(.callout)
+                    .buttonStyle(.borderless)
+                    .foregroundColor(.accentColor)
+                }
+            } header: {
+                Text(studyTrackHeader)
+            }
+
             // MARK: - Legal
             Section {
                 Button(s.settingsPrivacyPolicy) { showPrivacy = true }
@@ -224,6 +248,11 @@ struct SettingsView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView(trigger: "settings_upgrade", language: language)
         }
+        .sheet(isPresented: $showTrackPicker) {
+            QuestionSetPickerView(language: language) { _ in
+                showTrackPicker = false
+            }
+        }
         .onAppear {
             notifications.checkAuthorization()
             // Refresh local @State from persisted state. The @State init
@@ -262,6 +291,46 @@ struct SettingsView: View {
         case StoreManager.monthlyID:  return s.settingsPlanMonthly
         case StoreManager.lifetimeID: return s.settingsPlanLifetime
         default: return nil
+        }
+    }
+
+    // MARK: - Study Track copy
+
+    private var is100Track: Bool { questionSetRaw == "2008" }
+
+    private var studyTrackHeader: String {
+        switch language {
+        case .english: return "Study Track"
+        case .nepali:  return "अध्ययन ट्र्याक"
+        case .spanish: return "Vía de estudio"
+        case .chinese: return "学习方向"
+        }
+    }
+
+    private var trackLabel: String {
+        switch language {
+        case .english: return is100Track ? "100 Questions (2008 USCIS)" : "128 Questions (2020 USCIS)"
+        case .nepali:  return is100Track ? "१०० प्रश्न (२००८ USCIS)" : "१२८ प्रश्न (२०२० USCIS)"
+        case .spanish: return is100Track ? "100 preguntas (USCIS 2008)" : "128 preguntas (USCIS 2020)"
+        case .chinese: return is100Track ? "100道题（2008年USCIS）" : "128道题（2020年USCIS）"
+        }
+    }
+
+    private var trackDetail: String {
+        switch language {
+        case .english: return is100Track ? "10 interview sets · Pass 6/10" : "8 practice sets · Pass 12/16"
+        case .nepali:  return is100Track ? "१० अन्तर्वार्ता सेट · ६/१० पास" : "८ अभ्यास सेट · १२/१६ पास"
+        case .spanish: return is100Track ? "10 entrevistas · Pasa 6/10" : "8 prácticas · Pasa 12/16"
+        case .chinese: return is100Track ? "10组面试 · 通过需6/10" : "8组练习 · 通过需12/16"
+        }
+    }
+
+    private var switchTrackLabel: String {
+        switch language {
+        case .english: return "Switch"
+        case .nepali:  return "परिवर्तन"
+        case .spanish: return "Cambiar"
+        case .chinese: return "切换"
         }
     }
 }

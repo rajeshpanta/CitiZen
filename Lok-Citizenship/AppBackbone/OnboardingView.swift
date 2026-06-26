@@ -13,18 +13,19 @@ struct OnboardingView: View {
     // MARK: - State
 
     enum Step: Int, CaseIterable {
-        case intro, language, whyOral, voiceDemo, whatYoullMaster, interviewDate, notifications, quiz, results
+        case intro, language, questionSetSelection, whyOral, voiceDemo, whatYoullMaster, interviewDate, notifications, quiz, results
         /// Step dot index. Intro and results don't get a dot.
         var dotIndex: Int? {
             switch self {
-            case .intro, .results:    return nil
-            case .language:           return 0
-            case .whyOral:            return 1
-            case .voiceDemo:          return 2
-            case .whatYoullMaster:    return 3
-            case .interviewDate:      return 4
-            case .notifications:      return 5
-            case .quiz:               return 6
+            case .intro, .results:          return nil
+            case .language:                 return 0
+            case .questionSetSelection:     return 1
+            case .whyOral:                  return 2
+            case .voiceDemo:                return 3
+            case .whatYoullMaster:          return 4
+            case .interviewDate:            return 5
+            case .notifications:            return 6
+            case .quiz:                     return 7
             }
         }
     }
@@ -61,6 +62,8 @@ struct OnboardingView: View {
         case permissionDenied  // User said no to mic/speech — show Settings link
     }
     @StateObject private var demoVoiceCtrl = OnboardingVoiceDemoController()
+
+    @State private var selectedQuestionSet: ProgressManager.QuestionSet = .set2008
 
     // Quiz state
     @StateObject private var quizLogic = UnifiedQuizLogic()
@@ -101,15 +104,16 @@ struct OnboardingView: View {
             .ignoresSafeArea()
 
             switch step {
-            case .intro:           introScreen
-            case .language:        languageScreen
-            case .whyOral:         whyOralScreen
-            case .voiceDemo:       voiceDemoScreen
-            case .whatYoullMaster: whatYoullMasterScreen
-            case .interviewDate:   dateScreen
-            case .notifications:   notificationScreen
-            case .quiz:            quizScreen
-            case .results:         resultsScreen
+            case .intro:                  introScreen
+            case .language:               languageScreen
+            case .questionSetSelection:   questionSetSelectionScreen
+            case .whyOral:                whyOralScreen
+            case .voiceDemo:              voiceDemoScreen
+            case .whatYoullMaster:        whatYoullMasterScreen
+            case .interviewDate:          dateScreen
+            case .notifications:          notificationScreen
+            case .quiz:                   quizScreen
+            case .results:                resultsScreen
             }
         }
         .animation(.easeInOut(duration: 0.3), value: step)
@@ -394,7 +398,7 @@ struct OnboardingView: View {
                 ForEach(AppLanguage.allCases) { lang in
                     Button {
                         let gen = UISelectionFeedbackGenerator(); gen.selectionChanged()
-                        withAnimation { selectedLanguage = lang; step = .whyOral }
+                        withAnimation { selectedLanguage = lang; step = .questionSetSelection }
                     } label: {
                         VStack(spacing: 8) {
                             Text(lang.flag).font(.system(size: 36))
@@ -771,6 +775,8 @@ struct OnboardingView: View {
         ProgressManager.shared.preferredLanguage = lang.rawValue
         ProgressManager.shared.interviewDate = dateChoice == .picked ? interviewDate : nil
         ProgressManager.shared.recommendedLevel = recommendedLevel
+        ProgressManager.shared.questionSet = selectedQuestionSet
+        ProgressManager.shared.hasChosenQuestionSet = true
         ProgressManager.shared.hasCompletedOnboarding = true
         onComplete(lang)
     }
@@ -785,6 +791,7 @@ struct OnboardingView: View {
         ProgressManager.shared.preferredLanguage = lang.rawValue
         ProgressManager.shared.interviewDate = nil
         ProgressManager.shared.recommendedLevel = 1
+        ProgressManager.shared.hasChosenQuestionSet = true
         ProgressManager.shared.hasCompletedOnboarding = true
         onComplete(lang)
     }
@@ -1042,6 +1049,17 @@ struct OnboardingView: View {
 private extension OnboardingView {
 
     // ─────────────────────────────────────────────────────────────
+    // Screen: Question set selection (new step after language)
+    // ─────────────────────────────────────────────────────────────
+    var questionSetSelectionScreen: some View {
+        OnboardingQuestionSetView(
+            language: selectedLanguage ?? .english,
+            selectedSet: $selectedQuestionSet,
+            onContinue: { withAnimation { step = .whyOral } }
+        )
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Screen: Why CitiZen — the real interview is oral
     // ─────────────────────────────────────────────────────────────
     var whyOralScreen: some View {
@@ -1107,10 +1125,10 @@ private extension View {
 // Step-progress dot row
 // ─────────────────────────────────────────────────────────────────
 //
-// 7 dots cover every intermediate screen with a dotIndex:
-// language(0), whyOral(1), voiceDemo(2), whatYoullMaster(3),
-// interviewDate(4), notifications(5), quiz(6). Intro and results
-// don't render dots (their dotIndex is nil).
+// 8 dots cover every intermediate screen with a dotIndex:
+// language(0), questionSetSelection(1), whyOral(2), voiceDemo(3),
+// whatYoullMaster(4), interviewDate(5), notifications(6), quiz(7).
+// Intro and results don't render dots (their dotIndex is nil).
 //
 // Pulled out as a standalone struct so the 3 informative screens
 // below (which are their own private structs) can render the dots
@@ -1121,7 +1139,7 @@ private struct OnboardingStepDots: View {
     let currentIndex: Int
     var body: some View {
         HStack(spacing: 8) {
-            ForEach(0..<7, id: \.self) { i in
+            ForEach(0..<8, id: \.self) { i in
                 Circle()
                     .fill(i == currentIndex ? Color.cyan : Color.white.opacity(0.2))
                     .frame(width: 8, height: 8)
@@ -1247,7 +1265,7 @@ private struct OnboardingWhyOralView: View {
             .padding(.bottom, 12)
             .staggeredEntry(delay: 0.74, appeared: appeared)
 
-            OnboardingStepDots(currentIndex: 1)
+            OnboardingStepDots(currentIndex: 2)
                 .padding(.bottom, 24)
                 .staggeredEntry(delay: 0.82, appeared: appeared)
         }
@@ -1416,7 +1434,7 @@ private struct OnboardingVoiceDemoView: View {
             .padding(.bottom, 12)
             .staggeredEntry(delay: 0.66, appeared: appeared)
 
-            OnboardingStepDots(currentIndex: 2)
+            OnboardingStepDots(currentIndex: 3)
                 .padding(.bottom, 24)
                 .staggeredEntry(delay: 0.74, appeared: appeared)
         }
@@ -1770,7 +1788,7 @@ private struct OnboardingMasterView: View {
             .padding(.bottom, 12)
             .staggeredEntry(delay: 0.78, appeared: appeared)
 
-            OnboardingStepDots(currentIndex: 3)
+            OnboardingStepDots(currentIndex: 4)
                 .padding(.bottom, 24)
                 .staggeredEntry(delay: 0.86, appeared: appeared)
         }
@@ -1802,5 +1820,248 @@ private struct OnboardingMasterView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Question Set Selection — shown as onboarding step after language
+// ─────────────────────────────────────────────────────────────────
+private struct OnboardingQuestionSetView: View {
+    let language: AppLanguage
+    @Binding var selectedSet: ProgressManager.QuestionSet
+    let onContinue: () -> Void
+
+    @State private var appeared = false
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Spacer(minLength: 24)
+
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 46))
+                .foregroundColor(.cyan)
+                .staggeredEntry(delay: 0.00, appeared: appeared)
+
+            Text(headline)
+                .font(.title.bold())
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+                .staggeredEntry(delay: 0.10, appeared: appeared)
+
+            Text(subtitle)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 28)
+                .staggeredEntry(delay: 0.20, appeared: appeared)
+
+            Spacer().frame(height: 4)
+
+            VStack(spacing: 14) {
+                trackCard(
+                    set: .set2008,
+                    icon: "checkmark.seal.fill",
+                    iconColor: .green,
+                    title: title100,
+                    badge: badgeRecommended,
+                    badgeColor: .green,
+                    description: desc100,
+                    detail: detail100
+                )
+                .staggeredEntry(delay: 0.32, appeared: appeared)
+
+                trackCard(
+                    set: .set2020,
+                    icon: "books.vertical.fill",
+                    iconColor: .purple,
+                    title: title128,
+                    badge: badgeComprehensive,
+                    badgeColor: .purple,
+                    description: desc128,
+                    detail: detail128
+                )
+                .staggeredEntry(delay: 0.44, appeared: appeared)
+            }
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                onContinue()
+            } label: {
+                Text(continueLabel)
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(LinearGradient(
+                                colors: [.blue, .blue.opacity(0.75)],
+                                startPoint: .leading, endPoint: .trailing))
+                    )
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 12)
+            .staggeredEntry(delay: 0.58, appeared: appeared)
+
+            OnboardingStepDots(currentIndex: 1)
+                .padding(.bottom, 24)
+                .staggeredEntry(delay: 0.66, appeared: appeared)
+        }
+        .onAppear {
+            appeared = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { appeared = true }
+        }
+    }
+
+    private func trackCard(
+        set: ProgressManager.QuestionSet,
+        icon: String,
+        iconColor: Color,
+        title: String,
+        badge: String,
+        badgeColor: Color,
+        description: String,
+        detail: String
+    ) -> some View {
+        let isSelected = selectedSet == set
+        return Button {
+            UISelectionFeedbackGenerator().selectionChanged()
+            selectedSet = set
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) {
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundColor(iconColor)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(.headline.bold())
+                            .foregroundColor(.white)
+                        Text(detail)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.55))
+                    }
+                    Spacer()
+                    Text(badge)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(badgeColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(badgeColor.opacity(0.15)))
+                        .overlay(Capsule().stroke(badgeColor.opacity(0.4), lineWidth: 1))
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(isSelected ? .cyan : .white.opacity(0.3))
+                }
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.70))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isSelected ? Color.cyan.opacity(0.08) : Color.white.opacity(0.06))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? Color.cyan.opacity(0.5) : Color.white.opacity(0.1),
+                            lineWidth: isSelected ? 1.5 : 1)
+            )
+        }
+    }
+
+    // MARK: - Localized copy
+    private var headline: String {
+        switch language {
+        case .english: return "Choose Your Study Track"
+        case .nepali:  return "अध्ययन ट्र्याक छान्नुहोस्"
+        case .spanish: return "Elige tu ruta de estudio"
+        case .chinese: return "选择你的学习方向"
+        }
+    }
+    private var subtitle: String {
+        switch language {
+        case .english: return "You can switch tracks anytime in Settings"
+        case .nepali:  return "तपाईं सेटिङ्समा जुनसुकै बेला ट्र्याक परिवर्तन गर्न सक्नुहुन्छ"
+        case .spanish: return "Puedes cambiar de ruta en cualquier momento en Ajustes"
+        case .chinese: return "你可以随时在设置中切换方向"
+        }
+    }
+    private var title100: String {
+        switch language {
+        case .english: return "100 Questions"
+        case .nepali:  return "१०० प्रश्नहरू"
+        case .spanish: return "100 preguntas"
+        case .chinese: return "100道题"
+        }
+    }
+    private var detail100: String {
+        switch language {
+        case .english: return "10 sets · 10 questions each · Pass 6/10"
+        case .nepali:  return "१० सेट · प्रत्येक १० प्रश्न · ६/१० पास"
+        case .spanish: return "10 sets · 10 preguntas cada uno · Pasa 6/10"
+        case .chinese: return "10组 · 每组10题 · 通过需6/10"
+        }
+    }
+    private var desc100: String {
+        switch language {
+        case .english: return "The current official USCIS civics test used at real naturalization interviews. Each practice set mirrors the real interview: 10 questions, pass 6 out of 10."
+        case .nepali:  return "वास्तविक USCIS नागरिकता अन्तर्वार्तामा प्रयोग हुने आधिकारिक परीक्षा। प्रत्येक अभ्यास सेट वास्तविक अन्तर्वार्ता जस्तै: १० प्रश्न, १० मध्ये ६ पास।"
+        case .spanish: return "El examen cívico oficial de USCIS que se usa en las entrevistas reales de naturalización. Cada set de práctica imita la entrevista real: 10 preguntas, pasa 6 de 10."
+        case .chinese: return "目前真实USCIS入籍面试所使用的官方公民考试。每组练习模拟真实面试：10道题，通过需答对6道。"
+        }
+    }
+    private var title128: String {
+        switch language {
+        case .english: return "128 Questions"
+        case .nepali:  return "१२८ प्रश्नहरू"
+        case .spanish: return "128 preguntas"
+        case .chinese: return "128道题"
+        }
+    }
+    private var detail128: String {
+        switch language {
+        case .english: return "8 sets · 16 questions each · Practice mode"
+        case .nepali:  return "८ सेट · प्रत्येक १६ प्रश्न · अभ्यास मोड"
+        case .spanish: return "8 sets · 16 preguntas cada uno · Modo práctica"
+        case .chinese: return "8组 · 每组16题 · 练习模式"
+        }
+    }
+    private var desc128: String {
+        switch language {
+        case .english: return "A broader 128-question bank for deep preparation. Covers every topic area in detail across 8 thematic practice levels."
+        case .nepali:  return "गहन तयारीको लागि व्यापक १२८-प्रश्न बैंक। ८ विषयगत अभ्यास स्तरमा हरेक विषय क्षेत्र विस्तृत रूपमा समेट्छ।"
+        case .spanish: return "Un banco de 128 preguntas más amplio para una preparación profunda. Cubre cada área temática en detalle en 8 niveles de práctica."
+        case .chinese: return "包含128道题的广泛题库，助你深度备考。通过8个主题练习级别，全面涵盖各知识领域。"
+        }
+    }
+    private var badgeRecommended: String {
+        switch language {
+        case .english: return "RECOMMENDED"
+        case .nepali:  return "सिफारिश"
+        case .spanish: return "RECOMENDADO"
+        case .chinese: return "推荐"
+        }
+    }
+    private var badgeComprehensive: String {
+        switch language {
+        case .english: return "COMPREHENSIVE"
+        case .nepali:  return "व्यापक"
+        case .spanish: return "COMPLETO"
+        case .chinese: return "全面"
+        }
+    }
+    private var continueLabel: String {
+        switch language {
+        case .english: return "Continue"
+        case .nepali:  return "जारी राख्नुहोस्"
+        case .spanish: return "Continuar"
+        case .chinese: return "继续"
+        }
     }
 }

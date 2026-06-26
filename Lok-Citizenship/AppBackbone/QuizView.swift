@@ -124,15 +124,13 @@ struct QuizView: View {
         }
     }
 
-    /// Next level number if one exists. Defined only for the normal
-    /// practice path (level 1-8). Returns nil for level 0 — the
-    /// "Review Mistakes" entry from PracticeSelectionView — and for
-    /// level 8 (already the hardest). nil triggers the "Back to Levels"
-    /// button label, and crucially prevents leaking a stale
-    /// `NavigationIntent` into PracticeLevelsView from non-practice
-    /// entry points.
+    /// Next level number if one exists. Defined for the normal practice path.
+    /// Returns nil for level 0 (Review Mistakes), level 8 (last 128-set level),
+    /// and level 10 (last 100-set level). nil triggers the "Back to Levels" button.
     private var nextLevelNumber: Int? {
-        (level >= 1 && level < 8) ? level + 1 : nil
+        // 100-question track has 10 sets; 128-question track has 8 sets.
+        let maxLevel = config.requiredCorrect != nil ? 10 : 8
+        return (level >= 1 && level < maxLevel) ? level + 1 : nil
     }
 
     /// True when the next level is paywalled for the current user.
@@ -257,7 +255,9 @@ struct QuizView: View {
         // without leaking a level-push intent.
         .navigationDestination(isPresented: $showReviewMisses) {
             QuizView(
-                config: .reviewMistakes(questions: missedQuestions, language: appLanguage),
+                config: config.requiredCorrect != nil
+                    ? .reviewMistakes100(questions: missedQuestions, language: appLanguage)
+                    : .reviewMistakes(questions: missedQuestions, language: appLanguage),
                 level: 0
             )
             .navigationTitle(UIStrings.forLocaleCode(localeCode).navReviewMistakes)
@@ -271,7 +271,17 @@ struct QuizView: View {
             quizLogic.languageTag = localeCode
             quizLogic.levelTag = level
 
-            quizLogic.startQuiz()
+            // 100-question track: start in interview mode (6/10 pass, early-exit).
+            // 128-question track: standard practice mode (4-mistake limit).
+            if let required = config.requiredCorrect {
+                quizLogic.startMockInterview(
+                    from: config.questions,
+                    questionCount: config.questions.count,
+                    requiredCorrect: required
+                )
+            } else {
+                quizLogic.startQuiz()
+            }
             syncVoiceConfig()
             voice.requestAuthorization()
         }
@@ -433,12 +443,24 @@ private extension QuizView {
                         Capsule().fill(Color.yellow.opacity(0.15))
                     )
 
-                // Mistake pips
-                HStack(spacing: 3) {
-                    ForEach(0..<4, id: \.self) { i in
-                        Image(systemName: i < mistakesRemaining ? "heart.fill" : "heart")
-                            .font(.caption2)
-                            .foregroundColor(i < mistakesRemaining ? .red : .white.opacity(0.25))
+                // Interview mode: score counter. Practice mode: heart pips.
+                if let required = config.requiredCorrect {
+                    HStack(spacing: 6) {
+                        Label("\(quizLogic.correctAnswers)", systemImage: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Label("\(quizLogic.incorrectAnswers)", systemImage: "xmark.circle.fill")
+                            .foregroundColor(.red)
+                        Text("Need \(required)")
+                            .foregroundColor(.cyan.opacity(0.8))
+                    }
+                    .font(.caption.bold())
+                } else {
+                    HStack(spacing: 3) {
+                        ForEach(0..<4, id: \.self) { i in
+                            Image(systemName: i < mistakesRemaining ? "heart.fill" : "heart")
+                                .font(.caption2)
+                                .foregroundColor(i < mistakesRemaining ? .red : .white.opacity(0.25))
+                        }
                     }
                 }
             }
@@ -799,12 +821,14 @@ private extension QuizView {
 
                 Spacer()
 
-                Text("\(strings.mistakesLabel) \(quizLogic.incorrectAnswers)/4")
-                    .font(.caption.bold())
-                    .foregroundColor(.orange)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Capsule().fill(Color.orange.opacity(0.15)))
+                if config.requiredCorrect == nil {
+                    Text("\(strings.mistakesLabel) \(quizLogic.incorrectAnswers)/4")
+                        .font(.caption.bold())
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color.orange.opacity(0.15)))
+                }
             }
 
             if !isAnswerCorrect {
@@ -1007,7 +1031,15 @@ private extension QuizView {
                 quizLogic.levelTag = level
 
                 quizLogic.selectedVariantIndex = config.defaultVariantIndex
-                quizLogic.startQuiz()
+                if let required = config.requiredCorrect {
+                    quizLogic.startMockInterview(
+                        from: config.questions,
+                        questionCount: config.questions.count,
+                        requiredCorrect: required
+                    )
+                } else {
+                    quizLogic.startQuiz()
+                }
                 resetPerQuestionState()
             } label: {
                 Label(strings.restartQuiz, systemImage: "arrow.clockwise")

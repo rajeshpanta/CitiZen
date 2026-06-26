@@ -30,6 +30,13 @@ struct QuizConfig {
     /// English uses 2.0; all other languages use 1.5.
     let questionToOptionsDelay: TimeInterval
 
+    /// When non-nil, the quiz starts in interview mode with this many correct answers
+    /// required to pass. QuizView calls `startMockInterview(from:questionCount:requiredCorrect:)`
+    /// instead of `startQuiz()`, giving the same early-pass / early-fail logic as the real
+    /// USCIS interview. The 100-question track sets this to 6 (6/10 = USCIS pass threshold).
+    /// Nil (default) = standard practice mode (4-mistake limit).
+    var requiredCorrect: Int? = nil
+
     /// One button in the language toggle bar.
     struct LanguageToggle {
         let label: String       // e.g. "🇺🇸 English", "🇳🇵 नेपाली"
@@ -98,6 +105,48 @@ extension QuizConfig {
         case .nepali:  return .nepali(questions: questions)
         case .spanish: return .spanish(questions: questions)
         case .chinese: return .chinese(questions: questions)
+        }
+    }
+
+    // MARK: - 100-question track (interview mode: 6/10 to pass)
+
+    /// English-only interview-mode quiz for the 100-question track.
+    /// Uses the same TTS/STT config as `english(questions:)` but starts in
+    /// mock-interview mode: 10 questions, 6/10 to pass (matches the real USCIS interview).
+    static func english100(questions: [UnifiedQuestion]) -> QuizConfig {
+        var config = english(questions: questions)
+        config.requiredCorrect = 6
+        return config
+    }
+
+    /// English + Nepali bilingual interview-mode quiz for the 100-question track.
+    static func nepali100(questions: [UnifiedQuestion]) -> QuizConfig {
+        var config = nepali(questions: questions)
+        config.requiredCorrect = 6
+        return config
+    }
+
+    /// English + Spanish bilingual interview-mode quiz for the 100-question track.
+    static func spanish100(questions: [UnifiedQuestion]) -> QuizConfig {
+        var config = spanish(questions: questions)
+        config.requiredCorrect = 6
+        return config
+    }
+
+    /// English + Chinese trilingual interview-mode quiz for the 100-question track.
+    static func chinese100(questions: [UnifiedQuestion]) -> QuizConfig {
+        var config = chinese(questions: questions)
+        config.requiredCorrect = 6
+        return config
+    }
+
+    /// Review mistakes for the 100-question track (also interview mode).
+    static func reviewMistakes100(questions: [UnifiedQuestion], language: AppLanguage) -> QuizConfig {
+        switch language {
+        case .english: return .english100(questions: questions)
+        case .nepali:  return .nepali100(questions: questions)
+        case .spanish: return .spanish100(questions: questions)
+        case .chinese: return .chinese100(questions: questions)
         }
     }
 

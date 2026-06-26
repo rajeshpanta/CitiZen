@@ -130,6 +130,33 @@ final class ProgressManager {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // MARK: - Question Set (100 vs 128 questions)
+    // ─────────────────────────────────────────────────────────────
+
+    /// Which civics question set the user is studying.
+    /// `.set2008` = 100 official questions (current USCIS interview).
+    /// `.set2020` = 128 official questions (rescinded 2021 test, kept as study option).
+    enum QuestionSet: String {
+        case set2008 = "2008"  // 100 questions, 10 sets × 10, 6/10 pass threshold
+        case set2020 = "2020"  // 128 questions, 8 sets × 16, 4-mistake practice mode
+    }
+
+    var questionSet: QuestionSet {
+        get {
+            let raw = defaults.string(forKey: "pm_questionSet") ?? ""
+            return QuestionSet(rawValue: raw) ?? .set2008
+        }
+        set { defaults.set(newValue.rawValue, forKey: "pm_questionSet") }
+    }
+
+    /// True once the user has actively chosen a question set (via onboarding or the
+    /// one-time upgrade modal). Used to show the selection UI exactly once.
+    var hasChosenQuestionSet: Bool {
+        get { defaults.bool(forKey: "pm_hasChosenQuestionSet") }
+        set { defaults.set(newValue, forKey: "pm_hasChosenQuestionSet") }
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // MARK: - Onboarding (ready for future OnboardingView)
     // ─────────────────────────────────────────────────────────────
 

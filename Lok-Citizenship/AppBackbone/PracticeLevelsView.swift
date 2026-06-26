@@ -245,6 +245,220 @@ private let chinesePracticeItems: [PracticeItem] = [
     )
 ]
 
+// MARK: - 100-question track items (interview mode: 10 sets × 10 questions, 6/10 to pass)
+
+private let english100PracticeItems: [PracticeItem] = [
+    PracticeItem(
+        title: "Interview 1 – Principles of Democracy",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice1), level: 1)) },
+        level: 1
+    ),
+    PracticeItem(
+        title: "Interview 2 – Foundations of Government",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice2), level: 2)) },
+        level: 2
+    ),
+    PracticeItem(
+        title: "Interview 3 – Congress & Elections",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice3), level: 3)) },
+        level: 3
+    ),
+    PracticeItem(
+        title: "Interview 4 – Executive & Judicial Branch",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice4), level: 4)) },
+        level: 4
+    ),
+    PracticeItem(
+        title: "Interview 5 – Federal & State Powers",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice5), level: 5)) },
+        level: 5
+    ),
+    PracticeItem(
+        title: "Interview 6 – Rights & Civic Responsibilities",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice6), level: 6)) },
+        level: 6
+    ),
+    PracticeItem(
+        title: "Interview 7 – Colonial History & Independence",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice7), level: 7)) },
+        level: 7
+    ),
+    PracticeItem(
+        title: "Interview 8 – The 1800s & Civil War",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice8), level: 8)) },
+        level: 8
+    ),
+    PracticeItem(
+        title: "Interview 9 – 20th Century & US Geography",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice9), level: 9)) },
+        level: 9
+    ),
+    PracticeItem(
+        title: "Interview 10 – Geography, Symbols & Holidays",
+        buildView: { AnyView(QuizView(config: .english100(questions: EnglishQuestions100.practice10), level: 10)) },
+        level: 10
+    )
+]
+
+private let nepali100PracticeItems: [PracticeItem] = [
+    PracticeItem(
+        title: "अन्तर्वार्ता १ – लोकतन्त्रका सिद्धान्तहरू",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice1), level: 1)) },
+        level: 1
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता २ – सरकारका आधारहरू",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice2), level: 2)) },
+        level: 2
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता ३ – कांग्रेस र निर्वाचन",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice3), level: 3)) },
+        level: 3
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता ४ – कार्यपालिका र न्यायपालिका",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice4), level: 4)) },
+        level: 4
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता ५ – संघीय र राज्य शक्ति",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice5), level: 5)) },
+        level: 5
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता ६ – अधिकार र नागरिक जिम्मेवारी",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice6), level: 6)) },
+        level: 6
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता ७ – औपनिवेशिक इतिहास र स्वतन्त्रता",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice7), level: 7)) },
+        level: 7
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता ८ – १८०० का दशक र गृहयुद्ध",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice8), level: 8)) },
+        level: 8
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता ९ – २०औँ शताब्दी र अमेरिकी भूगोल",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice9), level: 9)) },
+        level: 9
+    ),
+    PracticeItem(
+        title: "अन्तर्वार्ता १० – भूगोल, प्रतीक र बिदाहरू",
+        buildView: { AnyView(QuizView(config: .nepali100(questions: NepaliQuestions100.practice10), level: 10)) },
+        level: 10
+    )
+]
+
+private let spanish100PracticeItems: [PracticeItem] = [
+    PracticeItem(
+        title: "Entrevista 1 – Principios de la democracia",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice1), level: 1)) },
+        level: 1
+    ),
+    PracticeItem(
+        title: "Entrevista 2 – Fundamentos del gobierno",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice2), level: 2)) },
+        level: 2
+    ),
+    PracticeItem(
+        title: "Entrevista 3 – Congreso y elecciones",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice3), level: 3)) },
+        level: 3
+    ),
+    PracticeItem(
+        title: "Entrevista 4 – Poder ejecutivo y judicial",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice4), level: 4)) },
+        level: 4
+    ),
+    PracticeItem(
+        title: "Entrevista 5 – Poderes federales y estatales",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice5), level: 5)) },
+        level: 5
+    ),
+    PracticeItem(
+        title: "Entrevista 6 – Derechos y responsabilidades",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice6), level: 6)) },
+        level: 6
+    ),
+    PracticeItem(
+        title: "Entrevista 7 – Historia colonial e independencia",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice7), level: 7)) },
+        level: 7
+    ),
+    PracticeItem(
+        title: "Entrevista 8 – El siglo XIX y la Guerra Civil",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice8), level: 8)) },
+        level: 8
+    ),
+    PracticeItem(
+        title: "Entrevista 9 – Siglo XX y geografía de EE. UU.",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice9), level: 9)) },
+        level: 9
+    ),
+    PracticeItem(
+        title: "Entrevista 10 – Geografía, símbolos y días festivos",
+        buildView: { AnyView(QuizView(config: .spanish100(questions: SpanishQuestions100.practice10), level: 10)) },
+        level: 10
+    )
+]
+
+private let chinese100PracticeItems: [PracticeItem] = [
+    PracticeItem(
+        title: "面试 1 – 民主原则",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice1), level: 1)) },
+        level: 1
+    ),
+    PracticeItem(
+        title: "面试 2 – 政府基础",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice2), level: 2)) },
+        level: 2
+    ),
+    PracticeItem(
+        title: "面试 3 – 国会与选举",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice3), level: 3)) },
+        level: 3
+    ),
+    PracticeItem(
+        title: "面试 4 – 行政与司法权",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice4), level: 4)) },
+        level: 4
+    ),
+    PracticeItem(
+        title: "面试 5 – 联邦与州权力",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice5), level: 5)) },
+        level: 5
+    ),
+    PracticeItem(
+        title: "面试 6 – 权利与公民责任",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice6), level: 6)) },
+        level: 6
+    ),
+    PracticeItem(
+        title: "面试 7 – 殖民历史与独立",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice7), level: 7)) },
+        level: 7
+    ),
+    PracticeItem(
+        title: "面试 8 – 19世纪与内战",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice8), level: 8)) },
+        level: 8
+    ),
+    PracticeItem(
+        title: "面试 9 – 20世纪与美国地理",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice9), level: 9)) },
+        level: 9
+    ),
+    PracticeItem(
+        title: "面试 10 – 地理、符号与节日",
+        buildView: { AnyView(QuizView(config: .chinese100(questions: ChineseQuestions100.practice10), level: 10)) },
+        level: 10
+    )
+]
+
 struct PracticeLevelsView: View {
     let language: AppLanguage
 
@@ -263,16 +477,16 @@ struct PracticeLevelsView: View {
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
-    /// Returns the cached per-language items array. The arrays themselves
-    /// are file-scope `let` constants (above) so that closure identities
-    /// stay stable across body re-renders — see the long comment near
-    /// `englishPracticeItems` for the bug history.
+    /// Returns the cached per-language items array for the active question set.
+    /// All arrays are file-scope `let` constants — see the long comment near
+    /// `englishPracticeItems` for why that prevents the quiz-exit bug.
     private var items: [PracticeItem] {
+        let is100 = ProgressManager.shared.questionSet == .set2008
         switch language {
-        case .english: return englishPracticeItems
-        case .nepali:  return nepaliPracticeItems
-        case .spanish: return spanishPracticeItems
-        case .chinese: return chinesePracticeItems
+        case .english: return is100 ? english100PracticeItems : englishPracticeItems
+        case .nepali:  return is100 ? nepali100PracticeItems  : nepaliPracticeItems
+        case .spanish: return is100 ? spanish100PracticeItems : spanishPracticeItems
+        case .chinese: return is100 ? chinese100PracticeItems : chinesePracticeItems
         }
     }
 
@@ -283,13 +497,14 @@ struct PracticeLevelsView: View {
         case 3: return (s.levelHard,     .orange, "3.circle.fill")
         case 4: return (s.levelAdvanced, .pink,   "4.circle.fill")
         case 5: return (s.levelExpert,   .red,    "5.circle.fill")
-        // 6-8 are English-only (other languages stop at 5). Difficulty
-        // labels continue the Easy → Expert progression: Master → Elite
-        // → Grandmaster, so each card reads as a distinct rung even
-        // though the themed title carries the topic.
+        // 6-8 are English-only in the 128-question track. The 100-question
+        // track adds levels 9-10 for all languages. Difficulty labels continue
+        // the Easy → Expert progression up through Grandmaster and Legend.
         case 6: return (s.levelMaster,       .purple, "6.circle.fill")
         case 7: return (s.levelElite,        .indigo, "7.circle.fill")
         case 8: return (s.levelGrandmaster,  .brown,  "8.circle.fill")
+        case 9: return ("Legend",            .orange, "9.circle.fill")
+        case 10: return ("Champion",         .yellow, "10.circle.fill")
         default: return ("", .gray, "circle")
         }
     }

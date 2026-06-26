@@ -8,22 +8,17 @@ struct ReadinessView: View {
     private let tracker = QuestionTracker.shared
     private let progress = ProgressManager.shared
 
-    /// Per-language practice level count. All four supported languages are now
-    /// on the official 2025 USCIS 8-practice layout (16 questions each = 128).
-    /// Kept as a per-language computed property in case a future language ships
-    /// with a different layout. Drives the level-breakdown row count below.
+    /// Practice level count for the active question set.
+    /// 100-question track (2008): 10 levels × 10 questions.
+    /// 128-question track (2020): 8 levels × 16 questions.
     private var levelCount: Int {
-        switch language {
-        case .english, .spanish, .chinese, .nepali: return 8
-        }
+        ProgressManager.shared.questionSet == .set2008 ? 10 : 8
     }
 
-    /// Per-language total — all four supported languages (English, Spanish,
-    /// Chinese, Nepali) now have the full 128-question 2025 USCIS bank
-    /// (16 per level × 8 levels). Reading from `QuestionPool` keeps the
-    /// readiness math correct as more languages are added.
+    /// Total questions for the active question set and language.
+    /// Uses `QuestionPool.activePool` so the math stays correct as sets change.
     private var totalQuestions: Int {
-        QuestionPool.allQuestions(for: language).count
+        QuestionPool.activePool(for: language).count
     }
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
@@ -377,10 +372,19 @@ struct ReadinessView: View {
     }
 
     private func questionsForLevel(_ level: Int) -> [UnifiedQuestion] {
+        let is100 = ProgressManager.shared.questionSet == .set2008
         switch language {
         case .english:
-            // 8-practice 2025 USCIS layout. `levelCount` for English is 8,
-            // so `level - 1` is always in [0..7].
+            if is100 {
+                let arrays = [
+                    EnglishQuestions100.practice1,  EnglishQuestions100.practice2,
+                    EnglishQuestions100.practice3,  EnglishQuestions100.practice4,
+                    EnglishQuestions100.practice5,  EnglishQuestions100.practice6,
+                    EnglishQuestions100.practice7,  EnglishQuestions100.practice8,
+                    EnglishQuestions100.practice9,  EnglishQuestions100.practice10
+                ]
+                return arrays[safe: level - 1] ?? []
+            }
             let arrays = [
                 EnglishQuestions.practice1, EnglishQuestions.practice2,
                 EnglishQuestions.practice3, EnglishQuestions.practice4,
@@ -389,7 +393,16 @@ struct ReadinessView: View {
             ]
             return arrays[safe: level - 1] ?? []
         case .nepali:
-            // Nepali matches English's 8-practice 2025 USCIS layout.
+            if is100 {
+                let arrays = [
+                    NepaliQuestions100.practice1,  NepaliQuestions100.practice2,
+                    NepaliQuestions100.practice3,  NepaliQuestions100.practice4,
+                    NepaliQuestions100.practice5,  NepaliQuestions100.practice6,
+                    NepaliQuestions100.practice7,  NepaliQuestions100.practice8,
+                    NepaliQuestions100.practice9,  NepaliQuestions100.practice10
+                ]
+                return arrays[safe: level - 1] ?? []
+            }
             let arrays = [
                 NepaliQuestions.practice1, NepaliQuestions.practice2,
                 NepaliQuestions.practice3, NepaliQuestions.practice4,
@@ -398,7 +411,16 @@ struct ReadinessView: View {
             ]
             return arrays[safe: level - 1] ?? []
         case .spanish:
-            // Spanish matches English's 8-practice 2025 USCIS layout.
+            if is100 {
+                let arrays = [
+                    SpanishQuestions100.practice1,  SpanishQuestions100.practice2,
+                    SpanishQuestions100.practice3,  SpanishQuestions100.practice4,
+                    SpanishQuestions100.practice5,  SpanishQuestions100.practice6,
+                    SpanishQuestions100.practice7,  SpanishQuestions100.practice8,
+                    SpanishQuestions100.practice9,  SpanishQuestions100.practice10
+                ]
+                return arrays[safe: level - 1] ?? []
+            }
             let arrays = [
                 SpanishQuestions.practice1, SpanishQuestions.practice2,
                 SpanishQuestions.practice3, SpanishQuestions.practice4,
@@ -407,7 +429,16 @@ struct ReadinessView: View {
             ]
             return arrays[safe: level - 1] ?? []
         case .chinese:
-            // Chinese matches English's 8-practice 2025 USCIS layout.
+            if is100 {
+                let arrays = [
+                    ChineseQuestions100.practice1,  ChineseQuestions100.practice2,
+                    ChineseQuestions100.practice3,  ChineseQuestions100.practice4,
+                    ChineseQuestions100.practice5,  ChineseQuestions100.practice6,
+                    ChineseQuestions100.practice7,  ChineseQuestions100.practice8,
+                    ChineseQuestions100.practice9,  ChineseQuestions100.practice10
+                ]
+                return arrays[safe: level - 1] ?? []
+            }
             let arrays = [
                 ChineseQuestions.practice1, ChineseQuestions.practice2,
                 ChineseQuestions.practice3, ChineseQuestions.practice4,

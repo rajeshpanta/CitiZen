@@ -22,6 +22,7 @@ struct Lok_CitizenshipApp: App {
     /// SettingsView's DEBUG "Reset Onboarding" button, or any future toggle
     /// — without needing a relaunch.
     @AppStorage("pm_hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("pm_hasChosenQuestionSet")   private var hasChosenQuestionSet   = false
 
     /// Resolve saved language preference to AppLanguage enum. Falls back to English.
     private var savedLanguage: AppLanguage {
@@ -84,6 +85,18 @@ struct Lok_CitizenshipApp: App {
                 if hasCompletedOnboarding {
                     NavigationStack {
                         PracticeSelectionView(language: savedLanguage)
+                    }
+                    // One-time track-selection modal for users who upgraded from a
+                    // build that predates the 100-question track. New users see this
+                    // as a step inside OnboardingView instead (so they are never shown
+                    // this sheet). `interactiveDismissDisabled` prevents accidental
+                    // swipe-down dismissal — the user must actively choose a track.
+                    .sheet(isPresented: .constant(!hasChosenQuestionSet)) {
+                        QuestionSetPickerView(language: savedLanguage) { _ in
+                            // hasChosenQuestionSet is persisted inside QuestionSetPickerView
+                            // via ProgressManager; @AppStorage picks it up automatically.
+                        }
+                        .interactiveDismissDisabled(true)
                     }
                 } else {
                     OnboardingView { _ in

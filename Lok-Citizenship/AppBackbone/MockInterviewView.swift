@@ -5,11 +5,10 @@ import SwiftUI
 // ═════════════════════════════════════════════════════════════════
 
 enum QuestionPool {
+    /// Full 128-question pool (2020 USCIS test, 8 × 16 questions).
     static func allQuestions(for language: AppLanguage) -> [UnifiedQuestion] {
         switch language {
         case .english:
-            // All four languages are on the 2025 USCIS 8-practice /
-            // 128-question layout.
             return EnglishQuestions.practice1 + EnglishQuestions.practice2
                  + EnglishQuestions.practice3 + EnglishQuestions.practice4
                  + EnglishQuestions.practice5 + EnglishQuestions.practice6
@@ -30,6 +29,42 @@ enum QuestionPool {
                  + ChineseQuestions.practice5 + ChineseQuestions.practice6
                  + ChineseQuestions.practice7 + ChineseQuestions.practice8
         }
+    }
+
+    /// Full 100-question pool (2008 USCIS test, 10 × 10 questions).
+    static func allQuestions100(for language: AppLanguage) -> [UnifiedQuestion] {
+        switch language {
+        case .english:
+            return EnglishQuestions100.practice1  + EnglishQuestions100.practice2
+                 + EnglishQuestions100.practice3  + EnglishQuestions100.practice4
+                 + EnglishQuestions100.practice5  + EnglishQuestions100.practice6
+                 + EnglishQuestions100.practice7  + EnglishQuestions100.practice8
+                 + EnglishQuestions100.practice9  + EnglishQuestions100.practice10
+        case .nepali:
+            return NepaliQuestions100.practice1  + NepaliQuestions100.practice2
+                 + NepaliQuestions100.practice3  + NepaliQuestions100.practice4
+                 + NepaliQuestions100.practice5  + NepaliQuestions100.practice6
+                 + NepaliQuestions100.practice7  + NepaliQuestions100.practice8
+                 + NepaliQuestions100.practice9  + NepaliQuestions100.practice10
+        case .spanish:
+            return SpanishQuestions100.practice1  + SpanishQuestions100.practice2
+                 + SpanishQuestions100.practice3  + SpanishQuestions100.practice4
+                 + SpanishQuestions100.practice5  + SpanishQuestions100.practice6
+                 + SpanishQuestions100.practice7  + SpanishQuestions100.practice8
+                 + SpanishQuestions100.practice9  + SpanishQuestions100.practice10
+        case .chinese:
+            return ChineseQuestions100.practice1  + ChineseQuestions100.practice2
+                 + ChineseQuestions100.practice3  + ChineseQuestions100.practice4
+                 + ChineseQuestions100.practice5  + ChineseQuestions100.practice6
+                 + ChineseQuestions100.practice7  + ChineseQuestions100.practice8
+                 + ChineseQuestions100.practice9  + ChineseQuestions100.practice10
+        }
+    }
+
+    /// Returns the correct pool for the user's active question set.
+    static func activePool(for language: AppLanguage) -> [UnifiedQuestion] {
+        let raw = UserDefaults.standard.string(forKey: "pm_questionSet") ?? ""
+        return raw == "2020" ? allQuestions(for: language) : allQuestions100(for: language)
     }
 }
 
@@ -63,7 +98,10 @@ struct MockInterviewView: View {
     @Environment(\.requestReview) private var requestReview
 
     private let interviewQuestionCount = 10
-    private let requiredCorrect = 8
+    // 100-question track (2008): 6/10 to pass. 128-question track (2020): 8/10.
+    private var requiredCorrect: Int {
+        ProgressManager.shared.questionSet == .set2008 ? 6 : 8
+    }
 
     // Custom init to wire voice controller to quiz logic
     init(language: AppLanguage) {
@@ -141,7 +179,7 @@ struct MockInterviewView: View {
         case .authorized:
             AudioSessionPrewarmer.prewarm {
                 quizLogic.startMockInterview(
-                    from: QuestionPool.allQuestions(for: language),
+                    from: QuestionPool.activePool(for: language),
                     questionCount: interviewQuestionCount,
                     requiredCorrect: requiredCorrect
                 )
@@ -1157,7 +1195,7 @@ struct MockInterviewView: View {
                             mockRecorded = false
                             AudioSessionPrewarmer.prewarm {
                                 quizLogic.startMockInterview(
-                                    from: QuestionPool.allQuestions(for: language),
+                                    from: QuestionPool.activePool(for: language),
                                     questionCount: interviewQuestionCount,
                                     requiredCorrect: requiredCorrect
                                 )
