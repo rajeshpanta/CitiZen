@@ -126,7 +126,7 @@ enum NepaliQuestions100 {
                   options: ["The Speaker of the House", "The Chief Justice of the Supreme Court", "The President", "The Secretary of State"],
                   explanation: "The President leads the executive branch, which carries out and enforces laws passed by Congress."),
             .init(text: "कार्यपालिका शाखाको प्रमुख को हो?",
-                  options: ["प्रतिनिधि सभाका अध्यक्ष", "सर्वोच्च अदालतका प्रधान न्यायाधीश", "राष्ट्रपति", "विदेश सचिव"],
+                  options: ["प्रतिनिधि सभाका सभामुख", "सर्वोच्च अदालतका प्रधान न्यायाधीश", "राष्ट्रपति", "विदेश सचिव"],
                   explanation: "राष्ट्रपतिले कार्यपालिका शाखाको नेतृत्व गर्छन्, जसले कांग्रेसले पारित कानुनहरू कार्यान्वयन र लागू गर्छ।")
         ]),
         UnifiedQuestion(id: "q_08_016", correctAnswer: 2, variants: [
@@ -250,7 +250,7 @@ enum NepaliQuestions100 {
                   options: ["The Speaker of the House", "The Chief Justice", "The Secretary of State", "The Vice President"],
                   explanation: "The Vice President becomes President if the President is unable to serve, per the 25th Amendment (1967)."),
             .init(text: "राष्ट्रपतिले सेवा गर्न नसके को राष्ट्रपति बन्छन्?",
-                  options: ["प्रतिनिधि सभाका अध्यक्ष", "प्रधान न्यायाधीश", "विदेश सचिव", "उपराष्ट्रपति"],
+                  options: ["प्रतिनिधि सभाका सभामुख", "प्रधान न्यायाधीश", "विदेश सचिव", "उपराष्ट्रपति"],
                   explanation: "२५औं संशोधन (१९६७) अनुसार राष्ट्रपतिले सेवा गर्न नसके उपराष्ट्रपति राष्ट्रपति बन्छन्।")
         ]),
     ]
@@ -262,8 +262,8 @@ enum NepaliQuestions100 {
                   options: ["The Secretary of State", "The Speaker of the House", "The President pro tempore of the Senate", "The Chief Justice of the Supreme Court"],
                   explanation: "By the Presidential Succession Act, the Speaker of the House is third in the line of succession, after the Vice President."),
             .init(text: "राष्ट्रपति र उपराष्ट्रपति दुवैले सेवा गर्न नसके को राष्ट्रपति बन्छन्?",
-                  options: ["विदेश सचिव", "प्रतिनिधि सभाका अध्यक्ष", "सेनेटका अस्थायी अध्यक्ष", "सर्वोच्च अदालतका प्रधान न्यायाधीश"],
-                  explanation: "राष्ट्रपतीय उत्तराधिकार ऐन अनुसार, प्रतिनिधि सभाका अध्यक्ष उपराष्ट्रपतिपछि उत्तराधिकारको तेस्रो क्रममा हुन्छन्।")
+                  options: ["विदेश सचिव", "प्रतिनिधि सभाका सभामुख", "सेनेटका अस्थायी अध्यक्ष", "सर्वोच्च अदालतका प्रधान न्यायाधीश"],
+                  explanation: "राष्ट्रपतीय उत्तराधिकार ऐन अनुसार, प्रतिनिधि सभाका सभामुख उपराष्ट्रपतिपछि उत्तराधिकारको तेस्रो क्रममा हुन्छन्।")
         ]),
         UnifiedQuestion(id: "q_08_032", correctAnswer: 2, variants: [
             .init(text: "Who is the Commander in Chief of the military?",
@@ -278,7 +278,7 @@ enum NepaliQuestions100 {
                   options: ["The Speaker of the House", "The Vice President", "The President", "The Chief Justice"],
                   explanation: "After Congress passes a bill, it goes to the President. If signed, it becomes law. If the President vetoes it, Congress can attempt to override with a two-thirds majority."),
             .init(text: "विधेयकलाई कानुन बनाउन कसले हस्ताक्षर गर्छन्?",
-                  options: ["प्रतिनिधि सभाका अध्यक्ष", "उपराष्ट्रपति", "राष्ट्रपति", "प्रधान न्यायाधीश"],
+                  options: ["प्रतिनिधि सभाका सभामुख", "उपराष्ट्रपति", "राष्ट्रपति", "प्रधान न्यायाधीश"],
                   explanation: "कांग्रेसले विधेयक पारित गरेपछि, यो राष्ट्रपतिकहाँ जान्छ। हस्ताक्षर भएमा, यो कानुन बन्छ। राष्ट्रपतिले भेटो गरेमा, कांग्रेसले दुई-तिहाई बहुमतले अस्वीकृति रद्द गर्न सक्छ।")
         ]),
         UnifiedQuestion(id: "q_08_034", correctAnswer: 3, variants: [
@@ -286,7 +286,7 @@ enum NepaliQuestions100 {
                   options: ["The Senate Majority Leader", "The Supreme Court", "The Speaker of the House", "The President"],
                   explanation: "The President can veto (reject) legislation passed by Congress. Congress may override a veto with a two-thirds vote in both the Senate and House."),
             .init(text: "विधेयक अस्वीकार (भेटो) गर्न को सक्छन्?",
-                  options: ["सेनेटका बहुमत नेता", "सर्वोच्च अदालत", "प्रतिनिधि सभाका अध्यक्ष", "राष्ट्रपति"],
+                  options: ["सेनेटका बहुमत नेता", "सर्वोच्च अदालत", "प्रतिनिधि सभाका सभामुख", "राष्ट्रपति"],
                   explanation: "राष्ट्रपतिले कांग्रेसले पारित गरेको कानुनलाई भेटो (अस्वीकार) गर्न सक्छन्। कांग्रेसले सेनेट र प्रतिनिधि सभा दुवैमा दुई-तिहाई मतले भेटो रद्द गर्न सक्छ।")
         ]),
         UnifiedQuestion(id: "q_08_035", correctAnswer: 1, variants: [
@@ -299,11 +299,11 @@ enum NepaliQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_036", correctAnswer: 2, variants: [
             .init(text: "What are two Cabinet-level positions?",
-                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Attorney General"],
-                  explanation: "Cabinet positions include the Vice President and 15 department heads such as Secretary of State, Defense, Treasury, and the Attorney General (Dept. of Justice)."),
+                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Speaker of the House"],
+                  explanation: "Cabinet positions include the Vice President and 15 department heads such as Secretary of State, Defense, Treasury, and the Attorney General. (Chief Justice and Speaker lead judicial/legislative branches — not Cabinet.)"),
             .init(text: "दुई मन्त्रिपरिषद् स्तरका पदहरू के हुन्?",
-                  options: ["सिनेटर र प्रतिनिधि", "गभर्नर र मेयर", "विदेश सचिव र रक्षा सचिव", "प्रधान न्यायाधीश र महान्यायाधिवक्ता"],
-                  explanation: "मन्त्रिपरिषद् पदहरूमा उपराष्ट्रपति र विदेश सचिव, रक्षा सचिव, खजाना सचिव र महान्यायाधिवक्ता (न्याय विभाग) जस्ता १५ विभाग प्रमुखहरू समावेश छन्।")
+                  options: ["सिनेटर र प्रतिनिधि", "गभर्नर र मेयर", "विदेश सचिव र रक्षा सचिव", "प्रधान न्यायाधीश र प्रतिनिधि सभाका सभामुख"],
+                  explanation: "मन्त्रिपरिषद् पदहरूमा उपराष्ट्रपति र विदेश सचिव, रक्षा सचिव, खजाना सचिव र महान्यायाधिवक्ता जस्ता १५ विभाग प्रमुखहरू समावेश छन्। (प्रधान न्यायाधीश र प्रतिनिधि सभाका सभामुख न्यायिक÷व्यवस्थापिका शाखाका नेता हुन्, मन्त्रिपरिषद्का होइनन्।)")
         ]),
         UnifiedQuestion(id: "q_08_037", correctAnswer: 3, variants: [
             .init(text: "What does the judicial branch do?",
@@ -393,9 +393,9 @@ enum NepaliQuestions100 {
             .init(text: "What is the name of the Speaker of the House of Representatives now?",
                   options: ["Kevin McCarthy", "Nancy Pelosi", "Mike Johnson", "Hakeem Jeffries"],
                   explanation: "Mike Johnson of Louisiana has served as Speaker of the House since October 2023. The Speaker is third in the line of presidential succession."),
-            .init(text: "हालका प्रतिनिधि सभाका अध्यक्षको नाम के हो?",
+            .init(text: "हालका प्रतिनिधि सभाका सभामुखको नाम के हो?",
                   options: ["केभिन म्याककार्थी", "न्यान्सी पेलोसी", "माइक जोन्सन", "हकिम जेफ्रीज"],
-                  explanation: "लुइजियानाका माइक जोन्सनले अक्टोबर २०२३ देखि प्रतिनिधि सभाका अध्यक्षको रूपमा सेवा गरेका छन्। अध्यक्ष राष्ट्रपतीय उत्तराधिकारको तेस्रो क्रममा हुन्छन्।")
+                  explanation: "लुइजियानाका माइक जोन्सनले अक्टोबर २०२३ देखि प्रतिनिधि सभाका सभामुखको रूपमा सेवा गरेका छन्। अध्यक्ष राष्ट्रपतीय उत्तराधिकारको तेस्रो क्रममा हुन्छन्।")
         ]),
         UnifiedQuestion(id: "q_08_048", correctAnswer: 1, variants: [
             .init(text: "There are four amendments to the Constitution about who can vote. Describe one of them.",
@@ -557,13 +557,13 @@ enum NepaliQuestions100 {
                   options: ["१७७६", "१७८१", "१७८७", "१७९१"],
                   explanation: "संविधान सन् १७८७ मा फिलाडेल्फियाको संवैधानिक सम्मेलनमा लेखियो र सन् १७८८ मा आवश्यक नौ राज्यहरूद्वारा अनुमोदित भयो।")
         ]),
-        UnifiedQuestion(id: "q_08_067", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_067", correctAnswer: 2, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "George Washington", "John Adams", "James Madison"],
-                  explanation: "The Federalist Papers (1787-88) were written by James Madison, Alexander Hamilton, and John Jay under the pen name 'Publius' to argue for ratifying the Constitution."),
-            .init(text: "फेडेरलिस्ट पेपर्सले अमेरिकी संविधानको अनुमोदनलाई समर्थन गर्यो। एक लेखकको नाम लिनुहोस्।",
-                  options: ["थोमस जेफर्सन", "जर्ज वाशिङ्टन", "जोन एडम्स", "जेम्स म्याडिसन"],
-                  explanation: "फेडेरलिस्ट पेपर्स (१७८७-८८) जेम्स म्याडिसन, अलेक्जेन्डर ह्यामिल्टन र जोन जयले 「पब्लियस」 उपनाम प्रयोग गरेर संविधान अनुमोदनको पक्षमा तर्क गर्न लेखेका थिए।")
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
+                  explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the pen name 'Publius.' USCIS accepts any of their names."),
+            .init(text: "फेडरलिस्ट पेपर्सले अमेरिकी संविधानको अनुमोदनलाई समर्थन गरेको थियो। एक लेखकको नाम बताउनुहोस्।",
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison वा Jay (Publius)", "Benjamin Franklin"],
+                  explanation: "फेडरलिस्ट पेपर्स Alexander Hamilton, James Madison र John Jay ले 'Publius' नाममा लेखेका थिए। USCIS ले तिनीहरूमध्ये कुनै एकको नाम स्वीकार गर्दछ।")
         ]),
         UnifiedQuestion(id: "q_08_068", correctAnswer: 2, variants: [
             .init(text: "What is one thing Benjamin Franklin is famous for?",
@@ -658,42 +658,26 @@ enum NepaliQuestions100 {
                   explanation: "१९०० को दशकमा अमेरिकी युद्धहरू: पहिलो विश्वयुद्ध (१९१७-१८), दोस्रो विश्वयुद्ध (१९४१-४५), कोरियाली युद्ध (१९५०-५३), भियतनाम युद्ध (१९६४-७५) र फारसी खाडी युद्ध (१९९१)।")
         ]),
         UnifiedQuestion(id: "q_08_079", correctAnswer: 2, variants: [
-            .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Japan fight against Germany", "Because Japan attacked Pearl Harbor", "Germany attacked U.S. ships and sent the Zimmermann Telegram", "To respond to the Great Depression's economic crisis"],
-                  explanation: "The U.S. entered WWI in 1917 because Germany sank U.S. ships (unrestricted submarine warfare) and the Zimmermann Telegram revealed Germany's offer to help Mexico attack the U.S."),
-            .init(text: "अमेरिका पहिलो विश्वयुद्धमा किन सामेल भयो?",
-                  options: ["जर्मनीविरुद्ध जापानलाई मद्दत गर्न", "जापानले पर्ल हार्बरमा आक्रमण गरेकाले", "जर्मनीले अमेरिकी जहाजहरूमा आक्रमण गर्यो र जिम्मर्म्यान टेलिग्राम पठायो", "महामन्दीको आर्थिक संकटको जवाफमा"],
-                  explanation: "अमेरिका सन् १९१७ मा पहिलो विश्वयुद्धमा सामेल भयो किनभने जर्मनीले अमेरिकी जहाजहरू डुबायो र जिम्मर्म्यान टेलिग्रामले जर्मनीले मेक्सिकोलाई अमेरिकामा आक्रमण गर्न मद्दत गर्ने प्रस्ताव प्रकट गर्यो।")
+            .init(text: "Who was President during World War I?",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson was the 28th President. He led the United States through World War I (1917–1918) and proposed the League of Nations to maintain world peace after the war."),
+            .init(text: "पहिलो विश्वयुद्धको समयमा अमेरिकाको राष्ट्रपति को थिए?",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson २८ औं राष्ट्रपति थिए। उनले पहिलो विश्वयुद्ध (१९१७–१९१८) को समयमा अमेरिकाको नेतृत्व गरे र युद्धपछि विश्व शान्ति कायम राख्न लिग अफ नेसन्सको प्रस्ताव गरे।")
         ]),
-        UnifiedQuestion(id: "q_08_080", correctAnswer: 2, variants: [
-            .init(text: "When did all women get the right to vote?",
-                  options: ["1776", "1865", "1920", "1964"],
-                  explanation: "The 19th Amendment, ratified on August 18, 1920, guaranteed women the right to vote nationwide — after decades of advocacy by suffragists like Susan B. Anthony."),
-            .init(text: "सबै महिलाहरूले मताधिकार कहिले पाए?",
-                  options: ["१७७६", "१८६५", "१९२०", "१९६४"],
-                  explanation: "अगस्त १८, १९२० मा अनुमोदित १९औं संशोधनले सुसन बी. एन्थोनी जस्ता मताधिकारवादीहरूको दशकौंको वकालतपछि देशव्यापी रूपमा महिलाहरूको मत दिने अधिकार ग्यारेन्टी गर्यो।")
+        UnifiedQuestion(id: "q_08_080", correctAnswer: 3, variants: [
+            .init(text: "Who was President during the Great Depression and World War II?",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "Franklin D. Roosevelt (FDR), the 32nd President, led the nation through both the Great Depression and World War II. He served four terms — the most of any President."),
+            .init(text: "महामन्दी र दोस्रो विश्वयुद्धको समयमा राष्ट्रपति को थिए?",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "Franklin D. Roosevelt (FDR), ३२ औं राष्ट्रपति, महामन्दी र दोस्रो विश्वयुद्ध दुवैमा देशको नेतृत्व गरे। उनी चार पटक निर्वाचित भए — कुनै पनि राष्ट्रपतिभन्दा बढी।")
         ]),
     ]
 
     // MARK: - Practice Set 9: 20th Century History & U.S. Geography (Q81–Q90)
     static let practice9: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_08_081", correctAnswer: 2, variants: [
-            .init(text: "What was the Great Depression?",
-                  options: ["A long drought that caused widespread crop failures", "A major war that devastated the economy", "The longest economic recession in modern history, when many people lost jobs and homes", "A period of great artistic and cultural growth in America"],
-                  explanation: "The Great Depression (1929-late 1930s) was the worst economic downturn in modern U.S. history — mass unemployment reached 25%, banks failed, and millions lost their savings."),
-            .init(text: "महामन्दी के थियो?",
-                  options: ["लामो खडेरीले फसलमा ठूलो क्षति पुर्यायो", "अर्थतन्त्र बर्बाद पार्ने ठूलो युद्ध", "आधुनिक इतिहासको सबैभन्दा लामो आर्थिक मन्दी, जब धेरैले रोजगारी र घर गुमाए", "अमेरिकामा ठूलो कलात्मक र सांस्कृतिक विकासको समय"],
-                  explanation: "महामन्दी (१९२९-१९३० को दशकको अन्त्यसम्म) आधुनिक अमेरिकी इतिहासको सबैभन्दा खराब आर्थिक पतन थियो — बेरोजगारी २५% पुग्यो, बैंकहरू डुबे र लाखौंले आफ्नो बचत गुमाए।")
-        ]),
-        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
-            .init(text: "When did the Great Depression begin?",
-                  options: ["1917", "1929", "1933", "1941"],
-                  explanation: "The Great Depression began with the stock market crash of October 1929 (Black Tuesday) and lasted through much of the 1930s until WWII-era industrial production revived the economy."),
-            .init(text: "महामन्दी कहिले सुरु भयो?",
-                  options: ["१९१७", "१९२९", "१९३३", "१९४१"],
-                  explanation: "महामन्दी अक्टोबर १९२९ को शेयर बजार दुर्घटना (ब्ल्याक टुजडे) सँग सुरु भयो र दोस्रो विश्वयुद्धकालीन औद्योगिक उत्पादनले अर्थतन्त्र पुनर्जीवित नगरेसम्म धेरैजसो १९३० को दशकसम्म चल्यो।")
-        ]),
-        UnifiedQuestion(id: "q_08_083", correctAnswer: 2, variants: [
             .init(text: "Who did the United States fight in World War II?",
                   options: ["Germany, Russia, and China", "Japan, France, and Italy", "Japan, Germany, and Italy", "Britain, France, and Germany"],
                   explanation: "The U.S. fought the Axis Powers: Japan, Germany, and Italy. The U.S. entered WWII after Japan's attack on Pearl Harbor, Hawaii, on December 7, 1941."),
@@ -701,7 +685,7 @@ enum NepaliQuestions100 {
                   options: ["जर्मनी, रुस र चीन", "जापान, फ्रान्स र इटाली", "जापान, जर्मनी र इटाली", "बेलायत, फ्रान्स र जर्मनी"],
                   explanation: "अमेरिकाले अक्ष शक्तिहरूसँग लड्यो: जापान, जर्मनी र इटाली। डिसेम्बर ७, १९४१ मा जापानले हवाईको पर्ल हार्बरमा आक्रमण गरेपछि अमेरिका दोस्रो विश्वयुद्धमा सामेल भयो।")
         ]),
-        UnifiedQuestion(id: "q_08_084", correctAnswer: 1, variants: [
+        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
             .init(text: "Before he was President, Eisenhower was a general. What war was he in?",
                   options: ["World War I", "World War II", "Korean War", "Vietnam War"],
                   explanation: "Dwight D. Eisenhower served as Supreme Commander of Allied Forces in Europe during WWII. He later became the 34th President, serving from 1953 to 1961."),
@@ -709,7 +693,7 @@ enum NepaliQuestions100 {
                   options: ["पहिलो विश्वयुद्ध", "दोस्रो विश्वयुद्ध", "कोरियाली युद्ध", "भियतनाम युद्ध"],
                   explanation: "ड्वाइट डी. आइजनहावरले दोस्रो विश्वयुद्धमा युरोपमा मित्र राष्ट्रका बलका सर्वोच्च कमाण्डरको रूपमा सेवा गरे। उनी पछि ३४औं राष्ट्रपति बने, सन् १९५३ देखि १९६१ सम्म सेवा गरे।")
         ]),
-        UnifiedQuestion(id: "q_08_085", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_083", correctAnswer: 3, variants: [
             .init(text: "During the Cold War, what was the main concern of the United States?",
                   options: ["Economic recession and unemployment", "Climate change and pollution", "Illegal immigration", "Communism / the spread of communism and nuclear war"],
                   explanation: "The Cold War (1947-1991) was a global ideological conflict between the democratic U.S. and communist Soviet Union, centered on nuclear weapons, arms races, and spreading influence."),
@@ -717,7 +701,7 @@ enum NepaliQuestions100 {
                   options: ["आर्थिक मन्दी र बेरोजगारी", "जलवायु परिवर्तन र प्रदूषण", "अवैध आप्रवासन", "साम्यवाद / साम्यवादको फैलावट र परमाणु युद्ध"],
                   explanation: "शीतयुद्ध (१९४७-१९९१) लोकतान्त्रिक अमेरिका र साम्यवादी सोभियत संघबीचको विश्वव्यापी वैचारिक संघर्ष थियो, जुन परमाणु हतियार, हतियार दौड र प्रभाव फैलाउनेमा केन्द्रित थियो।")
         ]),
-        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_084", correctAnswer: 2, variants: [
             .init(text: "What movement tried to end racial discrimination?",
                   options: ["The Temperance Movement", "The Labor Movement", "The Civil Rights Movement", "The Women's Suffrage Movement"],
                   explanation: "The Civil Rights Movement of the 1950s-1960s fought to end racial segregation and discrimination, resulting in landmark laws like the Civil Rights Act of 1964 and Voting Rights Act of 1965."),
@@ -725,13 +709,29 @@ enum NepaliQuestions100 {
                   options: ["संयम आन्दोलन", "श्रम आन्दोलन", "नागरिक अधिकार आन्दोलन", "महिला मताधिकार आन्दोलन"],
                   explanation: "१९५० र १९६० को दशकको नागरिक अधिकार आन्दोलनले जातीय अलगाव र भेदभाव अन्त्य गर्न लड्यो, जसले १९६४ को नागरिक अधिकार ऐन र १९६५ को मतदान अधिकार ऐन जस्ता ऐतिहासिक कानुनहरू ल्यायो।")
         ]),
-        UnifiedQuestion(id: "q_08_087", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_085", correctAnswer: 2, variants: [
             .init(text: "What did Martin Luther King, Jr. do?",
                   options: ["Led the Underground Railroad to free enslaved people", "Served as the first Black President of the NAACP", "Fought for civil rights and equality for all Americans", "Wrote the Civil Rights Act of 1964"],
                   explanation: "Dr. Martin Luther King, Jr. was the most prominent leader of the Civil Rights Movement, advocating nonviolent protest. He received the Nobel Peace Prize in 1964."),
             .init(text: "मार्टिन लुथर किङ जुनियरले के गरे?",
                   options: ["दासहरूलाई मुक्त गर्न अन्डरग्राउन्ड रेलरोडको नेतृत्व गरे", "NAACP का पहिलो अश्वेत राष्ट्रपति भए", "सबै अमेरिकीहरूका लागि नागरिक अधिकार र समानताका लागि लडे", "१९६४ को नागरिक अधिकार ऐन लेखे"],
                   explanation: "डा. मार्टिन लुथर किङ जुनियर नागरिक अधिकार आन्दोलनका सबैभन्दा प्रमुख नेता थिए, जसले अहिंसात्मक विरोधको वकालत गरे। उनले सन् १९६४ मा नोबेल शान्ति पुरस्कार पाए।")
+        ]),
+        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+            .init(text: "What major event happened on September 11, 2001, in the United States?",
+                  options: ["A major hurricane struck the East Coast", "A financial crisis closed the stock market", "Terrorists attacked the United States", "The United States declared war on Iraq"],
+                  explanation: "On September 11, 2001, al-Qaeda terrorists hijacked four planes and attacked the World Trade Center (New York) and the Pentagon (Virginia). Nearly 3,000 people were killed."),
+            .init(text: "सन् २००१ को सेप्टेम्बर ११ मा अमेरिकामा कुन ठूलो घटना भयो?",
+                  options: ["पूर्वी तटमा ठूलो आँधी आयो", "वित्तीय संकटले सेयर बजार बन्द भयो", "आतंकवादीहरूले अमेरिकामाथि आक्रमण गरे", "अमेरिकाले इराकविरुद्ध युद्ध घोषणा गर्‍यो"],
+                  explanation: "सन् २००१ को सेप्टेम्बर ११ मा, अल-कायदाका आतंकवादीहरूले चारवटा विमान अपहरण गरी न्यूयोर्कको वर्ल्ड ट्रेड सेन्टर र भर्जिनियाको पेन्टागनमा आक्रमण गरे। करिब ३,००० मानिसहरू मारिए।")
+        ]),
+        UnifiedQuestion(id: "q_08_087", correctAnswer: 3, variants: [
+            .init(text: "Name one American Indian tribe in the United States.",
+                  options: ["Aztec", "Maya", "Inca", "Cherokee or Navajo"],
+                  explanation: "USCIS accepts many tribes: Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Shawnee, Lakota, Crow, Hopi, Inuit, and others."),
+            .init(text: "संयुक्त राज्य अमेरिकामा एउटा अमेरिकन इन्डियन जनजातिको नाम बताउनुहोस्।",
+                  options: ["Aztec", "Maya", "Inca", "Cherokee वा Navajo"],
+                  explanation: "USCIS ले धेरै जनजातिहरू स्वीकार गर्दछ: Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Shawnee, Lakota, Crow, Hopi, Inuit र अन्य। (Aztec/Maya/Inca ल्याटिन अमेरिकी हुन्, अमेरिकी होइनन्।)")
         ]),
         UnifiedQuestion(id: "q_08_088", correctAnswer: 2, variants: [
             .init(text: "Name one of the two longest rivers in the United States.",

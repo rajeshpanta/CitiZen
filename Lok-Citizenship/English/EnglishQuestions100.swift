@@ -205,8 +205,8 @@ enum EnglishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_036", correctAnswer: 2, variants: [
             .init(text: "What are two Cabinet-level positions?",
-                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Attorney General"],
-                  explanation: "Cabinet positions include the Vice President and 15 department heads such as Secretary of State, Defense, Treasury, and the Attorney General (Dept. of Justice).")
+                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Speaker of the House"],
+                  explanation: "Cabinet positions include the Vice President and 15 department heads such as Secretary of State, Defense, Treasury, and the Attorney General. (Chief Justice and Speaker of the House lead judicial/legislative branches — not Cabinet.)")
         ]),
         UnifiedQuestion(id: "q_08_037", correctAnswer: 3, variants: [
             .init(text: "What does the judicial branch do?",
@@ -370,10 +370,10 @@ enum EnglishQuestions100 {
                   options: ["1776", "1781", "1787", "1791"],
                   explanation: "The Constitution was written at the Constitutional Convention in Philadelphia in 1787 and ratified by the required nine states in 1788.")
         ]),
-        UnifiedQuestion(id: "q_08_067", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_067", correctAnswer: 2, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "George Washington", "John Adams", "James Madison"],
-                  explanation: "The Federalist Papers (1787–88) were written by James Madison, Alexander Hamilton, and John Jay under the pen name 'Publius' to argue for ratifying the Constitution.")
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
+                  explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the shared pen name 'Publius.' USCIS accepts any of their names, or 'Publius.'")
         ]),
         UnifiedQuestion(id: "q_08_068", correctAnswer: 2, variants: [
             .init(text: "What is one thing Benjamin Franklin is famous for?",
@@ -435,53 +435,53 @@ enum EnglishQuestions100 {
                   explanation: "U.S. wars in the 1900s: WWI (1917–18), WWII (1941–45), Korean War (1950–53), Vietnam War (1964–75), and Persian Gulf War (1991).")
         ]),
         UnifiedQuestion(id: "q_08_079", correctAnswer: 2, variants: [
-            .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Japan fight against Germany", "Because Japan attacked Pearl Harbor", "Germany attacked U.S. ships and sent the Zimmermann Telegram", "To respond to the Great Depression's economic crisis"],
-                  explanation: "The U.S. entered WWI in 1917 because Germany sank U.S. ships (unrestricted submarine warfare) and the Zimmermann Telegram revealed Germany's offer to help Mexico attack the U.S.")
+            .init(text: "Who was President during World War I?",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson was the 28th President. He led the United States through World War I (1917–1918) and proposed the League of Nations to maintain world peace after the war.")
         ]),
-        UnifiedQuestion(id: "q_08_080", correctAnswer: 2, variants: [
-            .init(text: "When did all women get the right to vote?",
-                  options: ["1776", "1865", "1920", "1964"],
-                  explanation: "The 19th Amendment, ratified on August 18, 1920, guaranteed women the right to vote nationwide — after decades of advocacy by suffragists like Susan B. Anthony.")
+        UnifiedQuestion(id: "q_08_080", correctAnswer: 3, variants: [
+            .init(text: "Who was President during the Great Depression and World War II?",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "Franklin D. Roosevelt (FDR), the 32nd President, led the nation through both the Great Depression (New Deal programs) and World War II. He served four terms — the most of any President.")
         ])
     ]
 
     // MARK: - Practice Set 9: 20th Century History & U.S. Geography (Q81–Q90)
     static let practice9: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_08_081", correctAnswer: 2, variants: [
-            .init(text: "What was the Great Depression?",
-                  options: ["A long drought that caused widespread crop failures", "A major war that devastated the economy", "The longest economic recession in modern history, when many people lost jobs and homes", "A period of great artistic and cultural growth in America"],
-                  explanation: "The Great Depression (1929–late 1930s) was the worst economic downturn in modern U.S. history — mass unemployment reached 25%, banks failed, and millions lost their savings.")
-        ]),
-        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
-            .init(text: "When did the Great Depression begin?",
-                  options: ["1917", "1929", "1933", "1941"],
-                  explanation: "The Great Depression began with the stock market crash of October 1929 (Black Tuesday) and lasted through much of the 1930s until WWII-era industrial production revived the economy.")
-        ]),
-        UnifiedQuestion(id: "q_08_083", correctAnswer: 2, variants: [
             .init(text: "Who did the United States fight in World War II?",
                   options: ["Germany, Russia, and China", "Japan, France, and Italy", "Japan, Germany, and Italy", "Britain, France, and Germany"],
                   explanation: "The U.S. fought the Axis Powers: Japan, Germany, and Italy. The U.S. entered WWII after Japan's attack on Pearl Harbor, Hawaii, on December 7, 1941.")
         ]),
-        UnifiedQuestion(id: "q_08_084", correctAnswer: 1, variants: [
+        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
             .init(text: "Before he was President, Eisenhower was a general. What war was he in?",
                   options: ["World War I", "World War II", "Korean War", "Vietnam War"],
                   explanation: "Dwight D. Eisenhower served as Supreme Commander of Allied Forces in Europe during WWII. He later became the 34th President, serving from 1953 to 1961.")
         ]),
-        UnifiedQuestion(id: "q_08_085", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_083", correctAnswer: 3, variants: [
             .init(text: "During the Cold War, what was the main concern of the United States?",
                   options: ["Economic recession and unemployment", "Climate change and pollution", "Illegal immigration", "Communism / the spread of communism and nuclear war"],
                   explanation: "The Cold War (1947–1991) was a global ideological conflict between the democratic U.S. and communist Soviet Union, centered on nuclear weapons, arms races, and spreading influence.")
         ]),
-        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_084", correctAnswer: 2, variants: [
             .init(text: "What movement tried to end racial discrimination?",
                   options: ["The Temperance Movement", "The Labor Movement", "The Civil Rights Movement", "The Women's Suffrage Movement"],
                   explanation: "The Civil Rights Movement of the 1950s–1960s fought to end racial segregation and discrimination, resulting in landmark laws like the Civil Rights Act of 1964 and Voting Rights Act of 1965.")
         ]),
-        UnifiedQuestion(id: "q_08_087", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_085", correctAnswer: 2, variants: [
             .init(text: "What did Martin Luther King, Jr. do?",
                   options: ["Led the Underground Railroad to free enslaved people", "Served as the first Black President of the NAACP", "Fought for civil rights and equality for all Americans", "Wrote the Civil Rights Act of 1964"],
                   explanation: "Dr. Martin Luther King, Jr. was the most prominent leader of the Civil Rights Movement, advocating nonviolent protest. He received the Nobel Peace Prize in 1964.")
+        ]),
+        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+            .init(text: "What major event happened on September 11, 2001, in the United States?",
+                  options: ["A major hurricane struck the East Coast", "A financial crisis closed the stock market", "Terrorists attacked the United States", "The United States declared war on Iraq"],
+                  explanation: "On September 11, 2001, al-Qaeda terrorists hijacked four planes and attacked the World Trade Center (New York) and the Pentagon (Virginia). Nearly 3,000 people were killed.")
+        ]),
+        UnifiedQuestion(id: "q_08_087", correctAnswer: 3, variants: [
+            .init(text: "Name one American Indian tribe in the United States.",
+                  options: ["Aztec", "Maya", "Inca", "Cherokee or Navajo"],
+                  explanation: "USCIS accepts many tribes: Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Shawnee, Lakota, Crow, Hopi, Inuit, and others. (Aztec/Maya/Inca are Latin American, not U.S.)")
         ]),
         UnifiedQuestion(id: "q_08_088", correctAnswer: 2, variants: [
             .init(text: "Name one of the two longest rivers in the United States.",

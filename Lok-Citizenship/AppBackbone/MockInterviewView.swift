@@ -98,10 +98,10 @@ struct MockInterviewView: View {
     @Environment(\.requestReview) private var requestReview
 
     private let interviewQuestionCount = 10
-    // 100-question track (2008): 6/10 to pass. 128-question track (2020): 8/10.
-    private var requiredCorrect: Int {
-        ProgressManager.shared.questionSet == .set2008 ? 6 : 8
-    }
+    // Snapshot of the pass threshold at session start. Stored as @State so the
+    // engine and UI always agree even if the user visits Settings mid-interview.
+    // Set once in startInterviewIfPossible(); default 6 covers the 2008 track.
+    @State private var requiredCorrect: Int = 6
 
     // Custom init to wire voice controller to quiz logic
     init(language: AppLanguage) {
@@ -178,10 +178,12 @@ struct MockInterviewView: View {
         switch voice.authorizationStatus {
         case .authorized:
             AudioSessionPrewarmer.prewarm {
+                let req = ProgressManager.shared.questionSet == .set2008 ? 6 : 8
+                requiredCorrect = req
                 quizLogic.startMockInterview(
                     from: QuestionPool.activePool(for: language),
                     questionCount: interviewQuestionCount,
-                    requiredCorrect: requiredCorrect
+                    requiredCorrect: req
                 )
                 voice.start()
             }
@@ -499,6 +501,25 @@ struct MockInterviewView: View {
                              subtitle: s.mockRowVoiceSub)
                 }
                 .padding(.horizontal, 16)
+
+                // 128-track: clarify that 8/10 is a practice benchmark, not official.
+                if requiredCorrect != 6 {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.footnote)
+                            .foregroundColor(.orange.opacity(0.8))
+                        Text(s.mockInterviewSet2020Disclaimer)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.65))
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.05)))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.orange.opacity(0.2), lineWidth: 1))
+                    .padding(.horizontal, 16)
+                }
 
                 // English-only disclaimer. Shown in the user's app language so
                 // non-English users understand why questions will be read in English

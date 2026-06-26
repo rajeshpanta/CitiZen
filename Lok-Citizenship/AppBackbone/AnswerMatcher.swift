@@ -159,11 +159,21 @@ enum AnswerMatcher {
             let asymJacc = asymmetric(option: oTokens, spoken: sTokens)
             let asymTri = asymmetric(option: oTrigrams, spoken: sTrigrams)
 
-            // Best of all four — let any signal prove a match. The existing
-            // commit threshold (0.6) and margin guard (0.15) still gate
-            // ambiguous cases (multiple options scoring high → falls to GPT).
+            // Spoken-coverage signals (USCIS partial-answer rule): "is everything
+            // the user said contained within this option?" USCIS explicitly allows
+            // partial answers — "Congress" is a valid response for "the United States
+            // Congress." This signal scores 1.0 when all spoken tokens appear in the
+            // option, rewarding confident partial answers without penalizing brevity.
+            // The margin guard (0.15) still blocks ambiguous single-word inputs that
+            // appear in multiple options — those still go to GPT.
+            let spokenAsymJacc = asymmetric(option: sTokens, spoken: oTokens)
+            let spokenAsymTri  = asymmetric(option: sTrigrams, spoken: oTrigrams)
+
+            // Best of all six — let any signal prove a match. The commit
+            // threshold (0.6) and margin guard (0.15) still gate ambiguous cases.
             let score = max(jacc, tri * trigramWeight,
-                            asymJacc, asymTri * trigramWeight)
+                            asymJacc, asymTri * trigramWeight,
+                            spokenAsymJacc, spokenAsymTri * trigramWeight)
             results.append(Candidate(idx: idx, score: score))
         }
         return results.sorted { $0.score > $1.score }

@@ -90,7 +90,7 @@ extension QuizConfig {
             ],
             defaultVariantIndex:    1,
             stringsForVariant:      { $0 == 0 ? .englishBilingual : .spanish },
-            localeForVariant:       { $0 == 0 ? "en-US" : "es-ES" },
+            localeForVariant:       { $0 == 0 ? "en-US" : AppLanguage.spanish.rawValue },
             // Prefer on-device STT for both variants. Safe fallback to streaming
             // if the user hasn't downloaded the Spanish on-device pack.
             offlineForVariant:      { _ in true },
@@ -140,13 +140,17 @@ extension QuizConfig {
         return config
     }
 
-    /// Review mistakes for the 100-question track (also interview mode).
+    /// Review mistakes for the 100-question track.
+    /// Uses practice mode (4-mistake limit), NOT interview mode, because the
+    /// review set is always fewer than 10 questions. Applying requiredCorrect=6
+    /// to a 5-question set makes maxMistakes = 0, which would fail the quiz
+    /// immediately after the first answer (incorrectAnswers=0 >= maxMistakes=0).
     static func reviewMistakes100(questions: [UnifiedQuestion], language: AppLanguage) -> QuizConfig {
         switch language {
-        case .english: return .english100(questions: questions)
-        case .nepali:  return .nepali100(questions: questions)
-        case .spanish: return .spanish100(questions: questions)
-        case .chinese: return .chinese100(questions: questions)
+        case .english: return .english(questions: questions)
+        case .nepali:  return .nepali(questions: questions)
+        case .spanish: return .spanish(questions: questions)
+        case .chinese: return .chinese(questions: questions)
         }
     }
 

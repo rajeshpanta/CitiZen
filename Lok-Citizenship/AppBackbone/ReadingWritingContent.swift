@@ -16,7 +16,7 @@ enum ReadingWritingContent {
     static let readingVocabulary: [ReadingWritingWord] = [
         // People
         ReadingWritingWord(id: "r_01", word: "Abraham Lincoln", category: "People", exampleSentence: "Abraham Lincoln was the President during the Civil War."),
-        ReadingWritingWord(id: "r_02", word: "George Washington", category: "People", exampleSentence: "George Washington was the first President."),
+        ReadingWritingWord(id: "r_02", word: "George Washington", category: "People", exampleSentence: "George Washington led the Continental Army."),
 
         // Civics
         ReadingWritingWord(id: "r_03", word: "American flag", category: "Civics", exampleSentence: "The American flag has stars and stripes."),
@@ -26,17 +26,19 @@ enum ReadingWritingContent {
         ReadingWritingWord(id: "r_07", word: "Congress", category: "Civics", exampleSentence: "Congress makes federal laws."),
         ReadingWritingWord(id: "r_08", word: "country", category: "Civics", exampleSentence: "The United States is a large country."),
         ReadingWritingWord(id: "r_09", word: "Father of Our Country", category: "Civics", exampleSentence: "George Washington is the Father of Our Country."),
-        ReadingWritingWord(id: "r_10", word: "government", category: "Civics", exampleSentence: "The government is for the people."),
-        ReadingWritingWord(id: "r_11", word: "President", category: "Civics", exampleSentence: "The President lives in the White House."),
+        ReadingWritingWord(id: "r_10", word: "government", category: "Civics", exampleSentence: "The government makes laws for the country."),
+        ReadingWritingWord(id: "r_11", word: "President", category: "Civics", exampleSentence: "The President is elected every four years."),
         ReadingWritingWord(id: "r_12", word: "right", category: "Civics", exampleSentence: "Citizens have the right to vote."),
         ReadingWritingWord(id: "r_13", word: "Senators", category: "Civics", exampleSentence: "There are one hundred Senators in Congress."),
         ReadingWritingWord(id: "r_14", word: "state", category: "Civics", exampleSentence: "Each state has two Senators."),
-        ReadingWritingWord(id: "r_15", word: "White House", category: "Civics", exampleSentence: "The President lives in the White House."),
-        ReadingWritingWord(id: "r_16", word: "Constitution", category: "Civics", exampleSentence: "The Constitution is the supreme law of the land."),
-        ReadingWritingWord(id: "r_17", word: "election", category: "Civics", exampleSentence: "We vote in an election every November."),
-        ReadingWritingWord(id: "r_18", word: "freedom", category: "Civics", exampleSentence: "We have freedom of speech in America."),
-        ReadingWritingWord(id: "r_19", word: "law", category: "Civics", exampleSentence: "Everyone must obey the law."),
-        ReadingWritingWord(id: "r_20", word: "vote", category: "Civics", exampleSentence: "Citizens can vote for the President."),
+        ReadingWritingWord(id: "r_15", word: "White House", category: "Civics", exampleSentence: "The White House is in Washington, D.C."),
+        // Extra civics words — not on the official USCIS reading list but helpful bonus vocabulary
+        ReadingWritingWord(id: "r_16", word: "Constitution", category: "Extra", exampleSentence: "The Constitution is the supreme law of the land."),
+        ReadingWritingWord(id: "r_17", word: "election", category: "Extra", exampleSentence: "We vote in an election every November."),
+        ReadingWritingWord(id: "r_18", word: "freedom", category: "Extra", exampleSentence: "We have freedom of speech in America."),
+        ReadingWritingWord(id: "r_19", word: "law", category: "Extra", exampleSentence: "Everyone must obey the law."),
+        // "vote" is an official USCIS reading verb
+        ReadingWritingWord(id: "r_20", word: "vote", category: "Verbs", exampleSentence: "Citizens vote in every election."),
 
         // Places
         ReadingWritingWord(id: "r_21", word: "America", category: "Places", exampleSentence: "America is a free country."),
@@ -70,8 +72,15 @@ enum ReadingWritingContent {
         ReadingWritingWord(id: "r_43", word: "lives", category: "Verbs", exampleSentence: "The President lives in the White House."),
         ReadingWritingWord(id: "r_44", word: "meet", category: "Verbs", exampleSentence: "Congress meets in Washington, D.C."),
         ReadingWritingWord(id: "r_45", word: "pay", category: "Verbs", exampleSentence: "Citizens pay taxes."),
-        ReadingWritingWord(id: "r_46", word: "vote", category: "Verbs", exampleSentence: "Citizens vote for the President."),
+        ReadingWritingWord(id: "r_46", word: "name", category: "Verbs", exampleSentence: "Name one right from the First Amendment."),
         ReadingWritingWord(id: "r_47", word: "want", category: "Verbs", exampleSentence: "I want to be a citizen."),
+        // Official USCIS verb forms: do/does, is/are/was/be, lives/live, have/has
+        ReadingWritingWord(id: "r_61", word: "does", category: "Verbs", exampleSentence: "Does the President live in the White House?"),
+        ReadingWritingWord(id: "r_62", word: "are", category: "Verbs", exampleSentence: "There are fifty states in the United States."),
+        ReadingWritingWord(id: "r_63", word: "was", category: "Verbs", exampleSentence: "Lincoln was the President during the Civil War."),
+        ReadingWritingWord(id: "r_64", word: "be", category: "Verbs", exampleSentence: "I want to be a citizen of the United States."),
+        ReadingWritingWord(id: "r_65", word: "live", category: "Verbs", exampleSentence: "Many people live in the United States."),
+        ReadingWritingWord(id: "r_66", word: "has", category: "Verbs", exampleSentence: "Congress has one hundred Senators."),
 
         // Other Content Words
         ReadingWritingWord(id: "r_48", word: "colors", category: "Other", exampleSentence: "The colors of the flag are red, white, and blue."),
@@ -85,6 +94,13 @@ enum ReadingWritingContent {
         ReadingWritingWord(id: "r_56", word: "second", category: "Other", exampleSentence: "John Adams was the second President."),
         ReadingWritingWord(id: "r_57", word: "south", category: "Other", exampleSentence: "Mexico is south of the United States."),
         ReadingWritingWord(id: "r_58", word: "taxes", category: "Other", exampleSentence: "Citizens pay taxes to the government."),
+        ReadingWritingWord(id: "r_59", word: "many", category: "Other", exampleSentence: "Many people want to be citizens."),
+        ReadingWritingWord(id: "r_60", word: "they", category: "Other", exampleSentence: "They have freedom of speech."),
+        // Official USCIS reading colors and "one hundred"
+        ReadingWritingWord(id: "r_67", word: "blue", category: "Other", exampleSentence: "The flag is red, white, and blue."),
+        ReadingWritingWord(id: "r_68", word: "red", category: "Other", exampleSentence: "The flag has red and white stripes."),
+        ReadingWritingWord(id: "r_69", word: "white", category: "Other", exampleSentence: "The stars on the flag are white."),
+        ReadingWritingWord(id: "r_70", word: "one hundred", category: "Other", exampleSentence: "There are one hundred Senators."),
     ]
 
     // MARK: - Writing Vocabulary (~75 words organized by category)

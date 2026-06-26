@@ -412,14 +412,14 @@ enum ChineseQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_036", correctAnswer: 2, variants: [
             .init(text: "What are two Cabinet-level positions?",
-                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Attorney General"],
-                  explanation: "Cabinet positions include Secretary of State, Defense, Treasury, and the Attorney General."),
+                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Speaker of the House"],
+                  explanation: "Cabinet positions include the Vice President and department heads: Secretary of State, Defense, Treasury, and the Attorney General. (Chief Justice and Speaker lead judicial/legislative branches — not Cabinet.)"),
             .init(text: "举出两个内阁级别的职位。",
-                  options: ["参议员和众议员", "州长和市长", "国务卿和国防部长", "首席大法官和司法部长"],
-                  explanation: "内阁职位包括国务卿、国防部长、财政部长和司法部长等。"),
+                  options: ["参议员和众议员", "州长和市长", "国务卿和国防部长", "首席大法官和众议院议长"],
+                  explanation: "内阁职位包括副总统及国务卿、国防部长、财政部长和司法部长等部门首长。（首席大法官和众议院议长领导司法/立法机构，并非内阁成员。）"),
             .init(text: "舉出兩個內閣級別的職位。",
-                  options: ["參議員和眾議員", "州長和市長", "國務卿和國防部長", "首席大法官和司法部長"],
-                  explanation: "內閣職位包括國務卿、國防部長、財政部長和司法部長等。")
+                  options: ["參議員和眾議員", "州長和市長", "國務卿和國防部長", "首席大法官和眾議院議長"],
+                  explanation: "內閣職位包括副總統及國務卿、國防部長、財政部長和司法部長等部門首長。（首席大法官和眾議院議長領導司法／立法機構，並非內閣成員。）")
         ]),
         UnifiedQuestion(id: "q_08_037", correctAnswer: 3, variants: [
             .init(text: "What does the judicial branch do?",
@@ -763,16 +763,16 @@ enum ChineseQuestions100 {
                   options: ["1776年", "1781年", "1787年", "1791年"],
                   explanation: "《憲法》於1787年制定，1788年批准生效。")
         ]),
-        UnifiedQuestion(id: "q_08_067", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_067", correctAnswer: 2, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "George Washington", "John Adams", "James Madison"],
-                  explanation: "The Federalist Papers were written by James Madison, Alexander Hamilton, and John Jay."),
-            .init(text: "《联邦党人文集》支持通过美国宪法。请说出作者之一。",
-                  options: ["托马斯·杰斐逊", "乔治·华盛顿", "约翰·亚当斯", "詹姆斯·麦迪逊"],
-                  explanation: "《联邦党人文集》由詹姆斯·麦迪逊、亚历山大·汉密尔顿和约翰·杰伊共同撰写。"),
-            .init(text: "《聯邦黨人文集》支持通過美國憲法。請說出作者之一。",
-                  options: ["托馬斯·傑佛遜", "喬治·華盛頓", "約翰·亞當斯", "詹姆斯·麥迪遜"],
-                  explanation: "《聯邦黨人文集》由詹姆斯·麥迪遜、亞歷山大·漢密爾頓和約翰·傑伊共同撰寫。")
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
+                  explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the pen name 'Publius.' USCIS accepts any of their names."),
+            .init(text: "《联邦党人文集》支持批准美国宪法。请说出其中一位作者的名字。",
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton、Madison 或 Jay（Publius）", "Benjamin Franklin"],
+                  explanation: "《联邦党人文集》由 Alexander Hamilton、James Madison 和 John Jay 以笔名「Publius」共同撰写。USCIS 接受任何一位的名字。"),
+            .init(text: "《聯邦黨人文集》支持批准美國憲法。請說出其中一位作者的名字。",
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton、Madison 或 Jay（Publius）", "Benjamin Franklin"],
+                  explanation: "《聯邦黨人文集》由 Alexander Hamilton、James Madison 和 John Jay 以筆名「Publius」共同撰寫。USCIS 接受任何一位的名字。")
         ]),
         UnifiedQuestion(id: "q_08_068", correctAnswer: 2, variants: [
             .init(text: "What is one thing Benjamin Franklin is famous for?",
@@ -900,54 +900,32 @@ enum ChineseQuestions100 {
                   explanation: "美國在20世紀的戰爭包括：一戰、二戰、韓戰、越戰和波斯灣戰爭。")
         ]),
         UnifiedQuestion(id: "q_08_079", correctAnswer: 2, variants: [
-            .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Japan fight against Germany", "Because Japan attacked Pearl Harbor", "Germany attacked U.S. ships and sent the Zimmermann Telegram", "To respond to the Great Depression's economic crisis"],
-                  explanation: "The U.S. entered WWI because Germany sank U.S. ships and the Zimmermann Telegram was revealed."),
-            .init(text: "美国为何参加第一次世界大战？",
-                  options: ["帮助日本对抗德国", "因为日本袭击了珍珠港", "德国袭击美国船只并发送了齐默尔曼电报", "为了应对大萧条的经济危机"],
-                  explanation: "美国参加一战是因为德国击沉美国船只以及齐默尔曼电报被披露。"),
-            .init(text: "美國為何參加第一次世界大戰？",
-                  options: ["幫助日本對抗德國", "因為日本襲擊了珍珠港", "德國襲擊美國船隻並發送了齊默爾曼電報", "為了應對大蕭條的經濟危機"],
-                  explanation: "美國參加一戰是因為德國擊沉美國船隻以及齊默爾曼電報被披露。")
+            .init(text: "Who was President during World War I?",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson was the 28th President. He led the United States through World War I (1917–1918) and proposed the League of Nations to maintain world peace after the war."),
+            .init(text: "第一次世界大战期间谁是美国总统？",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson 是第 28 任总统。他领导美国经历了第一次世界大战（1917–1918），并提议成立国际联盟以维护战后世界和平。"),
+            .init(text: "第一次世界大戰期間誰是美國總統？",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson 是第 28 任總統。他領導美國經歷了第一次世界大戰（1917–1918），並提議成立國際聯盟以維護戰後世界和平。")
         ]),
-        UnifiedQuestion(id: "q_08_080", correctAnswer: 2, variants: [
-            .init(text: "When did all women get the right to vote?",
-                  options: ["1776", "1865", "1920", "1964"],
-                  explanation: "The 19th Amendment, ratified in 1920, guaranteed women the right to vote."),
-            .init(text: "所有女性是什么时候获得投票权的？",
-                  options: ["1776年", "1865年", "1920年", "1964年"],
-                  explanation: "第19条修正案于1920年批准，保障了女性的投票权。"),
-            .init(text: "所有女性是什麼時候獲得投票權的？",
-                  options: ["1776年", "1865年", "1920年", "1964年"],
-                  explanation: "第19條修正案於1920年批准，保障了女性的投票權。")
+        UnifiedQuestion(id: "q_08_080", correctAnswer: 3, variants: [
+            .init(text: "Who was President during the Great Depression and World War II?",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "Franklin D. Roosevelt (FDR), the 32nd President, led the nation through both the Great Depression and World War II. He served four terms — the most of any President."),
+            .init(text: "大萧条和第二次世界大战期间谁是美国总统？",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "富兰克林·罗斯福（FDR），第 32 任总统，带领美国经历了大萧条和第二次世界大战。他当选四届，比任何其他总统任期都长。"),
+            .init(text: "大蕭條和第二次世界大戰期間誰是美國總統？",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "富蘭克林·羅斯福（FDR），第 32 任總統，帶領美國經歷了大蕭條和第二次世界大戰。他當選四屆，比任何其他總統任期都長。")
         ])
     ]
 
     // MARK: - Practice Set 9: 現代歷史與地理 (Q81–Q90)
     static let practice9: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_08_081", correctAnswer: 2, variants: [
-            .init(text: "What was the Great Depression?",
-                  options: ["A long drought that caused widespread crop failures", "A major war that devastated the economy", "The longest economic recession in modern history, when many people lost jobs and homes", "A period of great artistic and cultural growth in America"],
-                  explanation: "The Great Depression (1929–late 1930s) was the worst economic downturn in modern U.S. history."),
-            .init(text: "什么是大萧条？",
-                  options: ["造成大范围农作物歉收的长期干旱", "严重破坏经济的重大战争", "现代史上历时最长的经济衰退，许多人失业并失去家园", "美国艺术和文化繁荣发展的时期"],
-                  explanation: "大萧条（1929年至1930年代末）是美国现代史上最严重的经济衰退。"),
-            .init(text: "什麼是大蕭條？",
-                  options: ["造成大範圍農作物歉收的長期乾旱", "嚴重破壞經濟的重大戰爭", "現代史上歷時最長的經濟衰退，許多人失業並失去家園", "美國藝術和文化繁榮發展的時期"],
-                  explanation: "大蕭條（1929年至1930年代末）是美國現代史上最嚴重的經濟衰退。")
-        ]),
-        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
-            .init(text: "When did the Great Depression begin?",
-                  options: ["1917", "1929", "1933", "1941"],
-                  explanation: "The Great Depression began with the stock market crash of October 1929."),
-            .init(text: "大萧条是什么时候开始的？",
-                  options: ["1917年", "1929年", "1933年", "1941年"],
-                  explanation: "大萧条始于1929年10月的股市崩溃。"),
-            .init(text: "大蕭條是什麼時候開始的？",
-                  options: ["1917年", "1929年", "1933年", "1941年"],
-                  explanation: "大蕭條始於1929年10月的股市崩潰。")
-        ]),
-        UnifiedQuestion(id: "q_08_083", correctAnswer: 2, variants: [
             .init(text: "Who did the United States fight in World War II?",
                   options: ["Germany, Russia, and China", "Japan, France, and Italy", "Japan, Germany, and Italy", "Britain, France, and Germany"],
                   explanation: "The U.S. fought the Axis Powers: Japan, Germany, and Italy."),
@@ -958,7 +936,7 @@ enum ChineseQuestions100 {
                   options: ["德國、俄羅斯和中國", "日本、法國和義大利", "日本、德國和義大利", "英國、法國和德國"],
                   explanation: "美國與軸心國作戰：日本、德國和義大利。")
         ]),
-        UnifiedQuestion(id: "q_08_084", correctAnswer: 1, variants: [
+        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
             .init(text: "Before he was President, Eisenhower was a general. What war was he in?",
                   options: ["World War I", "World War II", "Korean War", "Vietnam War"],
                   explanation: "Eisenhower served as Supreme Commander of Allied Forces in Europe during WWII."),
@@ -969,7 +947,7 @@ enum ChineseQuestions100 {
                   options: ["第一次世界大戰", "第二次世界大戰", "韓戰", "越戰"],
                   explanation: "艾森豪在二戰期間擔任歐洲盟軍最高統帥。")
         ]),
-        UnifiedQuestion(id: "q_08_085", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_083", correctAnswer: 3, variants: [
             .init(text: "During the Cold War, what was the main concern of the United States?",
                   options: ["Economic recession and unemployment", "Climate change and pollution", "Illegal immigration", "Communism / the spread of communism and nuclear war"],
                   explanation: "The Cold War (1947–1991) was a global conflict between the democratic U.S. and communist Soviet Union."),
@@ -980,7 +958,7 @@ enum ChineseQuestions100 {
                   options: ["經濟衰退和失業", "氣候變化和污染", "非法移民", "共產主義 / 共產主義的擴散和核戰爭"],
                   explanation: "冷戰（1947-1991年）是民主主義美國與共產主義蘇聯之間的全球性對抗。")
         ]),
-        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_084", correctAnswer: 2, variants: [
             .init(text: "What movement tried to end racial discrimination?",
                   options: ["The Temperance Movement", "The Labor Movement", "The Civil Rights Movement", "The Women's Suffrage Movement"],
                   explanation: "The Civil Rights Movement of the 1950s–1960s fought to end racial segregation."),
@@ -991,7 +969,7 @@ enum ChineseQuestions100 {
                   options: ["禁酒運動", "勞工運動", "民權運動", "女性選舉權運動"],
                   explanation: "1950至1960年代的民權運動致力於終結種族隔離。")
         ]),
-        UnifiedQuestion(id: "q_08_087", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_085", correctAnswer: 2, variants: [
             .init(text: "What did Martin Luther King, Jr. do?",
                   options: ["Led the Underground Railroad to free enslaved people", "Served as the first Black President of the NAACP", "Fought for civil rights and equality for all Americans", "Wrote the Civil Rights Act of 1964"],
                   explanation: "Dr. Martin Luther King, Jr. was the most prominent Civil Rights leader. He received the Nobel Peace Prize in 1964."),
@@ -1001,6 +979,28 @@ enum ChineseQuestions100 {
             .init(text: "小馬丁·路德·金恩做了什麼？",
                   options: ["領導地下鐵路解放奴隸", "擔任全國有色人種協進會第一任黑人主席", "為所有美國人的公民權利和平等而奮鬥", "起草了1964年《民權法案》"],
                   explanation: "小馬丁·路德·金恩博士是最傑出的民權領袖。他於1964年獲得諾貝爾和平獎。")
+        ]),
+        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+            .init(text: "What major event happened on September 11, 2001, in the United States?",
+                  options: ["A major hurricane struck the East Coast", "A financial crisis closed the stock market", "Terrorists attacked the United States", "The United States declared war on Iraq"],
+                  explanation: "On September 11, 2001, al-Qaeda terrorists hijacked four planes and attacked the World Trade Center (New York) and the Pentagon (Virginia). Nearly 3,000 people were killed."),
+            .init(text: "2001 年 9 月 11 日，美国发生了什么重大事件？",
+                  options: ["一场大型飓风袭击了东海岸", "一场金融危机导致股市关闭", "恐怖分子袭击了美国", "美国向伊拉克宣战"],
+                  explanation: "2001 年 9 月 11 日，基地组织恐怖分子劫持了四架飞机，袭击了纽约的世界贸易中心和弗吉尼亚州的五角大楼，近 3,000 人在袭击中遇难。"),
+            .init(text: "2001 年 9 月 11 日，美國發生了什麼重大事件？",
+                  options: ["一場大型颶風襲擊了東海岸", "一場金融危機導致股市關閉", "恐怖分子襲擊了美國", "美國向伊拉克宣戰"],
+                  explanation: "2001 年 9 月 11 日，蓋達組織恐怖分子劫持了四架飛機，襲擊了紐約的世界貿易中心和維吉尼亞州的五角大廈，近 3,000 人在襲擊中遇難。")
+        ]),
+        UnifiedQuestion(id: "q_08_087", correctAnswer: 3, variants: [
+            .init(text: "Name one American Indian tribe in the United States.",
+                  options: ["Aztec", "Maya", "Inca", "Cherokee or Navajo"],
+                  explanation: "USCIS accepts many tribes: Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Shawnee, Lakota, Crow, Hopi, Inuit, and others."),
+            .init(text: "请说出美国的一个印第安部落。",
+                  options: ["阿兹特克", "玛雅", "印加", "切罗基或纳瓦霍"],
+                  explanation: "USCIS 接受的部落包括：切罗基、纳瓦霍、苏族、奇佩瓦、乔克托、普韦布洛、阿帕奇、易洛魁、克里克、黑脚、塞米诺尔、夏延、肖尼、拉科塔、克劳、霍皮、因纽特等。（阿兹特克、玛雅、印加均属拉丁美洲，并非美国印第安人。）"),
+            .init(text: "請說出美國的一個印第安部落。",
+                  options: ["阿茲特克", "馬雅", "印加", "切羅基或納瓦荷"],
+                  explanation: "USCIS 接受的部落包括：切羅基、納瓦荷、蘇族、奇佩瓦、喬克托、普韋布洛、阿帕奇、易洛魁、克里克、黑腳、塞米諾爾、夏延、肖尼、拉科塔、克勞、霍皮、因紐特等。（阿茲特克、馬雅、印加均屬拉丁美洲，並非美國印第安人。）")
         ]),
         UnifiedQuestion(id: "q_08_088", correctAnswer: 2, variants: [
             .init(text: "Name one of the two longest rivers in the United States.",

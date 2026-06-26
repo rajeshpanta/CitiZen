@@ -450,7 +450,7 @@ private extension QuizView {
                             .foregroundColor(.green)
                         Label("\(quizLogic.incorrectAnswers)", systemImage: "xmark.circle.fill")
                             .foregroundColor(.red)
-                        Text("Need \(required)")
+                        Text(String(format: UIStrings.forLocaleCode(localeCode).interviewNeedFormat, required))
                             .foregroundColor(.cyan.opacity(0.8))
                     }
                     .font(.caption.bold())
@@ -903,6 +903,12 @@ private extension QuizView {
                     .font(.title.bold()).foregroundColor(.red)
                 Text(strings.failedSubtitle)
                     .foregroundColor(.white.opacity(0.7))
+            } else if quizLogic.status == .passed {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 44))
+                    .foregroundColor(.green)
+                Text(UIStrings.forLocaleCode(localeCode).resultPassed)
+                    .font(.title.bold()).foregroundColor(.green)
             } else {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 44))

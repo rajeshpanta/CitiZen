@@ -1332,6 +1332,7 @@ private struct OnboardingVoiceDemoView: View {
     @State private var appeared = false
     @State private var micPulse = false
     @State private var didFireSuccess = false
+    @State private var successWorkItem: DispatchWorkItem?
     @Environment(\.openURL) private var openURL
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
@@ -1447,15 +1448,16 @@ private struct OnboardingVoiceDemoView: View {
         }
         .onDisappear {
             controller.stop()
+            successWorkItem?.cancel()
         }
         .onChange(of: controller.status) { newStatus in
             // Auto-advance on success after a brief celebration moment.
             if newStatus == .success && !didFireSuccess {
                 didFireSuccess = true
                 let gen = UINotificationFeedbackGenerator(); gen.notificationOccurred(.success)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-                    onSuccess()
-                }
+                let item = DispatchWorkItem { onSuccess() }
+                successWorkItem = item
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.6, execute: item)
             }
         }
     }

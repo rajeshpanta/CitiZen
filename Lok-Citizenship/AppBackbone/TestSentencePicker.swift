@@ -21,6 +21,28 @@ enum TestSentencePicker {
         // If too many sentences have been seen recently to fill a fresh session,
         // use the whole pool — better to repeat than to fail.
         let source = fresh.count >= count ? fresh : pool
-        return Array(source.shuffled().prefix(count))
+        // Deduplicate by sentence text: multiple vocabulary words can share the
+        // same exampleSentence (e.g. "President" and "lives" both use
+        // "The President lives in the White House."). Without this filter a
+        // 3-sentence session could present the identical sentence twice, which
+        // is confusing and distorts the score.
+        var seenSentences = Set<String>()
+        var result: [ReadingWritingWord] = []
+        for word in source.shuffled() {
+            guard result.count < count else { break }
+            if seenSentences.insert(word.exampleSentence).inserted {
+                result.append(word)
+            }
+        }
+        // Fallback: if dedup exhausted the pool before filling `count`,
+        // top up from any remaining words (duplicates allowed at this point).
+        if result.count < count {
+            let picked = Set(result.map(\.id))
+            for word in pool.shuffled() where !picked.contains(word.id) {
+                result.append(word)
+                if result.count >= count { break }
+            }
+        }
+        return result
     }
 }

@@ -61,8 +61,13 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
         // Devanagari text. Hindi (hi-IN) uses the same script and pronounces
         // Nepali text intelligibly, so it's a better first fallback for Nepali
         // than English. Mirrors the STT fallback in LocalSTTService.
+        // Fallback chain: exact locale → language-family fallback → English → any
+        // Nepali (ne-NP) falls back to Hindi (hi-IN) — same Devanagari script.
+        // Spanish (es-US/es-ES/es-MX) falls back to any installed Spanish-family
+        // voice because US devices ship es-MX, not es-ES, as the default.
         let voice = AVSpeechSynthesisVoice(language: languageCode)
                     ?? (languageCode == "ne-NP" ? AVSpeechSynthesisVoice(language: "hi-IN") : nil)
+                    ?? (languageCode.hasPrefix("es-") ? AVSpeechSynthesisVoice.speechVoices().first(where: { $0.language.hasPrefix("es-") }) : nil)
                     ?? AVSpeechSynthesisVoice(language: "en-US")
                     ?? AVSpeechSynthesisVoice.speechVoices().first
 

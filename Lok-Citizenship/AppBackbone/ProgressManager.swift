@@ -134,8 +134,8 @@ final class ProgressManager {
     // ─────────────────────────────────────────────────────────────
 
     /// Which civics question set the user is studying.
-    /// `.set2008` = 100 official questions (current USCIS interview).
-    /// `.set2020` = 128 official questions (rescinded 2021 test, kept as study option).
+    /// `.set2008` = 100 official questions (current USCIS interview, 6/10 pass threshold).
+    /// `.set2020` = 128 questions (proposed Dec 2020, rescinded Feb 2021 before first use; kept as study option — no official pass threshold).
     enum QuestionSet: String {
         case set2008 = "2008"  // 100 questions, 10 sets × 10, 6/10 pass threshold
         case set2020 = "2020"  // 128 questions, 8 sets × 16, 4-mistake practice mode

@@ -100,6 +100,7 @@ final class SlowSpeechHelper: NSObject {
         // script, intelligible pronunciation) then en-US, matching LocalTTSService.
         utterance.voice = AVSpeechSynthesisVoice(language: languageCode)
                         ?? (languageCode == "ne-NP" ? AVSpeechSynthesisVoice(language: "hi-IN") : nil)
+                        ?? (languageCode.hasPrefix("es-") ? AVSpeechSynthesisVoice.speechVoices().first(where: { $0.language.hasPrefix("es-") }) : nil)
                         ?? AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * rateMultiplier
         currentUtterance = utterance

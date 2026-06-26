@@ -222,6 +222,7 @@ struct SettingsView: View {
                 ))
                 Button("Reset Onboarding") {
                     progress.hasCompletedOnboarding = false
+                    progress.hasChosenQuestionSet = false
                 }
                 .foregroundColor(.orange)
             } header: {

@@ -335,6 +335,10 @@ struct UIStrings {
     /// real USCIS test. Shown on the ready screen in the user's app language so
     /// non-English users understand why the questions will be read in English.
     let mockInterviewEnglishDisclaimer: String
+    /// Shown on the 128-question Mock Interview ready screen to clarify that
+    /// the 8/10 threshold is a practice convention, not an official USCIS standard
+    /// (the 128-question test was rescinded before it was ever administered).
+    let mockInterviewSet2020Disclaimer: String
     /// Banner shown on Practice Selection when the user's chosen language has
     /// no voice pack installed on the device. TTS would otherwise silently
     /// fall back to an English voice reading non-English text.
@@ -526,7 +530,7 @@ extension UIStrings {
     static func forLocaleCode(_ code: String) -> UIStrings {
         switch code {
         case "ne-NP":          return .nepali
-        case "es-ES":          return .spanish
+        case "es-US", "es-ES", "es-MX": return .spanish
         case "zh-CN", "zh-TW": return .chinese
         default:               return .english
         }
@@ -807,6 +811,7 @@ extension UIStrings {
 
         writingEnglishDisclaimer: "The USCIS writing test is in English. Type in English for the best practice.",
         mockInterviewEnglishDisclaimer: "The real USCIS interview is conducted in English. This mock is English-only so your practice matches the real test.",
+        mockInterviewSet2020Disclaimer: "Note: The 128-question set was never used for official USCIS interviews. The 8/10 pass threshold here is a practice benchmark, not an official USCIS standard.",
         voicePackMissingMessage: "This language's voice pack isn't installed. For clear audio, add it in Settings → Accessibility → Spoken Content → Voices.",
         questionTimeSensitiveNote: "Answers change over time. Verify the current officeholder at uscis.gov/citizenship before your interview.",
         testModeSpeechUnavailable: "Speech recognition isn't available on this device. In iOS Settings → General → Keyboard, make sure an English keyboard is added and try again.",
@@ -1172,6 +1177,7 @@ extension UIStrings {
 
         writingEnglishDisclaimer: "La prueba de escritura de USCIS es en inglés. Escribe en inglés para una mejor práctica.",
         mockInterviewEnglishDisclaimer: "La entrevista real de USCIS se realiza en inglés. Esta simulación es solo en inglés para que tu práctica coincida con el examen real.",
+        mockInterviewSet2020Disclaimer: "Nota: El conjunto de 128 preguntas nunca se usó en entrevistas oficiales de USCIS. El umbral de 8/10 es un punto de referencia de práctica, no un estándar oficial de USCIS.",
         voicePackMissingMessage: "No tienes instalada la voz de este idioma. Para un audio claro, agrégala en Ajustes → Accesibilidad → Contenido hablado → Voces.",
         questionTimeSensitiveNote: "Las respuestas cambian con el tiempo. Verifica al funcionario actual en uscis.gov/citizenship antes de tu entrevista.",
         testModeSpeechUnavailable: "El reconocimiento de voz no está disponible en este dispositivo. En Ajustes → General → Teclado, asegúrate de tener un teclado en inglés e inténtalo de nuevo.",
@@ -1537,6 +1543,7 @@ extension UIStrings {
 
         writingEnglishDisclaimer: "USCIS लेखाइ परीक्षा अंग्रेजीमा हुन्छ। उत्तम अभ्यासका लागि अंग्रेजीमा टाइप गर्नुहोस्।",
         mockInterviewEnglishDisclaimer: "वास्तविक USCIS अन्तर्वार्ता अंग्रेजीमा गरिन्छ। यो नक्कली अन्तर्वार्ता अंग्रेजीमा मात्र छ ताकि तपाईंको अभ्यास वास्तविक परीक्षासँग मेल खाओस्।",
+        mockInterviewSet2020Disclaimer: "नोट: १२८-प्रश्न सेट कहिल्यै आधिकारिक USCIS अन्तर्वार्तामा प्रयोग भएन। ८/१० उत्तीर्ण सीमा एक अभ्यास मापदण्ड हो, आधिकारिक USCIS मापदण्ड होइन।",
         voicePackMissingMessage: "स्पष्ट नेपाली अडियोको लागि, iOS Settings → Accessibility → Spoken Content → Voices मा हिन्दी आवाज स्थापना गर्नुहोस्।",
         questionTimeSensitiveNote: "उत्तरहरू समयसँगै परिवर्तन हुन सक्छन्। अन्तर्वार्ता अघि uscis.gov/citizenship मा हालको पदाधिकारी जाँच्नुहोस्।",
         testModeSpeechUnavailable: "यस उपकरणमा वाक् पहिचान उपलब्ध छैन। iOS सेटिङ → सामान्य → किबोर्डमा अंग्रेजी किबोर्ड थपिएको छ भन्ने सुनिश्चित गरी फेरि प्रयास गर्नुहोस्।",
@@ -1902,6 +1909,7 @@ extension UIStrings {
 
         writingEnglishDisclaimer: "USCIS 写作测试使用英语. 请用英语输入以获得最佳练习效果.",
         mockInterviewEnglishDisclaimer: "真实的 USCIS 面试以英语进行. 此模拟面试仅使用英语, 以便你的练习与真实考试保持一致.",
+        mockInterviewSet2020Disclaimer: "注意：128 道题集从未用于正式 USCIS 面试. 此处的 8/10 通过标准是练习基准, 并非 USCIS 官方标准.",
         voicePackMissingMessage: "未安装此语言的语音包. 为获得清晰的音频, 请在 设置 → 辅助功能 → 朗读内容 → 语音 中添加.",
         questionTimeSensitiveNote: "答案会随时间变化. 面试前请在 uscis.gov/citizenship 查看当前任职官员.",
         testModeSpeechUnavailable: "此设备上语音识别不可用. 请在 iOS 设置 → 通用 → 键盘中添加英语键盘后重试.",

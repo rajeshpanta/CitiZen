@@ -302,11 +302,11 @@ enum SpanishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_036", correctAnswer: 2, variants: [
             .init(text: "What are two Cabinet-level positions?",
-                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Attorney General"],
-                  explanation: "Cabinet positions include Secretary of State, Defense, Treasury, and the Attorney General."),
+                  options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Speaker of the House"],
+                  explanation: "Cabinet positions include the Vice President and department heads: Secretary of State, Defense, Treasury, and the Attorney General. (Chief Justice and Speaker lead judicial/legislative branches — not Cabinet.)"),
             .init(text: "¿Cuáles son dos cargos a nivel de Gabinete?",
-                  options: ["Senador y Representante", "Gobernador y Alcalde", "Secretario de Estado y Secretario de Defensa", "Presidente del Tribunal Supremo y Fiscal General"],
-                  explanation: "Los cargos del Gabinete incluyen el Secretario de Estado, de Defensa, del Tesoro y el Fiscal General.")
+                  options: ["Senador y Representante", "Gobernador y Alcalde", "Secretario de Estado y Secretario de Defensa", "Presidente del Tribunal Supremo y Presidente de la Cámara"],
+                  explanation: "Los cargos del Gabinete incluyen al Vicepresidente y jefes de departamento: Secretario de Estado, de Defensa, del Tesoro y el Fiscal General. (El Presidente del Tribunal Supremo y el Presidente de la Cámara dirigen ramas distintas, no el Gabinete.)")
         ]),
         UnifiedQuestion(id: "q_08_037", correctAnswer: 3, variants: [
             .init(text: "What does the judicial branch do?",
@@ -560,13 +560,13 @@ enum SpanishQuestions100 {
                   options: ["1776", "1781", "1787", "1791"],
                   explanation: "La Constitución se redactó en 1787 y fue ratificada en 1788.")
         ]),
-        UnifiedQuestion(id: "q_08_067", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_067", correctAnswer: 2, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "George Washington", "John Adams", "James Madison"],
-                  explanation: "The Federalist Papers were written by James Madison, Alexander Hamilton, and John Jay."),
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
+                  explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the pen name 'Publius.' USCIS accepts any of their names."),
             .init(text: "Los Documentos Federalistas apoyaron la aprobación de la Constitución de EE. UU. Nombre a uno de sus autores.",
-                  options: ["Thomas Jefferson", "George Washington", "John Adams", "James Madison"],
-                  explanation: "Los Documentos Federalistas fueron escritos por James Madison, Alexander Hamilton y John Jay.")
+                  options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison o Jay (Publius)", "Benjamin Franklin"],
+                  explanation: "Los Documentos Federalistas fueron escritos por Alexander Hamilton, James Madison y John Jay bajo el seudónimo «Publius». La USCIS acepta cualquiera de sus nombres.")
         ]),
         UnifiedQuestion(id: "q_08_068", correctAnswer: 2, variants: [
             .init(text: "What is one thing Benjamin Franklin is famous for?",
@@ -661,42 +661,26 @@ enum SpanishQuestions100 {
                   explanation: "Las guerras de EE. UU. en el siglo XX incluyen la Primera Guerra Mundial, la Segunda Guerra Mundial, la Guerra de Corea, la Guerra de Vietnam y la Guerra del Golfo Pérsico.")
         ]),
         UnifiedQuestion(id: "q_08_079", correctAnswer: 2, variants: [
-            .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Japan fight against Germany", "Because Japan attacked Pearl Harbor", "Germany attacked U.S. ships and sent the Zimmermann Telegram", "To respond to the Great Depression's economic crisis"],
-                  explanation: "The U.S. entered WWI in 1917 because Germany sank U.S. ships and the Zimmermann Telegram was revealed."),
-            .init(text: "¿Por qué entraron los Estados Unidos en la Primera Guerra Mundial?",
-                  options: ["Para ayudar a Japón a luchar contra Alemania", "Porque Japón atacó Pearl Harbor", "Alemania atacó barcos estadounidenses y envió el Telegrama Zimmermann", "Para responder a la crisis económica de la Gran Depresión"],
-                  explanation: "EE. UU. entró en la Primera Guerra Mundial en 1917 porque Alemania hundió barcos estadounidenses y se reveló el Telegrama Zimmermann.")
+            .init(text: "Who was President during World War I?",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson was the 28th President. He led the United States through World War I (1917–1918) and proposed the League of Nations to maintain world peace after the war."),
+            .init(text: "¿Quién fue presidente durante la Primera Guerra Mundial?",
+                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
+                  explanation: "Woodrow Wilson fue el 28.º Presidente. Lideró a los Estados Unidos durante la Primera Guerra Mundial (1917–1918) y propuso la Liga de Naciones para mantener la paz mundial.")
         ]),
-        UnifiedQuestion(id: "q_08_080", correctAnswer: 2, variants: [
-            .init(text: "When did all women get the right to vote?",
-                  options: ["1776", "1865", "1920", "1964"],
-                  explanation: "The 19th Amendment, ratified in 1920, guaranteed women the right to vote nationwide."),
-            .init(text: "¿Cuándo obtuvieron todas las mujeres el derecho al voto?",
-                  options: ["1776", "1865", "1920", "1964"],
-                  explanation: "La 19.ª Enmienda, ratificada en 1920, garantizó a las mujeres el derecho al voto en todo el país.")
+        UnifiedQuestion(id: "q_08_080", correctAnswer: 3, variants: [
+            .init(text: "Who was President during the Great Depression and World War II?",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "Franklin D. Roosevelt (FDR), the 32nd President, led the nation through both the Great Depression and World War II. He served four terms — the most of any President."),
+            .init(text: "¿Quién fue presidente durante la Gran Depresión y la Segunda Guerra Mundial?",
+                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
+                  explanation: "Franklin D. Roosevelt (FDR), el 32.º Presidente, lideró al país durante la Gran Depresión y la Segunda Guerra Mundial. Fue elegido cuatro veces, más que cualquier otro presidente.")
         ])
     ]
 
     // MARK: - Practice Set 9: Historia del siglo XX (Q81–Q90)
     static let practice9: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_08_081", correctAnswer: 2, variants: [
-            .init(text: "What was the Great Depression?",
-                  options: ["A long drought that caused widespread crop failures", "A major war that devastated the economy", "The longest economic recession in modern history, when many people lost jobs and homes", "A period of great artistic and cultural growth in America"],
-                  explanation: "The Great Depression (1929–late 1930s) was the worst economic downturn in modern U.S. history."),
-            .init(text: "¿Qué fue la Gran Depresión?",
-                  options: ["Una larga sequía que causó pérdidas generalizadas de cosechas", "Una gran guerra que devastó la economía", "La recesión económica más prolongada de la historia moderna, en la que muchas personas perdieron sus empleos y hogares", "Un período de gran crecimiento artístico y cultural en América"],
-                  explanation: "La Gran Depresión (1929 – finales de la década de 1930) fue la peor crisis económica de la historia moderna de EE. UU.")
-        ]),
-        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
-            .init(text: "When did the Great Depression begin?",
-                  options: ["1917", "1929", "1933", "1941"],
-                  explanation: "The Great Depression began with the stock market crash of October 1929 and lasted through the 1930s."),
-            .init(text: "¿Cuándo comenzó la Gran Depresión?",
-                  options: ["1917", "1929", "1933", "1941"],
-                  explanation: "La Gran Depresión comenzó con el colapso de la bolsa de valores en octubre de 1929 y se prolongó durante la década de 1930.")
-        ]),
-        UnifiedQuestion(id: "q_08_083", correctAnswer: 2, variants: [
             .init(text: "Who did the United States fight in World War II?",
                   options: ["Germany, Russia, and China", "Japan, France, and Italy", "Japan, Germany, and Italy", "Britain, France, and Germany"],
                   explanation: "The U.S. fought the Axis Powers: Japan, Germany, and Italy. The U.S. entered after Japan attacked Pearl Harbor on December 7, 1941."),
@@ -704,7 +688,7 @@ enum SpanishQuestions100 {
                   options: ["Alemania, Rusia y China", "Japón, Francia e Italia", "Japón, Alemania e Italia", "Gran Bretaña, Francia y Alemania"],
                   explanation: "EE. UU. combatió a las Potencias del Eje: Japón, Alemania e Italia. EE. UU. entró en la guerra tras el ataque japonés a Pearl Harbor el 7 de diciembre de 1941.")
         ]),
-        UnifiedQuestion(id: "q_08_084", correctAnswer: 1, variants: [
+        UnifiedQuestion(id: "q_08_082", correctAnswer: 1, variants: [
             .init(text: "Before he was President, Eisenhower was a general. What war was he in?",
                   options: ["World War I", "World War II", "Korean War", "Vietnam War"],
                   explanation: "Eisenhower served as Supreme Commander of Allied Forces in Europe during WWII, then became the 34th President."),
@@ -712,7 +696,7 @@ enum SpanishQuestions100 {
                   options: ["La Primera Guerra Mundial", "La Segunda Guerra Mundial", "La Guerra de Corea", "La Guerra de Vietnam"],
                   explanation: "Eisenhower fue Comandante Supremo de las Fuerzas Aliadas en Europa durante la Segunda Guerra Mundial y luego se convirtió en el 34.º Presidente.")
         ]),
-        UnifiedQuestion(id: "q_08_085", correctAnswer: 3, variants: [
+        UnifiedQuestion(id: "q_08_083", correctAnswer: 3, variants: [
             .init(text: "During the Cold War, what was the main concern of the United States?",
                   options: ["Economic recession and unemployment", "Climate change and pollution", "Illegal immigration", "Communism / the spread of communism and nuclear war"],
                   explanation: "The Cold War (1947–1991) was a global conflict between the democratic U.S. and communist Soviet Union."),
@@ -720,7 +704,7 @@ enum SpanishQuestions100 {
                   options: ["La recesión económica y el desempleo", "El cambio climático y la contaminación", "La inmigración ilegal", "El comunismo / la expansión del comunismo y la guerra nuclear"],
                   explanation: "La Guerra Fría (1947–1991) fue un conflicto global entre EE. UU., defensor de la democracia, y la Unión Soviética, de régimen comunista.")
         ]),
-        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_084", correctAnswer: 2, variants: [
             .init(text: "What movement tried to end racial discrimination?",
                   options: ["The Temperance Movement", "The Labor Movement", "The Civil Rights Movement", "The Women's Suffrage Movement"],
                   explanation: "The Civil Rights Movement of the 1950s–1960s fought to end racial segregation, resulting in the Civil Rights Act of 1964."),
@@ -728,13 +712,29 @@ enum SpanishQuestions100 {
                   options: ["El Movimiento de Templanza", "El Movimiento Obrero", "El Movimiento por los Derechos Civiles", "El Movimiento por el Sufragio Femenino"],
                   explanation: "El Movimiento por los Derechos Civiles de las décadas de 1950 y 1960 luchó para acabar con la segregación racial, lo que dio lugar a la Ley de Derechos Civiles de 1964.")
         ]),
-        UnifiedQuestion(id: "q_08_087", correctAnswer: 2, variants: [
+        UnifiedQuestion(id: "q_08_085", correctAnswer: 2, variants: [
             .init(text: "What did Martin Luther King, Jr. do?",
                   options: ["Led the Underground Railroad to free enslaved people", "Served as the first Black President of the NAACP", "Fought for civil rights and equality for all Americans", "Wrote the Civil Rights Act of 1964"],
                   explanation: "Dr. Martin Luther King, Jr. was the most prominent Civil Rights leader. He received the Nobel Peace Prize in 1964."),
             .init(text: "¿Qué hizo Martin Luther King Jr.?",
                   options: ["Lideró el Ferrocarril Subterráneo para liberar a los esclavizados", "Fue el primer presidente negro de la NAACP", "Luchó por los derechos civiles y la igualdad para todos los estadounidenses", "Redactó la Ley de Derechos Civiles de 1964"],
                   explanation: "El Dr. Martin Luther King Jr. fue el líder más destacado del movimiento por los derechos civiles. Recibió el Premio Nobel de la Paz en 1964.")
+        ]),
+        UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
+            .init(text: "What major event happened on September 11, 2001, in the United States?",
+                  options: ["A major hurricane struck the East Coast", "A financial crisis closed the stock market", "Terrorists attacked the United States", "The United States declared war on Iraq"],
+                  explanation: "On September 11, 2001, al-Qaeda terrorists hijacked four planes and attacked the World Trade Center (New York) and the Pentagon (Virginia). Nearly 3,000 people were killed."),
+            .init(text: "¿Qué evento importante ocurrió el 11 de septiembre de 2001 en los Estados Unidos?",
+                  options: ["Un gran huracán azotó la Costa Este", "Una crisis financiera cerró la bolsa de valores", "Los terroristas atacaron los Estados Unidos", "Los Estados Unidos declararon la guerra a Irak"],
+                  explanation: "El 11 de septiembre de 2001, terroristas de Al-Qaeda secuestraron cuatro aviones y atacaron el World Trade Center (Nueva York) y el Pentágono (Virginia). Casi 3,000 personas murieron en los ataques.")
+        ]),
+        UnifiedQuestion(id: "q_08_087", correctAnswer: 3, variants: [
+            .init(text: "Name one American Indian tribe in the United States.",
+                  options: ["Aztec", "Maya", "Inca", "Cherokee or Navajo"],
+                  explanation: "USCIS accepts many tribes: Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Shawnee, Lakota, Crow, Hopi, Inuit, and others."),
+            .init(text: "Nombre una tribu indígena americana en los Estados Unidos.",
+                  options: ["Azteca", "Maya", "Inca", "Cherokee o Navajo"],
+                  explanation: "La USCIS acepta muchas tribus: Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Shawnee, Lakota, Crow, Hopi, Inuit y otras. (Los aztecas, mayas e incas son latinoamericanos, no de EE. UU.)")
         ]),
         UnifiedQuestion(id: "q_08_088", correctAnswer: 2, variants: [
             .init(text: "Name one of the two longest rivers in the United States.",

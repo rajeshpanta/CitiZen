@@ -21,6 +21,12 @@ enum VoiceAvailability {
         if locale == "ne-NP", AVSpeechSynthesisVoice(language: "hi-IN") != nil {
             return true
         }
+        // US devices ship es-MX as the default Spanish voice, not es-US or es-ES.
+        // Any installed Spanish-family voice is usable for all Spanish locales.
+        if locale.hasPrefix("es-"),
+           AVSpeechSynthesisVoice.speechVoices().contains(where: { $0.language.hasPrefix("es-") }) {
+            return true
+        }
         return false
     }
 }

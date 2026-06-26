@@ -52,7 +52,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     func speak(_ text: String, languageCode: String) -> AnyPublisher<Void, Never> {
         stopSpeaking()
         finished = PassthroughSubject<Void, Never>()
-        fetchAndPlay(text: text) { [weak self] success in
+        fetchAndPlay(text: text, languageCode: languageCode) { [weak self] success in
             if success { self?.finished.send(()) }
             self?.finished.send(completion: .finished)
         }
@@ -73,7 +73,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
     /// `fetchAndPlay`) supersedes this request — see `currentRequestId`. This
     /// prevents stale-cancel callbacks from triggering the router's local-TTS
     /// fallback for the previous question's text.
-    func fetchAndPlay(text: String, rate: Float = 1.0, completion: @escaping (Bool) -> Void) {
+    func fetchAndPlay(text: String, rate: Float = 1.0, languageCode: String = "en-US", completion: @escaping (Bool) -> Void) {
         guard isConfigured, !text.isEmpty else {
             completion(false)
             return
@@ -114,6 +114,7 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
         let body: [String: Any] = [
             "text": text,
             "voice": Self.voice,
+            "language": languageCode,
         ]
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
@@ -187,7 +188,10 @@ final class OpenAITTSService: NSObject, TextToSpeechService {
             // also drops `.defaultToSpeaker` and applies a runtime route
             // override so BT speakers actually route to BT instead of
             // being forced to the iPhone speaker.
-            AudioSessionPrewarmer.configureSession()
+            guard AudioSessionPrewarmer.configureSession() else {
+                completion(false)
+                return
+            }
 
             player = try AVAudioPlayer(contentsOf: url)
             currentPlayURL = url
