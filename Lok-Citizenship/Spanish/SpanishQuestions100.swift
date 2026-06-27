@@ -121,15 +121,15 @@ enum SpanishQuestions100 {
                   options: ["Popular vote", "Checks and balances / separation of powers", "The military", "State governments"],
                   explanation: "Checks and balances allow each branch to limit the others."),
             .init(text: "¿Qué impide que una rama del gobierno se vuelva demasiado poderosa?",
-                  options: ["El voto popular", "Los controles y equilibrios / separación de poderes", "Las fuerzas armadas", "Los gobiernos estatales"],
-                  explanation: "Los controles y equilibrios permiten que cada rama limite a las demás.")
+                  options: ["El voto popular", "Los frenos y contrapesos / separación de poderes", "Las fuerzas armadas", "Los gobiernos estatales"],
+                  explanation: "Los frenos y contrapesos permiten que cada rama limite a las demás.")
         ]),
         UnifiedQuestion(id: "q_08_015", correctAnswer: 2, variants: [
             .init(text: "Who is in charge of the executive branch?",
                   options: ["The Speaker of the House", "The Chief Justice of the Supreme Court", "The President", "The Secretary of State"],
                   explanation: "The President leads the executive branch."),
             .init(text: "¿Quién está a cargo de la rama ejecutiva?",
-                  options: ["El Presidente de la Cámara", "El Presidente del Tribunal Supremo", "El Presidente", "El Secretario de Estado"],
+                  options: ["El Presidente de la Cámara", "El Presidente de la Corte Suprema", "El Presidente", "El Secretario de Estado"],
                   explanation: "El Presidente dirige la rama ejecutiva.")
         ]),
         UnifiedQuestion(id: "q_08_016", correctAnswer: 2, variants: [
@@ -162,7 +162,7 @@ enum SpanishQuestions100 {
                   explanation: "U.S. Senators serve 6-year terms."),
             .init(text: "¿Por cuántos años elegimos a un senador de EE. UU.?",
                   options: ["2 años", "4 años", "6 años", "8 años"],
-                  explanation: "Los senadores de EE. UU. sirven mandatos de 6 años.")
+                  explanation: "Los senadores de EE. UU. cumplen mandatos de 6 años.")
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
             .init(text: "Who is one of your state's U.S. Senators now? (Varies by state)",
@@ -190,7 +190,7 @@ enum SpanishQuestions100 {
                   explanation: "U.S. Representatives serve 2-year terms."),
             .init(text: "¿Por cuántos años elegimos a un representante de EE. UU.?",
                   options: ["2 años", "4 años", "6 años", "8 años"],
-                  explanation: "Los representantes de EE. UU. sirven mandatos de 2 años.")
+                  explanation: "Los representantes de EE. UU. cumplen mandatos de 2 años.")
         ]),
         UnifiedQuestion(id: "q_08_023", correctAnswer: 0, variants: [
             .init(text: "Name your U.S. Representative. (Varies by congressional district)",
@@ -253,7 +253,7 @@ enum SpanishQuestions100 {
                   options: ["The Speaker of the House", "The Chief Justice", "The Secretary of State", "The Vice President"],
                   explanation: "The Vice President becomes President if the President is unable to serve."),
             .init(text: "Si el Presidente ya no puede ejercer el cargo, ¿quién se convierte en Presidente?",
-                  options: ["El Presidente de la Cámara de Representantes", "El Presidente del Tribunal Supremo", "El Secretario de Estado", "El Vicepresidente"],
+                  options: ["El Presidente de la Cámara de Representantes", "El Presidente de la Corte Suprema", "El Secretario de Estado", "El Vicepresidente"],
                   explanation: "El Vicepresidente asume la Presidencia si el Presidente no puede ejercer el cargo.")
         ])
     ]
@@ -265,7 +265,7 @@ enum SpanishQuestions100 {
                   options: ["The Secretary of State", "The Speaker of the House", "The President pro tempore of the Senate", "The Chief Justice of the Supreme Court"],
                   explanation: "The Speaker of the House is third in line of succession."),
             .init(text: "Si tanto el Presidente como el Vicepresidente no pueden ejercer el cargo, ¿quién se convierte en Presidente?",
-                  options: ["El Secretario de Estado", "El Presidente de la Cámara de Representantes", "El Presidente pro tempore del Senado", "El Presidente del Tribunal Supremo"],
+                  options: ["El Secretario de Estado", "El Presidente de la Cámara de Representantes", "El Presidente pro tempore del Senado", "El Presidente de la Corte Suprema"],
                   explanation: "El Presidente de la Cámara de Representantes ocupa el tercer lugar en la línea de sucesión.")
         ]),
         UnifiedQuestion(id: "q_08_032", correctAnswer: 2, variants: [
@@ -281,7 +281,7 @@ enum SpanishQuestions100 {
                   options: ["The Speaker of the House", "The Vice President", "The President", "The Chief Justice"],
                   explanation: "After Congress passes a bill, the President signs it into law or vetoes it."),
             .init(text: "¿Quién firma los proyectos de ley para que se conviertan en leyes?",
-                  options: ["El Presidente de la Cámara", "El Vicepresidente", "El Presidente", "El Presidente del Tribunal Supremo"],
+                  options: ["El Presidente de la Cámara", "El Vicepresidente", "El Presidente", "El Presidente de la Corte Suprema"],
                   explanation: "Después de que el Congreso aprueba un proyecto de ley, el Presidente lo firma para convertirlo en ley o lo veta.")
         ]),
         UnifiedQuestion(id: "q_08_034", correctAnswer: 3, variants: [
@@ -305,8 +305,8 @@ enum SpanishQuestions100 {
                   options: ["Senator and Representative", "Governor and Mayor", "Secretary of State and Secretary of Defense", "Chief Justice and Speaker of the House"],
                   explanation: "Cabinet positions include the Vice President and department heads: Secretary of State, Defense, Treasury, and the Attorney General. (Chief Justice and Speaker lead judicial/legislative branches — not Cabinet.)"),
             .init(text: "¿Cuáles son dos cargos a nivel de Gabinete?",
-                  options: ["Senador y Representante", "Gobernador y Alcalde", "Secretario de Estado y Secretario de Defensa", "Presidente del Tribunal Supremo y Presidente de la Cámara"],
-                  explanation: "Los cargos del Gabinete incluyen al Vicepresidente y jefes de departamento: Secretario de Estado, de Defensa, del Tesoro y el Fiscal General. (El Presidente del Tribunal Supremo y el Presidente de la Cámara dirigen ramas distintas, no el Gabinete.)")
+                  options: ["Senador y Representante", "Gobernador y Alcalde", "Secretario de Estado y Secretario de Defensa", "Presidente de la Corte Suprema y Presidente de la Cámara"],
+                  explanation: "Los cargos del Gabinete incluyen al Vicepresidente y jefes de departamento: Secretario de Estado, de Defensa, del Tesoro y el Fiscal General. (El Presidente de la Corte Suprema y el Presidente de la Cámara dirigen ramas distintas, no el Gabinete.)")
         ]),
         UnifiedQuestion(id: "q_08_037", correctAnswer: 3, variants: [
             .init(text: "What does the judicial branch do?",
@@ -321,7 +321,7 @@ enum SpanishQuestions100 {
                   options: ["The Federal Appeals Court", "The State Supreme Court", "The Federal District Court", "The Supreme Court"],
                   explanation: "The U.S. Supreme Court is the highest court in the land. Its decisions are final."),
             .init(text: "¿Cuál es el tribunal más alto de los Estados Unidos?",
-                  options: ["El Tribunal Federal de Apelaciones", "El Tribunal Supremo Estatal", "El Tribunal Federal de Distrito", "La Corte Suprema"],
+                  options: ["El Tribunal Federal de Apelaciones", "La Corte Suprema Estatal", "El Tribunal Federal de Distrito", "La Corte Suprema"],
                   explanation: "La Corte Suprema de EE. UU. es el tribunal más alto del país. Sus decisiones son definitivas.")
         ]),
         UnifiedQuestion(id: "q_08_039", correctAnswer: 1, variants: [
@@ -336,9 +336,9 @@ enum SpanishQuestions100 {
             .init(text: "Who is the Chief Justice of the United States now?",
                   options: ["Sonia Sotomayor", "Clarence Thomas", "John Roberts", "Elena Kagan"],
                   explanation: "John G. Roberts Jr. has served as Chief Justice since 2005."),
-            .init(text: "¿Quién es actualmente el Presidente del Tribunal Supremo de los Estados Unidos?",
+            .init(text: "¿Quién es actualmente el Presidente de la Corte Suprema de los Estados Unidos?",
                   options: ["Sonia Sotomayor", "Clarence Thomas", "John Roberts", "Elena Kagan"],
-                  explanation: "John G. Roberts Jr. es Presidente del Tribunal Supremo desde 2005.")
+                  explanation: "John G. Roberts Jr. es Presidente de la Corte Suprema desde 2005.")
         ])
     ]
 
@@ -406,7 +406,7 @@ enum SpanishQuestions100 {
                   explanation: "Four voting amendments: 15th (race), 19th (women), 24th (no poll tax), and 26th (age 18+)."),
             .init(text: "Hay cuatro enmiendas a la Constitución sobre quién puede votar. Describa una de ellas.",
                   options: ["Todas las personas de 16 años o más pueden votar", "Los ciudadanos de dieciocho (18) años o más pueden votar", "Solo los propietarios pueden votar", "Solo los contribuyentes pueden votar"],
-                  explanation: "Las cuatro enmiendas sobre el voto son: la 15.ª (raza), la 19.ª (mujeres), la 24.ª (sin impuesto al voto) y la 26.ª (a partir de los 18 años).")
+                  explanation: "Las cuatro enmiendas sobre el voto son: la 15.ª (raza), la 19.ª (mujeres), la 24.ª (sin impuesto para votar) y la 26.ª (a partir de los 18 años).")
         ]),
         UnifiedQuestion(id: "q_08_049", correctAnswer: 2, variants: [
             .init(text: "What is one responsibility that is only for United States citizens?",
@@ -440,7 +440,7 @@ enum SpanishQuestions100 {
             .init(text: "Who do we show loyalty to when we say the Pledge of Allegiance?",
                   options: ["The President of the United States", "The U.S. Constitution and the courts", "The United States and the flag", "The military and veterans"],
                   explanation: "The Pledge of Allegiance is a declaration of loyalty to the United States and its flag."),
-            .init(text: "¿A quién le mostramos lealtad cuando recitamos el Juramento de Lealtad?",
+            .init(text: "¿A quién le expresamos lealtad cuando decimos el Juramento de Lealtad?",
                   options: ["Al Presidente de los Estados Unidos", "A la Constitución de EE. UU. y los tribunales", "A los Estados Unidos y a la bandera", "A las fuerzas armadas y a los veteranos"],
                   explanation: "El Juramento de Lealtad es una declaración de fidelidad a los Estados Unidos y a su bandera.")
         ]),
@@ -472,7 +472,7 @@ enum SpanishQuestions100 {
             .init(text: "When is the last day you can send in federal income tax forms?",
                   options: ["January 31", "March 15", "April 15", "June 30"],
                   explanation: "Federal income tax returns are due on April 15 each year."),
-            .init(text: "¿Cuál es el último día para enviar las declaraciones de impuestos federales sobre la renta?",
+            .init(text: "¿Cuál es el último día para presentar las declaraciones de impuestos federales sobre la renta?",
                   options: ["31 de enero", "15 de marzo", "15 de abril", "30 de junio"],
                   explanation: "Las declaraciones de impuestos federales sobre la renta vencen el 15 de abril de cada año.")
         ]),
@@ -564,7 +564,7 @@ enum SpanishQuestions100 {
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
                   options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the pen name 'Publius.' USCIS accepts any of their names."),
-            .init(text: "Los Documentos Federalistas apoyaron la aprobación de la Constitución de EE. UU. Nombre a uno de sus autores.",
+            .init(text: "Los Documentos Federalistas apoyaron la ratificación de la Constitución de EE. UU. Nombre a uno de sus autores.",
                   options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison o Jay (Publius)", "Benjamin Franklin"],
                   explanation: "Los Documentos Federalistas fueron escritos por Alexander Hamilton, James Madison y John Jay bajo el seudónimo «Publius». La USCIS acepta cualquiera de sus nombres.")
         ]),
@@ -572,7 +572,7 @@ enum SpanishQuestions100 {
             .init(text: "What is one thing Benjamin Franklin is famous for?",
                   options: ["Writing the Declaration of Independence", "Being the first President of the United States", "Being the first U.S. Postmaster General", "Leading the Union Army during the Civil War"],
                   explanation: "Benjamin Franklin was a diplomat, inventor, writer, and the first Postmaster General."),
-            .init(text: "¿Por qué es famoso Benjamin Franklin?",
+            .init(text: "¿Cuál es una cosa por la que es famoso Benjamin Franklin?",
                   options: ["Por redactar la Declaración de Independencia", "Por ser el primer Presidente de los Estados Unidos", "Por ser el primer Director General de Correos de EE. UU.", "Por liderar el Ejército de la Unión durante la Guerra Civil"],
                   explanation: "Benjamin Franklin fue diplomático, inventor, escritor y el primer Director General de Correos.")
         ]),
@@ -709,7 +709,7 @@ enum SpanishQuestions100 {
                   options: ["The Temperance Movement", "The Labor Movement", "The Civil Rights Movement", "The Women's Suffrage Movement"],
                   explanation: "The Civil Rights Movement of the 1950s–1960s fought to end racial segregation, resulting in the Civil Rights Act of 1964."),
             .init(text: "¿Qué movimiento intentó poner fin a la discriminación racial?",
-                  options: ["El Movimiento de Templanza", "El Movimiento Obrero", "El Movimiento por los Derechos Civiles", "El Movimiento por el Sufragio Femenino"],
+                  options: ["El Movimiento por la Templanza", "El Movimiento Obrero", "El Movimiento por los Derechos Civiles", "El Movimiento por el Sufragio Femenino"],
                   explanation: "El Movimiento por los Derechos Civiles de las décadas de 1950 y 1960 luchó para acabar con la segregación racial, lo que dio lugar a la Ley de Derechos Civiles de 1964.")
         ]),
         UnifiedQuestion(id: "q_08_085", correctAnswer: 2, variants: [
@@ -725,7 +725,7 @@ enum SpanishQuestions100 {
                   options: ["A major hurricane struck the East Coast", "A financial crisis closed the stock market", "Terrorists attacked the United States", "The United States declared war on Iraq"],
                   explanation: "On September 11, 2001, al-Qaeda terrorists hijacked four planes and attacked the World Trade Center (New York) and the Pentagon (Virginia). Nearly 3,000 people were killed."),
             .init(text: "¿Qué evento importante ocurrió el 11 de septiembre de 2001 en los Estados Unidos?",
-                  options: ["Un gran huracán azotó la Costa Este", "Una crisis financiera cerró la bolsa de valores", "Los terroristas atacaron los Estados Unidos", "Los Estados Unidos declararon la guerra a Irak"],
+                  options: ["Un gran huracán azotó la Costa Este", "Una crisis financiera cerró la bolsa de valores", "Terroristas atacaron a los Estados Unidos", "Los Estados Unidos declararon la guerra a Irak"],
                   explanation: "El 11 de septiembre de 2001, terroristas de Al-Qaeda secuestraron cuatro aviones y atacaron el World Trade Center (Nueva York) y el Pentágono (Virginia). Casi 3,000 personas murieron en los ataques.")
         ]),
         UnifiedQuestion(id: "q_08_087", correctAnswer: 3, variants: [

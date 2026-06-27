@@ -95,10 +95,10 @@ enum ChineseQuestions100 {
                   options: ["Created the U.S. Constitution", "Announced and declared our independence from Great Britain", "Established the Bill of Rights", "Set up the three branches of government"],
                   explanation: "The Declaration of Independence, adopted July 4, 1776, formally announced separation from British rule."),
             .init(text: "《独立宣言》起到了什么作用？",
-                  options: ["创建了美国宪法", "宣布并宣告我们脱离英国独立", "建立了《权利法案》", "设立了政府三个分支"],
+                  options: ["创建了美国宪法", "宣告我们脱离英国独立", "建立了《权利法案》", "设立了政府三个分支"],
                   explanation: "1776年7月4日通过的《独立宣言》正式宣布脱离英国统治。"),
             .init(text: "《獨立宣言》起到了什麼作用？",
-                  options: ["創建了美國憲法", "宣布並宣告我們脫離英國獨立", "建立了《權利法案》", "設立了政府三個分支"],
+                  options: ["創建了美國憲法", "宣告我們脫離英國獨立", "建立了《權利法案》", "設立了政府三個分支"],
                   explanation: "1776年7月4日通過的《獨立宣言》正式宣布脫離英國統治。")
         ]),
         UnifiedQuestion(id: "q_08_009", correctAnswer: 1, variants: [
@@ -302,10 +302,10 @@ enum ChineseQuestions100 {
                   explanation: "The President serves a 4-year term, limited to two terms."),
             .init(text: "总统的任期是多少年？",
                   options: ["2年", "3年", "4年", "6年"],
-                  explanation: "总统任期为4年，最多连任两届。"),
+                  explanation: "总统任期为4年，最多担任两届。"),
             .init(text: "總統的任期是多少年？",
                   options: ["2年", "3年", "4年", "6年"],
-                  explanation: "總統任期為4年，最多連任兩屆。")
+                  explanation: "總統任期為4年，最多擔任兩屆。")
         ]),
         UnifiedQuestion(id: "q_08_027", correctAnswer: 2, variants: [
             .init(text: "In what month do we vote for President?",
@@ -375,7 +375,7 @@ enum ChineseQuestions100 {
                   explanation: "总统担任美国全部武装力量的总司令。"),
             .init(text: "誰是軍隊的總司令？",
                   options: ["國防部長", "四星上將", "總統", "參謀長聯席會議主席"],
-                  explanation: "總統擔任美國全部武裝力量的三軍統帥。")
+                  explanation: "總統擔任美國全部武裝力量的總司令。")
         ]),
         UnifiedQuestion(id: "q_08_033", correctAnswer: 2, variants: [
             .init(text: "Who signs bills to become laws?",
@@ -449,10 +449,10 @@ enum ChineseQuestions100 {
                   explanation: "The Supreme Court has 9 justices: one Chief Justice and eight Associate Justices."),
             .init(text: "最高法院有多少位大法官？",
                   options: ["7位", "9位", "11位", "13位"],
-                  explanation: "最高法院共有9位大法官：一位首席大法官和八位陪席大法官。"),
+                  explanation: "最高法院共有9位大法官：一位首席大法官和八位大法官。"),
             .init(text: "最高法院有多少位大法官？",
                   options: ["7位", "9位", "11位", "13位"],
-                  explanation: "最高法院共有9位大法官：一位首席大法官和八位陪席大法官。")
+                  explanation: "最高法院共有9位大法官：一位首席大法官和八位大法官。")
         ]),
         UnifiedQuestion(id: "q_08_040", correctAnswer: 2, variants: [
             .init(text: "Who is the Chief Justice of the United States now?",
@@ -529,10 +529,10 @@ enum ChineseQuestions100 {
                   options: ["Democratic Party", "Republican Party", "Independent", "Libertarian Party"],
                   explanation: "Donald Trump is a member of the Republican Party."),
             .init(text: "现任总统属于哪个政党？",
-                  options: ["民主党", "共和党", "无党派", "自由党"],
+                  options: ["民主党", "共和党", "无党派", "自由意志党"],
                   explanation: "唐纳德·特朗普是共和党成员。"),
             .init(text: "現任總統屬於哪個政黨？",
-                  options: ["民主黨", "共和黨", "無黨派", "自由黨"],
+                  options: ["民主黨", "共和黨", "無黨派", "自由意志黨"],
                   explanation: "唐納德·特朗普是共和黨成員。")
         ]),
         UnifiedQuestion(id: "q_08_047", correctAnswer: 2, variants: [
@@ -562,11 +562,11 @@ enum ChineseQuestions100 {
                   options: ["Pay taxes", "Follow federal and state laws", "Serve on a jury", "Obey local ordinances"],
                   explanation: "Serving on a jury is reserved exclusively for U.S. citizens."),
             .init(text: "仅限美国公民的一项责任是什么？",
-                  options: ["缴纳税款", "遵守联邦和州法律", "陪审团服务", "遵守地方条例"],
-                  explanation: "陪审团服务是专属美国公民的责任。"),
+                  options: ["缴纳税款", "遵守联邦和州法律", "担任陪审团成员", "遵守地方条例"],
+                  explanation: "担任陪审团成员是专属美国公民的责任。"),
             .init(text: "僅限美國公民的一項責任是什麼？",
-                  options: ["繳納稅款", "遵守聯邦和州法律", "陪審團服務", "遵守地方條例"],
-                  explanation: "陪審團服務是專屬美國公民的責任。")
+                  options: ["繳納稅款", "遵守聯邦和州法律", "擔任陪審團成員", "遵守地方條例"],
+                  explanation: "擔任陪審團成員是專屬美國公民的責任。")
         ]),
         UnifiedQuestion(id: "q_08_050", correctAnswer: 2, variants: [
             .init(text: "Name one right only for United States citizens.",
@@ -598,10 +598,10 @@ enum ChineseQuestions100 {
             .init(text: "Who do we show loyalty to when we say the Pledge of Allegiance?",
                   options: ["The President of the United States", "The U.S. Constitution and the courts", "The United States and the flag", "The military and veterans"],
                   explanation: "The Pledge of Allegiance is a declaration of loyalty to the United States and its flag."),
-            .init(text: "我们宣誓效忠时，是对谁表示忠诚？",
+            .init(text: "我们朗诵《效忠誓词》时，是对谁表示忠诚？",
                   options: ["美国总统", "美国宪法和法院", "美国和国旗", "军队和退伍军人"],
                   explanation: "效忠誓词是对美国及其国旗的忠诚宣言。"),
-            .init(text: "我們宣誓效忠時，是對誰表示忠誠？",
+            .init(text: "我們朗誦《效忠誓詞》時，是對誰表示忠誠？",
                   options: ["美國總統", "美國憲法和法院", "美國和國旗", "軍隊和退伍軍人"],
                   explanation: "效忠誓詞是對美國及其國旗的忠誠宣言。")
         ]),
@@ -653,10 +653,10 @@ enum ChineseQuestions100 {
             .init(text: "When must all men register for the Selective Service?",
                   options: ["At age 16", "At age 21", "At age 18 (between 18 and 26)", "Only during wartime when required"],
                   explanation: "All male U.S. residents must register with the Selective Service within 30 days of turning 18."),
-            .init(text: "所有男性必须在何时登记兵役？",
+            .init(text: "所有男性必须在何时向选征兵役局登记？",
                   options: ["16岁时", "21岁时", "18岁时（18至26岁之间）", "仅在战时需要时"],
                   explanation: "所有美国男性居民必须在年满18岁后30天内向选征兵役局登记。"),
-            .init(text: "所有男性必須在何時登記兵役？",
+            .init(text: "所有男性必須在何時向選征兵役局登記？",
                   options: ["16歲時", "21歲時", "18歲時（18至26歲之間）", "僅在戰時需要時"],
                   explanation: "所有美國男性居民必須在年滿18歲後30天內向選征兵役局登記。")
         ]),
@@ -768,10 +768,10 @@ enum ChineseQuestions100 {
                   options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the pen name 'Publius.' USCIS accepts any of their names."),
             .init(text: "《联邦党人文集》支持批准美国宪法。请说出其中一位作者的名字。",
-                  options: ["Thomas Jefferson", "John Adams", "Hamilton、Madison 或 Jay（Publius）", "Benjamin Franklin"],
+                  options: ["托马斯·杰斐逊", "约翰·亚当斯", "Hamilton、Madison 或 Jay（Publius）", "本杰明·富兰克林"],
                   explanation: "《联邦党人文集》由 Alexander Hamilton、James Madison 和 John Jay 以笔名「Publius」共同撰写。USCIS 接受任何一位的名字。"),
             .init(text: "《聯邦黨人文集》支持批准美國憲法。請說出其中一位作者的名字。",
-                  options: ["Thomas Jefferson", "John Adams", "Hamilton、Madison 或 Jay（Publius）", "Benjamin Franklin"],
+                  options: ["托馬斯·傑佛遜", "約翰·亞當斯", "Hamilton、Madison 或 Jay（Publius）", "班傑明·富蘭克林"],
                   explanation: "《聯邦黨人文集》由 Alexander Hamilton、James Madison 和 John Jay 以筆名「Publius」共同撰寫。USCIS 接受任何一位的名字。")
         ]),
         UnifiedQuestion(id: "q_08_068", correctAnswer: 2, variants: [
@@ -904,22 +904,22 @@ enum ChineseQuestions100 {
                   options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
                   explanation: "Woodrow Wilson was the 28th President. He led the United States through World War I (1917–1918) and proposed the League of Nations to maintain world peace after the war."),
             .init(text: "第一次世界大战期间谁是美国总统？",
-                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
-                  explanation: "Woodrow Wilson 是第 28 任总统。他领导美国经历了第一次世界大战（1917–1918），并提议成立国际联盟以维护战后世界和平。"),
+                  options: ["西奥多·罗斯福", "亚伯拉罕·林肯", "伍德罗·威尔逊", "富兰克林·罗斯福"],
+                  explanation: "伍德罗·威尔逊是第 28 任总统。他领导美国经历了第一次世界大战（1917–1918），并提议成立国际联盟以维护战后世界和平。"),
             .init(text: "第一次世界大戰期間誰是美國總統？",
-                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
-                  explanation: "Woodrow Wilson 是第 28 任總統。他領導美國經歷了第一次世界大戰（1917–1918），並提議成立國際聯盟以維護戰後世界和平。")
+                  options: ["西奧多·羅斯福", "亞伯拉罕·林肯", "伍德羅·威爾遜", "富蘭克林·羅斯福"],
+                  explanation: "伍德羅·威爾遜是第 28 任總統。他領導美國經歷了第一次世界大戰（1917–1918），並提議成立國際聯盟以維護戰後世界和平。")
         ]),
         UnifiedQuestion(id: "q_08_080", correctAnswer: 3, variants: [
             .init(text: "Who was President during the Great Depression and World War II?",
                   options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
                   explanation: "Franklin D. Roosevelt (FDR), the 32nd President, led the nation through both the Great Depression and World War II. He served four terms — the most of any President."),
             .init(text: "大萧条和第二次世界大战期间谁是美国总统？",
-                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
-                  explanation: "富兰克林·罗斯福（FDR），第 32 任总统，带领美国经历了大萧条和第二次世界大战。他当选四届，比任何其他总统任期都长。"),
+                  options: ["赫伯特·胡佛", "卡尔文·柯立芝", "哈里·杜鲁门", "富兰克林·罗斯福"],
+                  explanation: "富兰克林·罗斯福（FDR），第 32 任总统，带领美国经历了大萧条和第二次世界大战。他连任四届，是历史上任期最长的总统。"),
             .init(text: "大蕭條和第二次世界大戰期間誰是美國總統？",
-                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
-                  explanation: "富蘭克林·羅斯福（FDR），第 32 任總統，帶領美國經歷了大蕭條和第二次世界大戰。他當選四屆，比任何其他總統任期都長。")
+                  options: ["赫伯特·胡佛", "卡爾文·柯立芝", "哈利·杜魯門", "富蘭克林·羅斯福"],
+                  explanation: "富蘭克林·羅斯福（FDR），第 32 任總統，帶領美國經歷了大蕭條和第二次世界大戰。他連任四屆，是歷史上任期最長的總統。")
         ])
     ]
 
@@ -953,10 +953,10 @@ enum ChineseQuestions100 {
                   explanation: "The Cold War (1947–1991) was a global conflict between the democratic U.S. and communist Soviet Union."),
             .init(text: "冷战期间，美国最主要的担忧是什么？",
                   options: ["经济衰退和失业", "气候变化和污染", "非法移民", "共产主义 / 共产主义的扩散和核战争"],
-                  explanation: "冷战（1947-1991年）是民主主义美国与共产主义苏联之间的全球性对抗。"),
+                  explanation: "冷战（1947–1991年）是民主国家美国与共产主义苏联之间的全球性对抗。"),
             .init(text: "冷戰期間，美國最主要的擔憂是什麼？",
                   options: ["經濟衰退和失業", "氣候變化和污染", "非法移民", "共產主義 / 共產主義的擴散和核戰爭"],
-                  explanation: "冷戰（1947-1991年）是民主主義美國與共產主義蘇聯之間的全球性對抗。")
+                  explanation: "冷戰（1947–1991年）是民主國家美國與共產主義蘇聯之間的全球性對抗。")
         ]),
         UnifiedQuestion(id: "q_08_084", correctAnswer: 2, variants: [
             .init(text: "What movement tried to end racial discrimination?",
@@ -1121,10 +1121,10 @@ enum ChineseQuestions100 {
                   options: ["America the Beautiful", "God Bless America", "My Country, 'Tis of Thee", "The Star-Spangled Banner"],
                   explanation: "'The Star-Spangled Banner' became the national anthem in 1931."),
             .init(text: "国歌的名称是什么？",
-                  options: ["《美丽的美国》", "《上帝保佑美国》", "《我的祖国》", "《星条旗》"],
+                  options: ["《美丽的美国》", "《上帝保佑美国》", "《我的国家，属于你》", "《星条旗》"],
                   explanation: "《星条旗》于1931年成为美国国歌。"),
             .init(text: "國歌的名稱是什麼？",
-                  options: ["《美麗的美國》", "《上帝保佑美國》", "《我的祖國》", "《星條旗》"],
+                  options: ["《美麗的美國》", "《上帝保佑美國》", "《我的國家，屬於你》", "《星條旗》"],
                   explanation: "《星條旗》於1931年成為美國國歌。")
         ]),
         UnifiedQuestion(id: "q_08_099", correctAnswer: 1, variants: [

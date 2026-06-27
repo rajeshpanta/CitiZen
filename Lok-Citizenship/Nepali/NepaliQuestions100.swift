@@ -27,7 +27,7 @@ enum NepaliQuestions100 {
                   explanation: "'We the People' opens the Preamble, establishing that all government authority comes from the citizens."),
             .init(text: "स्व-शासनको विचार संविधानका पहिला तीन शब्दमा छ। ती शब्दहरू के हुन्?",
                   options: ["जीवन र स्वतन्त्रता", "हामी जनता", "सबैका लागि समान न्याय", "हामी ईश्वरमा विश्वास गर्छौं"],
-                  explanation: "हामी जनता ले प्रस्तावनाको सुरुआत गर्छ, जसले स्थापित गर्छ कि सरकारको सबै अधिकार नागरिकहरूबाट आउँछ।")
+                  explanation: "'हामी जनता' ले प्रस्तावनाको सुरुआत गर्छ, जसले स्थापित गर्छ कि सरकारको सबै अधिकार नागरिकहरूबाट आउँछ।")
         ]),
         UnifiedQuestion(id: "q_08_004", correctAnswer: 2, variants: [
             .init(text: "What is an amendment?",
@@ -42,7 +42,7 @@ enum NepaliQuestions100 {
                   options: ["The Federalist Papers", "The Articles of Confederation", "The Declaration of Rights", "The Bill of Rights"],
                   explanation: "The first ten amendments are the Bill of Rights, ratified in 1791. They guarantee fundamental individual freedoms such as speech, religion, and fair trial."),
             .init(text: "संविधानका पहिलो दश संशोधनलाई हामी के भन्छौं?",
-                  options: ["फेडेरलिस्ट पेपर्स", "संघको धाराहरू", "अधिकारको घोषणापत्र", "अधिकारको विधेयक"],
+                  options: ["फेडेरलिस्ट पेपर्स", "परिसंघका धाराहरू", "अधिकारको घोषणापत्र", "अधिकारको विधेयक"],
                   explanation: "पहिलो दश संशोधनहरू अधिकारको विधेयक हुन्, जुन सन् १७९१ मा अनुमोदित भयो। यसले बोली, धर्म र निष्पक्ष सुनुवाइ जस्ता मौलिक व्यक्तिगत स्वतन्त्रताहरू ग्यारेन्टी गर्छ।")
         ]),
         UnifiedQuestion(id: "q_08_006", correctAnswer: 1, variants: [
@@ -50,7 +50,7 @@ enum NepaliQuestions100 {
                   options: ["Right to bear arms", "Freedom of speech", "Right to vote", "Right to a trial by jury"],
                   explanation: "The First Amendment protects five freedoms: religion, speech, press, assembly, and the right to petition the government."),
             .init(text: "पहिलो संशोधनको एउटा अधिकार वा स्वतन्त्रता के हो?",
-                  options: ["हतियार बोक्ने अधिकार", "बोलीको स्वतन्त्रता", "मतदानको अधिकार", "न्यायाधिकरणद्वारा सुनुवाइको अधिकार"],
+                  options: ["हतियार बोक्ने अधिकार", "बोलीको स्वतन्त्रता", "मतदानको अधिकार", "जुरीद्वारा सुनुवाइको अधिकार"],
                   explanation: "पहिलो संशोधनले पाँच स्वतन्त्रताहरू सुरक्षित गर्छ: धर्म, बोली, प्रेस, सभा र सरकारसँग निवेदन गर्ने अधिकार।")
         ]),
         UnifiedQuestion(id: "q_08_007", correctAnswer: 2, variants: [
@@ -74,8 +74,8 @@ enum NepaliQuestions100 {
                   options: ["Free speech and religion", "Life and liberty (or pursuit of happiness)", "Right to vote and bear arms", "Trial by jury and free press"],
                   explanation: "USCIS accepts any two of: life / liberty / pursuit of happiness. The Declaration states these as 'unalienable rights' — the most famous words in American founding history."),
             .init(text: "स्वतन्त्रताको घोषणापत्रमा उल्लेखित दुई अधिकार के हुन्?",
-                  options: ["बोलीको स्वतन्त्रता र धर्म", "जीवन र स्वतन्त्रता (वा खुशीको खोजी)", "मत दिने र हतियार बोक्ने अधिकार", "न्यायाधिकरण र स्वतन्त्र प्रेस"],
-                  explanation: "USCIS ले कुनै दुईलाई स्वीकार गर्छ: जीवन / स्वतन्त्रता / खुशीको खोजी। घोषणापत्रले यिनीहरूलाई 'अहस्तान्तरणीय अधिकार' भनेको छ।")
+                  options: ["बोलीको स्वतन्त्रता र धर्म", "जीवन र स्वतन्त्रता (वा खुसीको खोज)", "मत दिने र हतियार बोक्ने अधिकार", "जुरीद्वारा सुनुवाइ र स्वतन्त्र प्रेस"],
+                  explanation: "USCIS ले कुनै दुईलाई स्वीकार गर्छ: जीवन / स्वतन्त्रता / खुसीको खोज। घोषणापत्रले यिनीहरूलाई 'अहस्तान्तरणीय अधिकार' भनेको छ।")
         ]),
         UnifiedQuestion(id: "q_08_010", correctAnswer: 2, variants: [
             .init(text: "What is freedom of religion?",
@@ -118,7 +118,7 @@ enum NepaliQuestions100 {
                   options: ["Popular vote", "Checks and balances / separation of powers", "The military", "State governments"],
                   explanation: "Checks and balances allow each branch to limit the others. For example, Congress makes laws, the President can veto them, and the courts can strike them down if unconstitutional."),
             .init(text: "सरकारको एउटा शाखालाई अत्यधिक शक्तिशाली हुनबाट के रोक्छ?",
-                  options: ["जनमत संग्रह", "नियन्त्रण र सन्तुलन / शक्तिको विभाजन", "सेना", "राज्य सरकारहरू"],
+                  options: ["जनताको मत", "नियन्त्रण र सन्तुलन / शक्तिको विभाजन", "सेना", "राज्य सरकारहरू"],
                   explanation: "नियन्त्रण र सन्तुलनले प्रत्येक शाखालाई अरूलाई सीमित गर्न अनुमति दिन्छ। उदाहरणका लागि, कांग्रेसले कानुन बनाउँछ, राष्ट्रपतिले भेटो गर्न सक्छन् र अदालतले संविधानविपरित भए खारेज गर्न सक्छ।")
         ]),
         UnifiedQuestion(id: "q_08_015", correctAnswer: 2, variants: [
@@ -395,7 +395,7 @@ enum NepaliQuestions100 {
                   explanation: "Mike Johnson of Louisiana has served as Speaker of the House since October 2023. The Speaker is third in the line of presidential succession."),
             .init(text: "हालका प्रतिनिधि सभाका सभामुखको नाम के हो?",
                   options: ["केभिन म्याककार्थी", "न्यान्सी पेलोसी", "माइक जोन्सन", "हकिम जेफ्रीज"],
-                  explanation: "लुइजियानाका माइक जोन्सनले अक्टोबर २०२३ देखि प्रतिनिधि सभाका सभामुखको रूपमा सेवा गरेका छन्। अध्यक्ष राष्ट्रपतीय उत्तराधिकारको तेस्रो क्रममा हुन्छन्।")
+                  explanation: "लुइजियानाका माइक जोन्सनले अक्टोबर २०२३ देखि प्रतिनिधि सभाका सभामुखको रूपमा सेवा गरेका छन्। सभामुख राष्ट्रपतीय उत्तराधिकारको दोस्रो क्रममा हुन्छन्।")
         ]),
         UnifiedQuestion(id: "q_08_048", correctAnswer: 1, variants: [
             .init(text: "There are four amendments to the Constitution about who can vote. Describe one of them.",
@@ -515,7 +515,7 @@ enum NepaliQuestions100 {
                   explanation: "Key causes of the Revolution: taxation without representation, British troops quartered in colonists' homes, and colonists having no vote in British Parliament."),
             .init(text: "उपनिवेशवादीहरूले बेलायतीहरूसँग किन लडे?",
                   options: ["पश्चिमी भूभागमा थप जमिन पाउनका लागि", "उनीहरू क्यानडाको हिस्सा बन्न चाहन्थे", "उच्च कर र स्व-शासनको अभावले (प्रतिनिधित्वबिना कर)", "मूल निवासी अमेरिकीको आक्रमणबाट आफूलाई बचाउन"],
-                  explanation: "क्रान्तिका मुख्य कारणहरू: प्रतिनिधित्वबिना कर, उपनिवेशवादीहरूका घरमा बेलायती सैनिकहरूको बास र उपनिवेशवादीहरूको बेलायती संसदमा मत नहुनु।")
+                  explanation: "क्रान्तिका मुख्य कारणहरू: प्रतिनिधित्वबिना कर, उपनिवेशवादीहरूका घरमा बेलायती सैनिकहरूको जबरजस्ती बसाइ र उपनिवेशवादीहरूको बेलायती संसदमा मत नहुनु।")
         ]),
         UnifiedQuestion(id: "q_08_062", correctAnswer: 2, variants: [
             .init(text: "Who wrote the Declaration of Independence?",
@@ -662,16 +662,16 @@ enum NepaliQuestions100 {
                   options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
                   explanation: "Woodrow Wilson was the 28th President. He led the United States through World War I (1917–1918) and proposed the League of Nations to maintain world peace after the war."),
             .init(text: "पहिलो विश्वयुद्धको समयमा अमेरिकाको राष्ट्रपति को थिए?",
-                  options: ["Theodore Roosevelt", "Abraham Lincoln", "Woodrow Wilson", "Franklin Roosevelt"],
-                  explanation: "Woodrow Wilson २८ औं राष्ट्रपति थिए। उनले पहिलो विश्वयुद्ध (१९१७–१९१८) को समयमा अमेरिकाको नेतृत्व गरे र युद्धपछि विश्व शान्ति कायम राख्न लिग अफ नेसन्सको प्रस्ताव गरे।")
+                  options: ["थियोडोर रुजभेल्ट", "अब्राहम लिंकन", "वुडरो विल्सन", "फ्र्याङ्कलिन रुजभेल्ट"],
+                  explanation: "वुडरो विल्सन २८ औं राष्ट्रपति थिए। उनले पहिलो विश्वयुद्ध (१९१७–१९१८) को समयमा अमेरिकाको नेतृत्व गरे र युद्धपछि विश्व शान्ति कायम राख्न लिग अफ नेसन्सको प्रस्ताव गरे।")
         ]),
         UnifiedQuestion(id: "q_08_080", correctAnswer: 3, variants: [
             .init(text: "Who was President during the Great Depression and World War II?",
                   options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
                   explanation: "Franklin D. Roosevelt (FDR), the 32nd President, led the nation through both the Great Depression and World War II. He served four terms — the most of any President."),
             .init(text: "महामन्दी र दोस्रो विश्वयुद्धको समयमा राष्ट्रपति को थिए?",
-                  options: ["Herbert Hoover", "Calvin Coolidge", "Harry Truman", "Franklin Roosevelt"],
-                  explanation: "Franklin D. Roosevelt (FDR), ३२ औं राष्ट्रपति, महामन्दी र दोस्रो विश्वयुद्ध दुवैमा देशको नेतृत्व गरे। उनी चार पटक निर्वाचित भए — कुनै पनि राष्ट्रपतिभन्दा बढी।")
+                  options: ["हर्बर्ट हुभर", "क्यालभिन कुलिज", "ह्यारी ट्रुम्यान", "फ्र्याङ्कलिन रुजभेल्ट"],
+                  explanation: "फ्र्याङ्कलिन डी. रुजभेल्ट (FDR), ३२ औं राष्ट्रपति, महामन्दी र दोस्रो विश्वयुद्ध दुवैमा देशको नेतृत्व गरे। उनी चार पटक निर्वाचित भए — कुनै पनि राष्ट्रपतिभन्दा बढी।")
         ]),
     ]
 
@@ -767,7 +767,7 @@ enum NepaliQuestions100 {
                   explanation: "U.S. territories include Puerto Rico, U.S. Virgin Islands, American Samoa, Guam, and the Northern Mariana Islands. Residents are U.S. nationals; Puerto Ricans are U.S. citizens."),
             .init(text: "अमेरिकाको एउटा क्षेत्र (टेरिटरी) को नाम लिनुहोस्।",
                   options: ["क्युबा", "पुएर्टो रिको", "डोमिनिकन गणतन्त्र", "फिलिपिन्स"],
-                  explanation: "अमेरिकी क्षेत्रहरूमा पुएर्टो रिको, अमेरिकी भर्जिन आइल्याण्ड्स, अमेरिकी सामोआ, गुआम र उत्तरी मारियाना आइल्याण्ड्स समावेश छन्। बासिन्दाहरू अमेरिकी नागरिक हुन्; पुएर्टो रिकनहरू अमेरिकी नागरिक हुन्।")
+                  explanation: "अमेरिकी क्षेत्रहरूमा पुएर्टो रिको, अमेरिकी भर्जिन आइल्याण्ड्स, अमेरिकी सामोआ, गुआम र उत्तरी मारियाना आइल्याण्ड्स समावेश छन्। अधिकांश क्षेत्रका बासिन्दाहरू अमेरिकी राष्ट्रिय हुन्; पुएर्टो रिकनहरू अमेरिकी नागरिक हुन्।")
         ]),
         UnifiedQuestion(id: "q_08_092", correctAnswer: 3, variants: [
             .init(text: "Name one state that borders Canada.",
