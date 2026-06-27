@@ -7,7 +7,7 @@
 ///
 /// Chinese terminology follows USCIS official Chinese PDF conventions:
 /// 憲法/宪法、國會/国会、參議院/参议院、眾議院/众议院、最高法院、
-/// 三軍統帥/三军统帅、權利法案/权利法案、獨立宣言/独立宣言、解放宣言、制衡等。
+/// 總司令/三军统帅、權利法案/权利法案、獨立宣言/独立宣言、解放宣言、制衡等。
 /// Traditional Chinese uses Taiwan standard: 臺灣, 選舉, 總統, 國會, etc.
 enum ChineseQuestions100 {
 
