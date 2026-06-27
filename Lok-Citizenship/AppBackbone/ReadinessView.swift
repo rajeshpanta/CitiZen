@@ -88,7 +88,7 @@ struct ReadinessView: View {
         // Pass the current pool so legacy records (e.g., the old 75-question
         // English IDs that no longer exist after the 2025 USCIS migration)
         // don't inflate mastery for returning users.
-        let pool = QuestionPool.allQuestions(for: language)
+        let pool = QuestionPool.activePool(for: language)
         let mastered = tracker.masteredCount(for: localeKey, inPool: pool)
         let pct = totalQuestions > 0 ? Double(mastered) / Double(totalQuestions) : 0
 
@@ -125,7 +125,7 @@ struct ReadinessView: View {
         // pull these numbers down. Computed from per-locale buckets in
         // `QuestionTracker`. Pass the current pool so orphaned records
         // from a prior question-bank layout don't skew the totals.
-        let pool = QuestionPool.allQuestions(for: language)
+        let pool = QuestionPool.activePool(for: language)
         let mastered = tracker.masteredCount(for: localeKey, inPool: pool)
         let learning = tracker.learningCount(for: localeKey, inPool: pool)
         return HStack(spacing: 0) {
@@ -248,7 +248,7 @@ struct ReadinessView: View {
     private func interviewFutureCard(days: Int, date: Date) -> some View {
         // Pool-aware mastery count so legacy records from the pre-2025
         // English layout don't inflate the % for returning users.
-        let pool = QuestionPool.allQuestions(for: language)
+        let pool = QuestionPool.activePool(for: language)
         let mastered = tracker.masteredCount(for: localeKey, inPool: pool)
         let pct = totalQuestions > 0 ? (mastered * 100) / totalQuestions : 0
         let remaining = max(0, totalQuestions - mastered)

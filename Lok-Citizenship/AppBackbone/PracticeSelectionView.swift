@@ -506,7 +506,7 @@ struct PracticeSelectionView: View {
     /// a 0/128 readiness row.
     private var isFirstTimeUser: Bool {
         _ = trackerVersion
-        let pool = QuestionPool.allQuestions(for: language)
+        let pool = QuestionPool.activePool(for: language)
         return tracker.masteredCount(for: language.rawValue, inPool: pool) == 0
     }
 
@@ -564,7 +564,7 @@ struct PracticeSelectionView: View {
         // Passing the pool to `masteredCount` filters out orphaned records
         // from the pre-migration English layout so the % isn't inflated for
         // returning users.
-        let pool = QuestionPool.allQuestions(for: language)
+        let pool = QuestionPool.activePool(for: language)
         let total = pool.count
         let mastered = tracker.masteredCount(for: language.rawValue, inPool: pool)
         let pct = total > 0 ? (mastered * 100) / total : 0
@@ -670,7 +670,7 @@ struct PracticeSelectionView: View {
         // languages are added. Passing the pool to `masteredCount` filters
         // orphaned records so a returning user's % isn't inflated by the
         // pre-migration question layout.
-        let pool = QuestionPool.allQuestions(for: language)
+        let pool = QuestionPool.activePool(for: language)
         let total = pool.count
         // Per-language mastered count — a learner studying in Spanish
         // sees mastery of Spanish questions only, not their English or
@@ -716,7 +716,7 @@ struct PracticeSelectionView: View {
         // observation so mid-quiz tracker publishes don't pop the quiz.
         // `let _ =` (not bare `_ =`) is required inside @ViewBuilder.
         let _ = trackerVersion
-        let pool = QuestionPool.allQuestions(for: language)
+        let pool = QuestionPool.activePool(for: language)
         // Per-language records: the user's mistakes in OTHER languages
         // must NOT show up in this language's review pool. A Nepali
         // learner who got `q_1_01` wrong in Nepali should see it for

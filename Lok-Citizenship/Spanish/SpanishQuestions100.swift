@@ -74,11 +74,11 @@ enum SpanishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_009", correctAnswer: 1, variants: [
             .init(text: "What are two rights in the Declaration of Independence?",
-                  options: ["Free speech and religion", "Life, liberty, and the pursuit of happiness", "Right to vote and bear arms", "Trial by jury and free press"],
-                  explanation: "The Declaration states that people have unalienable rights including Life, Liberty, and the pursuit of Happiness."),
+                  options: ["Free speech and religion", "Life and liberty (or pursuit of happiness)", "Right to vote and bear arms", "Trial by jury and free press"],
+                  explanation: "USCIS accepts any two of: life / liberty / pursuit of happiness. The Declaration states these as 'unalienable rights' — the most famous words in American founding history."),
             .init(text: "¿Cuáles son dos derechos mencionados en la Declaración de Independencia?",
-                  options: ["Libertad de expresión y de religión", "Vida, libertad y la búsqueda de la felicidad", "Derecho al voto y a portar armas", "Juicio por jurado y libertad de prensa"],
-                  explanation: "La Declaración establece que las personas tienen derechos inalienables, entre ellos la Vida, la Libertad y la búsqueda de la Felicidad.")
+                  options: ["Libertad de expresión y de religión", "Vida y libertad (o búsqueda de la felicidad)", "Derecho al voto y a portar armas", "Juicio por jurado y libertad de prensa"],
+                  explanation: "La USCIS acepta cualquiera de los dos: vida / libertad / búsqueda de la felicidad. La Declaración los describe como derechos 'inalienables'.")
         ]),
         UnifiedQuestion(id: "q_08_010", correctAnswer: 2, variants: [
             .init(text: "What is freedom of religion?",

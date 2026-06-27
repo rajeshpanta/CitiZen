@@ -58,8 +58,8 @@ enum EnglishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_009", correctAnswer: 1, variants: [
             .init(text: "What are two rights in the Declaration of Independence?",
-                  options: ["Free speech and religion", "Life, liberty, and the pursuit of happiness", "Right to vote and bear arms", "Trial by jury and free press"],
-                  explanation: "The Declaration states that people have unalienable rights including Life, Liberty, and the pursuit of Happiness — three of the most famous words in American history.")
+                  options: ["Free speech and religion", "Life and liberty (or pursuit of happiness)", "Right to vote and bear arms", "Trial by jury and free press"],
+                  explanation: "USCIS accepts any two of: life / liberty / pursuit of happiness. The Declaration states these as 'unalienable rights' — the most famous words in American founding history.")
         ]),
         UnifiedQuestion(id: "q_08_010", correctAnswer: 2, variants: [
             .init(text: "What is freedom of religion?",

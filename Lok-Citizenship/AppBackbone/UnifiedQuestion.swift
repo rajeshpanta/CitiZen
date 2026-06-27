@@ -50,7 +50,13 @@ struct UnifiedQuestion {
         "q_25_030",  // Speaker of the House
         "q_25_038",  // President
         "q_25_039",  // Vice President
-        "q_25_057"   // Chief Justice
+        "q_25_057",  // Chief Justice
+        // 2008 USCIS 100-question track officeholder questions
+        "q_08_028",  // President
+        "q_08_029",  // Vice President
+        "q_08_040",  // Chief Justice
+        "q_08_046",  // President's political party
+        "q_08_047",  // Speaker of the House
     ]
 
     /// True when the correct answer depends on current officeholders.

@@ -71,11 +71,11 @@ enum NepaliQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_009", correctAnswer: 1, variants: [
             .init(text: "What are two rights in the Declaration of Independence?",
-                  options: ["Free speech and religion", "Life, liberty, and the pursuit of happiness", "Right to vote and bear arms", "Trial by jury and free press"],
-                  explanation: "The Declaration states that people have unalienable rights including Life, Liberty, and the pursuit of Happiness — three of the most famous words in American history."),
+                  options: ["Free speech and religion", "Life and liberty (or pursuit of happiness)", "Right to vote and bear arms", "Trial by jury and free press"],
+                  explanation: "USCIS accepts any two of: life / liberty / pursuit of happiness. The Declaration states these as 'unalienable rights' — the most famous words in American founding history."),
             .init(text: "स्वतन्त्रताको घोषणापत्रमा उल्लेखित दुई अधिकार के हुन्?",
-                  options: ["बोलीको स्वतन्त्रता र धर्म", "जीवन, स्वतन्त्रता र खुशीको खोजी", "मत दिने र हतियार बोक्ने अधिकार", "न्यायाधिकरण र स्वतन्त्र प्रेस"],
-                  explanation: "घोषणापत्रले भन्छ कि मानिसहरूलाई जीवन, स्वतन्त्रता र खुशीको खोजी सहित अहस्तान्तरणीय अधिकारहरू छन् — अमेरिकी इतिहासका सबैभन्दा प्रसिद्ध शब्दहरू।")
+                  options: ["बोलीको स्वतन्त्रता र धर्म", "जीवन र स्वतन्त्रता (वा खुशीको खोजी)", "मत दिने र हतियार बोक्ने अधिकार", "न्यायाधिकरण र स्वतन्त्र प्रेस"],
+                  explanation: "USCIS ले कुनै दुईलाई स्वीकार गर्छ: जीवन / स्वतन्त्रता / खुशीको खोजी। घोषणापत्रले यिनीहरूलाई 'अहस्तान्तरणीय अधिकार' भनेको छ।")
         ]),
         UnifiedQuestion(id: "q_08_010", correctAnswer: 2, variants: [
             .init(text: "What is freedom of religion?",

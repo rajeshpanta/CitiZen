@@ -103,14 +103,14 @@ enum ChineseQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_009", correctAnswer: 1, variants: [
             .init(text: "What are two rights in the Declaration of Independence?",
-                  options: ["Free speech and religion", "Life, liberty, and the pursuit of happiness", "Right to vote and bear arms", "Trial by jury and free press"],
-                  explanation: "The Declaration states that people have unalienable rights including Life, Liberty, and the pursuit of Happiness."),
+                  options: ["Free speech and religion", "Life and liberty (or pursuit of happiness)", "Right to vote and bear arms", "Trial by jury and free press"],
+                  explanation: "USCIS accepts any two of: life / liberty / pursuit of happiness. The Declaration states these as 'unalienable rights' — the most famous words in American founding history."),
             .init(text: "《独立宣言》中有哪两项权利？",
-                  options: ["言论自由和宗教自由", "生命、自由和追求幸福", "投票权和持有武器权", "陪审团审判权和新闻自由"],
-                  explanation: "《独立宣言》指出，人们拥有不可剥夺的权利，包括生命权、自由权和追求幸福的权利。"),
+                  options: ["言论自由和宗教自由", "生命和自由（或追求幸福）", "投票权和持有武器权", "陪审团审判权和新闻自由"],
+                  explanation: "USCIS 接受以下任意两项：生命 / 自由 / 追求幸福。《独立宣言》将这些称为「不可剥夺的权利」。"),
             .init(text: "《獨立宣言》中有哪兩項權利？",
-                  options: ["言論自由和宗教自由", "生命、自由和追求幸福", "投票權和持有武器權", "陪審團審判權和新聞自由"],
-                  explanation: "《獨立宣言》指出，人們擁有不可剝奪的權利，包括生命權、自由權和追求幸福的權利。")
+                  options: ["言論自由和宗教自由", "生命和自由（或追求幸福）", "投票權和持有武器權", "陪審團審判權和新聞自由"],
+                  explanation: "USCIS 接受以下任意兩項：生命 / 自由 / 追求幸福。《獨立宣言》將這些稱為「不可剝奪的權利」。")
         ]),
         UnifiedQuestion(id: "q_08_010", correctAnswer: 2, variants: [
             .init(text: "What is freedom of religion?",
