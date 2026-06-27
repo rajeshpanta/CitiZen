@@ -263,7 +263,7 @@ enum NepaliQuestions100 {
                   explanation: "By the Presidential Succession Act, the Speaker of the House is third in the line of succession, after the Vice President."),
             .init(text: "राष्ट्रपति र उपराष्ट्रपति दुवैले सेवा गर्न नसके को राष्ट्रपति बन्छन्?",
                   options: ["विदेश सचिव", "प्रतिनिधि सभाका सभामुख", "सेनेटका अस्थायी अध्यक्ष", "सर्वोच्च अदालतका प्रधान न्यायाधीश"],
-                  explanation: "राष्ट्रपतीय उत्तराधिकार ऐन अनुसार, प्रतिनिधि सभाका सभामुख उपराष्ट्रपतिपछि उत्तराधिकारको तेस्रो क्रममा हुन्छन्।")
+                  explanation: "राष्ट्रपतीय उत्तराधिकार ऐन अनुसार, प्रतिनिधि सभाका सभामुख उपराष्ट्रपतिपछि उत्तराधिकारको दोस्रो क्रममा हुन्छन्।")
         ]),
         UnifiedQuestion(id: "q_08_032", correctAnswer: 2, variants: [
             .init(text: "Who is the Commander in Chief of the military?",
@@ -562,7 +562,7 @@ enum NepaliQuestions100 {
                   options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the pen name 'Publius.' USCIS accepts any of their names."),
             .init(text: "फेडरलिस्ट पेपर्सले अमेरिकी संविधानको अनुमोदनलाई समर्थन गरेको थियो। एक लेखकको नाम बताउनुहोस्।",
-                  options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison वा Jay (Publius)", "Benjamin Franklin"],
+                  options: ["थोमस जेफर्सन", "जोन एडम्स", "ह्यामिल्टन, म्याडिसन वा जे (Publius)", "बेन्जामिन फ्र्याङ्कलिन"],
                   explanation: "फेडरलिस्ट पेपर्स Alexander Hamilton, James Madison र John Jay ले 'Publius' नाममा लेखेका थिए। USCIS ले तिनीहरूमध्ये कुनै एकको नाम स्वीकार गर्दछ।")
         ]),
         UnifiedQuestion(id: "q_08_068", correctAnswer: 2, variants: [
