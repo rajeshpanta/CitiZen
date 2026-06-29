@@ -260,7 +260,7 @@ enum NepaliQuestions100 {
         UnifiedQuestion(id: "q_08_031", correctAnswer: 1, variants: [
             .init(text: "If both the President and the Vice President can no longer serve, who becomes President?",
                   options: ["The Secretary of State", "The Speaker of the House", "The President pro tempore of the Senate", "The Chief Justice of the Supreme Court"],
-                  explanation: "By the Presidential Succession Act, the Speaker of the House is third in the line of succession, after the Vice President."),
+                  explanation: "By the Presidential Succession Act, the Speaker of the House is second in the line of succession, after the Vice President."),
             .init(text: "राष्ट्रपति र उपराष्ट्रपति दुवैले सेवा गर्न नसके को राष्ट्रपति बन्छन्?",
                   options: ["विदेश सचिव", "प्रतिनिधि सभाका सभामुख", "सेनेटका अस्थायी अध्यक्ष", "सर्वोच्च अदालतका प्रधान न्यायाधीश"],
                   explanation: "राष्ट्रपतीय उत्तराधिकार ऐन अनुसार, प्रतिनिधि सभाका सभामुख उपराष्ट्रपतिपछि उत्तराधिकारको दोस्रो क्रममा हुन्छन्।")
@@ -392,7 +392,7 @@ enum NepaliQuestions100 {
         UnifiedQuestion(id: "q_08_047", correctAnswer: 2, variants: [
             .init(text: "What is the name of the Speaker of the House of Representatives now?",
                   options: ["Kevin McCarthy", "Nancy Pelosi", "Mike Johnson", "Hakeem Jeffries"],
-                  explanation: "Mike Johnson of Louisiana has served as Speaker of the House since October 2023. The Speaker is third in the line of presidential succession."),
+                  explanation: "Mike Johnson of Louisiana has served as Speaker of the House since October 2023. The Speaker is second in the line of presidential succession."),
             .init(text: "हालका प्रतिनिधि सभाका सभामुखको नाम के हो?",
                   options: ["केभिन म्याककार्थी", "न्यान्सी पेलोसी", "माइक जोन्सन", "हकिम जेफ्रीज"],
                   explanation: "लुइजियानाका माइक जोन्सनले अक्टोबर २०२३ देखि प्रतिनिधि सभाका सभामुखको रूपमा सेवा गरेका छन्। सभामुख राष्ट्रपतीय उत्तराधिकारको दोस्रो क्रममा हुन्छन्।")

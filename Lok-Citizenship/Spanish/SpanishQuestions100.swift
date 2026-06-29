@@ -263,10 +263,10 @@ enum SpanishQuestions100 {
         UnifiedQuestion(id: "q_08_031", correctAnswer: 1, variants: [
             .init(text: "If both the President and the Vice President can no longer serve, who becomes President?",
                   options: ["The Secretary of State", "The Speaker of the House", "The President pro tempore of the Senate", "The Chief Justice of the Supreme Court"],
-                  explanation: "The Speaker of the House is third in line of succession."),
+                  explanation: "The Speaker of the House is second in line of succession."),
             .init(text: "Si tanto el Presidente como el Vicepresidente no pueden ejercer el cargo, ¿quién se convierte en Presidente?",
                   options: ["El Secretario de Estado", "El Presidente de la Cámara de Representantes", "El Presidente pro tempore del Senado", "El Presidente de la Corte Suprema"],
-                  explanation: "El Presidente de la Cámara de Representantes ocupa el tercer lugar en la línea de sucesión.")
+                  explanation: "El Presidente de la Cámara de Representantes ocupa el segundo lugar en la línea de sucesión.")
         ]),
         UnifiedQuestion(id: "q_08_032", correctAnswer: 2, variants: [
             .init(text: "Who is the Commander in Chief of the military?",

@@ -358,13 +358,13 @@ enum ChineseQuestions100 {
         UnifiedQuestion(id: "q_08_031", correctAnswer: 1, variants: [
             .init(text: "If both the President and the Vice President can no longer serve, who becomes President?",
                   options: ["The Secretary of State", "The Speaker of the House", "The President pro tempore of the Senate", "The Chief Justice of the Supreme Court"],
-                  explanation: "The Speaker of the House is third in line of succession."),
+                  explanation: "The Speaker of the House is second in line of succession."),
             .init(text: "如果总统和副总统都无法继续履职，谁将成为总统？",
                   options: ["国务卿", "众议院议长", "参议院临时议长", "最高法院首席大法官"],
-                  explanation: "众议院议长在继任顺序中排第三位。"),
+                  explanation: "众议院议长在继任顺序中排第二位。"),
             .init(text: "如果總統和副總統都無法繼續履職，誰將成為總統？",
                   options: ["國務卿", "眾議院議長", "參議院臨時議長", "最高法院首席大法官"],
-                  explanation: "眾議院議長在繼任順序中排第三位。")
+                  explanation: "眾議院議長在繼任順序中排第二位。")
         ]),
         UnifiedQuestion(id: "q_08_032", correctAnswer: 2, variants: [
             .init(text: "Who is the Commander in Chief of the military?",
