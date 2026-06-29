@@ -116,7 +116,7 @@ enum EnglishQuestions100 {
                   explanation: "U.S. Senators serve 6-year terms. Elections are staggered so roughly one-third of Senate seats are contested every two years.")
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
-            .init(text: "Who is one of your state's U.S. Senators now? (Varies by state)",
+            .init(text: "Who is one of your state's U.S. Senators now?",
                   options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
                   explanation: "U.S. Senators represent their state. The correct answer depends on which state you live in. Look up your two current senators at senate.gov before your interview.")
         ])
@@ -135,7 +135,7 @@ enum EnglishQuestions100 {
                   explanation: "U.S. Representatives serve 2-year terms. Because they must run every two years, all 435 House seats are on the ballot in every election cycle.")
         ]),
         UnifiedQuestion(id: "q_08_023", correctAnswer: 0, variants: [
-            .init(text: "Name your U.S. Representative. (Varies by congressional district)",
+            .init(text: "Name your U.S. Representative.",
                   options: ["Answers will vary — research your district", "Nancy Pelosi", "Kevin McCarthy", "Hakeem Jeffries"],
                   explanation: "Your U.S. Representative represents your specific congressional district. Look up your representative at house.gov before your interview.")
         ]),
@@ -243,12 +243,12 @@ enum EnglishQuestions100 {
                   explanation: "State powers include providing education, police protection, fire departments, driver's licenses, and zoning/land use decisions.")
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
-            .init(text: "Who is the Governor of your state now? (Varies by state)",
+            .init(text: "Who is the Governor of your state now?",
                   options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
                   explanation: "The Governor is the chief executive of a state. Look up your current Governor before your interview — USCIS will ask about YOUR state.")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [
-            .init(text: "What is the capital of your state? (Varies by state)",
+            .init(text: "What is the capital of your state?",
                   options: ["Answers will vary — research your state", "New York City", "Los Angeles", "Chicago"],
                   explanation: "Each state has its own capital city. Note: state capitals are often NOT the largest cities (e.g., Albany is NY's capital, not New York City).")
         ]),
@@ -292,7 +292,7 @@ enum EnglishQuestions100 {
                   explanation: "Everyone in the U.S. — citizens and non-citizens — has rights including freedom of expression, speech, assembly, petition, religion, and the right to bear arms.")
         ]),
         UnifiedQuestion(id: "q_08_052", correctAnswer: 2, variants: [
-            .init(text: "Who do we show loyalty to when we say the Pledge of Allegiance?",
+            .init(text: "What do we show loyalty to when we say the Pledge of Allegiance?",
                   options: ["The President of the United States", "The U.S. Constitution and the courts", "The United States and the flag", "The military and veterans"],
                   explanation: "The Pledge of Allegiance is a declaration of loyalty to the United States and to its flag — the national symbol — pledging allegiance to 'one nation, under God, indivisible.'")
         ]),

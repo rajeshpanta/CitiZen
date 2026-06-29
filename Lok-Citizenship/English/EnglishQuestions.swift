@@ -168,7 +168,7 @@ enum EnglishQuestions {
                   explanation: "The 10th Amendment reserves any powers not delegated to the federal government — and not prohibited to states — for the states or the people.")
         ]),
         UnifiedQuestion(id: "q_25_097", correctAnswer: 1, variants: [
-            .init(text: "What amendment says all persons born or naturalized in the United States, and subject to the jurisdiction thereof, are U.S. citizens?",
+            .init(text: "What amendment gives citizenship to all persons born in the United States?",
                   options: ["13th Amendment", "14th Amendment", "15th Amendment", "19th Amendment"],
                   explanation: "The 14th Amendment (1868) grants citizenship to all persons born or naturalized in the United States — known as birthright citizenship.")
         ]),
@@ -337,8 +337,8 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_054", correctAnswer: 1, variants: [
             .init(text: "How many Supreme Court justices are usually needed to decide a case?",
-                  options: ["3", "6 (a quorum)", "9 (all)", "5"],
-                  explanation: "Per 28 U.S.C. §1, six (6) Justices constitute a quorum — the minimum number required to hear and decide a Supreme Court case. This is the official USCIS answer.")
+                  options: ["3", "5", "6", "9"],
+                  explanation: "The official USCIS answer is five (5) — a majority of the nine Justices is needed to decide a case. (Six Justices form a quorum to hear a case, but the answer to this question on the test is five.)")
         ]),
         UnifiedQuestion(id: "q_25_055", correctAnswer: 3, variants: [
             .init(text: "How long do Supreme Court justices serve?",

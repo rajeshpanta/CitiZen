@@ -65,9 +65,9 @@ enum SpanishQuestions {
             .init(text: "If the President can no longer serve, who becomes President?",
                   options: ["The Speaker of the House", "The Vice President", "The Secretary of State", "The Chief Justice"],
                   explanation: "The Vice President becomes President if the President can no longer serve, per the 25th Amendment."),
-            .init(text: "Si el Presidente ya no puede servir, ¿quién se convierte en Presidente?",
+            .init(text: "Si el Presidente ya no puede ejercer el cargo, ¿quién se convierte en Presidente?",
                   options: ["El Presidente de la Cámara", "El Vicepresidente", "El Secretario de Estado", "El Presidente del Tribunal Supremo"],
-                  explanation: "El Vicepresidente asume la Presidencia si el Presidente ya no puede servir, según la 25.ª Enmienda.")
+                  explanation: "El Vicepresidente asume la Presidencia si el Presidente ya no puede ejercer el cargo, según la 25.ª Enmienda.")
         ]),
         UnifiedQuestion(id: "q_25_042", correctAnswer: 0, variants: [
             .init(text: "Who is Commander in Chief of the U.S. military?",
@@ -258,10 +258,10 @@ enum SpanishQuestions {
                   explanation: "La 10.ª Enmienda reserva cualquier poder no delegado al gobierno federal — y no prohibido a los estados — para los estados o el pueblo.")
         ]),
         UnifiedQuestion(id: "q_25_097", correctAnswer: 1, variants: [
-            .init(text: "What amendment says all persons born or naturalized in the United States, and subject to the jurisdiction thereof, are U.S. citizens?",
+            .init(text: "What amendment gives citizenship to all persons born in the United States?",
                   options: ["13th Amendment", "14th Amendment", "15th Amendment", "19th Amendment"],
                   explanation: "The 14th Amendment (1868) grants citizenship to all persons born or naturalized in the United States — known as birthright citizenship."),
-            .init(text: "¿Qué enmienda dice que todas las personas nacidas o naturalizadas en los Estados Unidos, y sujetas a su jurisdicción, son ciudadanos de EE. UU.?",
+            .init(text: "¿Qué enmienda otorga la ciudadanía a todas las personas nacidas en los Estados Unidos?",
                   options: ["13.ª Enmienda", "14.ª Enmienda", "15.ª Enmienda", "19.ª Enmienda"],
                   explanation: "La 14.ª Enmienda (1868) otorga la ciudadanía a todas las personas nacidas o naturalizadas en los Estados Unidos — conocida como ciudadanía por nacimiento.")
         ]),
@@ -315,7 +315,7 @@ enum SpanishQuestions {
                   explanation: "Senators serve 6-year terms. About one-third of the Senate is up for election every two years."),
             .init(text: "¿Cuánto dura el mandato de un senador de EE. UU.?",
                   options: ["2 años", "4 años", "6 años", "De por vida"],
-                  explanation: "Los senadores sirven mandatos de 6 años. Aproximadamente un tercio del Senado se renueva cada dos años.")
+                  explanation: "Los senadores cumplen mandatos de 6 años. Aproximadamente un tercio del Senado se renueva cada dos años.")
         ]),
         UnifiedQuestion(id: "q_25_023", correctAnswer: 0, variants: [
             .init(text: "Who is one of your state's U.S. senators now?",
@@ -437,7 +437,7 @@ enum SpanishQuestions {
             .init(text: "The President of the United States can serve only two terms. Why?",
                   options: ["To save campaign costs", "Because of the 22nd Amendment (to prevent too much power)", "Because of tradition only", "Because the President gets too old"],
                   explanation: "The 22nd Amendment (1951) limits Presidents to two elected terms, preventing any one person from accumulating too much power. It was passed after FDR served four terms."),
-            .init(text: "El Presidente de EE. UU. solo puede servir dos mandatos. ¿Por qué?",
+            .init(text: "El Presidente de EE. UU. solo puede ejercer dos mandatos. ¿Por qué?",
                   options: ["Para ahorrar costos de campaña", "Por la 22.ª Enmienda (para evitar demasiado poder)", "Solo por tradición", "Porque el Presidente envejece"],
                   explanation: "La 22.ª Enmienda (1951) limita a los presidentes a dos mandatos electos, impidiendo que una sola persona acumule demasiado poder. Se aprobó después de que FDR sirviera cuatro mandatos.")
         ]),
@@ -523,17 +523,17 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_054", correctAnswer: 1, variants: [
             .init(text: "How many Supreme Court justices are usually needed to decide a case?",
-                  options: ["3", "6 (a quorum)", "9 (all)", "5"],
-                  explanation: "Per 28 U.S.C. §1, six (6) Justices constitute a quorum — the minimum number required to hear and decide a Supreme Court case. This is the official USCIS answer."),
+                  options: ["3", "5", "6", "9"],
+                  explanation: "The official USCIS answer is five (5) — a majority of the nine Justices is needed to decide a case. (Six Justices form a quorum to hear a case, but the answer to this question on the test is five.)"),
             .init(text: "¿Cuántos magistrados de la Corte Suprema se necesitan normalmente para decidir un caso?",
-                  options: ["3", "6 (quórum)", "9 (todos)", "5"],
-                  explanation: "Según 28 U.S.C. §1, seis (6) magistrados constituyen el quórum — el número mínimo requerido para que la Corte Suprema escuche y decida un caso. Esta es la respuesta oficial de USCIS.")
+                  options: ["3", "5", "6", "9"],
+                  explanation: "La respuesta oficial de USCIS es cinco (5): se necesita una mayoría de los nueve magistrados para decidir un caso. (Seis magistrados forman el quórum para escuchar un caso, pero la respuesta a esta pregunta en el examen es cinco.)")
         ]),
         UnifiedQuestion(id: "q_25_055", correctAnswer: 3, variants: [
             .init(text: "How long do Supreme Court justices serve?",
                   options: ["4 years", "8 years", "12 years", "For life (lifetime appointment)"],
                   explanation: "Supreme Court Justices serve for life or until retirement. Lifetime appointments shield them from political pressure."),
-            .init(text: "¿Cuánto tiempo sirven los jueces de la Corte Suprema?",
+            .init(text: "¿Cuánto tiempo ejercen su cargo los magistrados de la Corte Suprema?",
                   options: ["4 años", "8 años", "12 años", "De por vida (nombramiento vitalicio)"],
                   explanation: "Los jueces de la Corte Suprema sirven de por vida o hasta su jubilación. Los nombramientos vitalicios los protegen de las presiones políticas.")
         ])
@@ -733,7 +733,7 @@ enum SpanishQuestions {
             .init(text: "The American Revolution had many important events. Name one.",
                   options: ["The Battle of Gettysburg", "The Declaration of Independence (1776)", "Pearl Harbor attack", "Fall of the Berlin Wall"],
                   explanation: "Important Revolution events include the Battle of Bunker Hill, the Declaration of Independence, Washington crossing the Delaware, Valley Forge, and the Battle of Yorktown."),
-            .init(text: "La Revolución Estadounidense tuvo muchos eventos importantes. Nombre uno.",
+            .init(text: "La Revolución Americana tuvo muchos eventos importantes. Nombre uno.",
                   options: ["La Batalla de Gettysburg", "La Declaración de Independencia (1776)", "El ataque a Pearl Harbor", "La caída del Muro de Berlín"],
                   explanation: "Entre los eventos importantes de la Revolución se incluyen la Batalla de Bunker Hill, la Declaración de Independencia, el cruce del Delaware por Washington, Valley Forge y la Batalla de Yorktown.")
         ]),

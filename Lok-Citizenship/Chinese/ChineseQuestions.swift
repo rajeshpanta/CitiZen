@@ -72,8 +72,8 @@ enum ChineseQuestions {
                   options: ["乔·拜登", "巴拉克·奥巴马", "唐纳德·特朗普", "乔治·W·布什"],
                   explanation: "唐纳德·特朗普是现任总统，自 2025 年 1 月起开始他的第二个任期。"),
             .init(text: "現任美國總統的名字是什麼？",
-                  options: ["喬·拜登", "巴拉克·歐巴馬", "唐納德·特朗普", "喬治·W·布什"],
-                  explanation: "唐納德·特朗普是現任總統，自 2025 年 1 月起開始他的第二個任期。")
+                  options: ["喬·拜登", "巴拉克·歐巴馬", "唐納德·川普", "喬治·W·布什"],
+                  explanation: "唐納德·川普是現任總統，自 2025 年 1 月起開始他的第二個任期。")
         ]),
         UnifiedQuestion(id: "q_25_039", correctAnswer: 1, variants: [
             .init(text: "What is the name of the Vice President of the United States now?",
@@ -84,7 +84,7 @@ enum ChineseQuestions {
                   explanation: "JD·万斯于 2025 年 1 月就任副总统，与特朗普总统共同执政。"),
             .init(text: "現任美國副總統的名字是什麼？",
                   options: ["卡馬拉·哈里斯", "JD·萬斯", "邁克·彭斯", "喬·拜登"],
-                  explanation: "JD·萬斯於 2025 年 1 月就任副總統，與特朗普總統共同執政。")
+                  explanation: "JD·萬斯於 2025 年 1 月就任副總統，與川普總統共同執政。")
         ]),
         UnifiedQuestion(id: "q_25_040", correctAnswer: 1, variants: [
             .init(text: "If the President can no longer serve, who becomes President?",
@@ -355,13 +355,13 @@ enum ChineseQuestions {
                   explanation: "第 10 修正案規定：凡未授予聯邦政府且未禁止州行使的權力，均保留給各州或人民。")
         ]),
         UnifiedQuestion(id: "q_25_097", correctAnswer: 1, variants: [
-            .init(text: "What amendment says all persons born or naturalized in the United States, and subject to the jurisdiction thereof, are U.S. citizens?",
+            .init(text: "What amendment gives citizenship to all persons born in the United States?",
                   options: ["13th Amendment", "14th Amendment", "15th Amendment", "19th Amendment"],
                   explanation: "The 14th Amendment (1868) grants citizenship to all persons born or naturalized in the United States — known as birthright citizenship."),
-            .init(text: "哪条修正案规定凡在美国出生或归化并受其管辖的人均为美国公民？",
+            .init(text: "哪条修正案赋予所有在美国出生的人公民身份？",
                   options: ["第 13 修正案", "第 14 修正案", "第 15 修正案", "第 19 修正案"],
                   explanation: "第 14 修正案（1868 年）授予所有在美国出生或归化者公民身份——即「出生公民权」。"),
-            .init(text: "哪條修正案規定凡在美國出生或歸化並受其管轄的人均為美國公民？",
+            .init(text: "哪條修正案賦予所有在美國出生的人公民身份？",
                   options: ["第 13 修正案", "第 14 修正案", "第 15 修正案", "第 19 修正案"],
                   explanation: "第 14 修正案（1868 年）授予所有在美國出生或歸化者公民身份——即「出生公民權」。")
         ]),
@@ -443,7 +443,7 @@ enum ChineseQuestions {
                   options: ["依您所在州而定", "乔·拜登", "唐纳德·特朗普", "罗恩·德桑蒂斯"],
                   explanation: "每个州都有 2 位美国参议员。请在面试前到 senate.gov 查询您所在州的现任参议员。（哥伦比亚特区及美国领地没有有投票权的参议员。）"),
             .init(text: "您所在州現任的一位美國參議員是誰？",
-                  options: ["依您所在州而定", "喬·拜登", "唐納德·特朗普", "羅恩·德桑蒂斯"],
+                  options: ["依您所在州而定", "喬·拜登", "唐納德·川普", "羅恩·德桑蒂斯"],
                   explanation: "每個州都有 2 位美國參議員。請在面試前到 senate.gov 查詢您所在州的現任參議員。（哥倫比亞特區及美國領地沒有有投票權的參議員。）")
         ]),
         UnifiedQuestion(id: "q_25_024", correctAnswer: 2, variants: [
@@ -716,14 +716,14 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_054", correctAnswer: 1, variants: [
             .init(text: "How many Supreme Court justices are usually needed to decide a case?",
-                  options: ["3", "6 (a quorum)", "9 (all)", "5"],
-                  explanation: "Per 28 U.S.C. §1, six (6) Justices constitute a quorum — the minimum number required to hear and decide a Supreme Court case. This is the official USCIS answer."),
+                  options: ["3", "5", "6", "9"],
+                  explanation: "The official USCIS answer is five (5) — a majority of the nine Justices is needed to decide a case. (Six Justices form a quorum to hear a case, but the answer to this question on the test is five.)"),
             .init(text: "通常需要多少位最高法院大法官才能裁决一个案件？",
-                  options: ["3", "6（法定人数）", "9（全部）", "5"],
-                  explanation: "根据《美国法典》第28编第1条，6 位大法官构成法定人数——即最高法院审理并裁决一个案件所需的最低人数。这是 USCIS 的官方答案。"),
+                  options: ["3", "5", "6", "9"],
+                  explanation: "USCIS 的官方答案是五（5）位——裁决一个案件需要九位大法官中的多数。（六位大法官构成审理案件的法定人数，但这道考题的答案是五。）"),
             .init(text: "通常需要多少位最高法院大法官才能裁決一個案件？",
-                  options: ["3", "6（法定人數）", "9（全部）", "5"],
-                  explanation: "根據《美國法典》第28編第1條，6 位大法官構成法定人數——即最高法院審理並裁決一個案件所需的最低人數。這是 USCIS 的官方答案。")
+                  options: ["3", "5", "6", "9"],
+                  explanation: "USCIS 的官方答案是五（5）位——裁決一個案件需要九位大法官中的多數。（六位大法官構成審理案件的法定人數，但這道考題的答案是五。）")
         ]),
         UnifiedQuestion(id: "q_25_055", correctAnswer: 3, variants: [
             .init(text: "How long do Supreme Court justices serve?",
@@ -792,7 +792,7 @@ enum ChineseQuestions {
                   options: ["依您所在州而定", "唐纳德·特朗普", "乔·拜登", "加文·纽森"],
                   explanation: "每个州都有自己的州长。请在所在州政府的网站上查询现任州长。（领地的州长由任命产生；哥伦比亚特区设市长而非州长。）"),
             .init(text: "您所在州現任州長是誰？",
-                  options: ["依您所在州而定", "唐納德·特朗普", "喬·拜登", "加文·紐森"],
+                  options: ["依您所在州而定", "唐納德·川普", "喬·拜登", "加文·紐森"],
                   explanation: "每個州都有自己的州長。請在所在州政府的網站上查詢現任州長。（領地的州長由任命產生；哥倫比亞特區設市長而非州長。）")
         ]),
         UnifiedQuestion(id: "q_25_062", correctAnswer: 0, variants: [
@@ -1089,9 +1089,9 @@ enum ChineseQuestions {
             .init(text: "James Madison is famous for many things. Name one.",
                   options: ["Father of the Constitution and 4th President", "Led the Underground Railroad", "Discovered America", "Founded Boston"],
                   explanation: "Madison is called the \"Father of the Constitution.\" He was the 4th President, served during the War of 1812, and was a writer of the Federalist Papers."),
-            .init(text: "詹姆斯·麦迪森因许多事迹而著名。请说出其中之一。",
+            .init(text: "詹姆斯·麦迪逊因许多事迹而著名。请说出其中之一。",
                   options: ["宪法之父及第四任总统", "领导了地下铁路", "发现了美洲", "创建了波士顿"],
-                  explanation: "麦迪森被尊为「宪法之父」。他是第四任总统，在 1812 年战争期间任职，并是《联邦论》的作者之一。"),
+                  explanation: "麦迪逊被尊为「宪法之父」。他是第四任总统，在 1812 年战争期间任职，并是《联邦论》的作者之一。"),
             .init(text: "詹姆士·麥迪森因許多事蹟而著名。請說出其中之一。",
                   options: ["憲法之父及第四任總統", "領導了地下鐵路", "發現了美洲", "創建了波士頓"],
                   explanation: "麥迪森被尊為「憲法之父」。他是第四任總統，在 1812 年戰爭期間任職，並是《聯邦論》的作者之一。")
@@ -1149,8 +1149,8 @@ enum ChineseQuestions {
                   options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg (or Emancipation Proclamation, Surrender at Appomattox)", "Construction of the Panama Canal", "The first moon landing"],
                   explanation: "Important Civil War events include the Battle of Fort Sumter, Emancipation Proclamation, Battle of Gettysburg, Sherman's March, and the Surrender at Appomattox."),
             .init(text: "内战有许多重要事件。请说出其中之一。",
-                  options: ["珍珠港事件", "盖茨堡之战（或《解放宣言》、阿波马托克斯投降）", "巴拿马运河的建造", "首次登月"],
-                  explanation: "内战的重要事件包括萨姆特堡之战、《解放宣言》、盖茨堡之战、谢尔曼进军以及阿波马托克斯投降。"),
+                  options: ["珍珠港事件", "葛底斯堡之战（或《解放宣言》、阿波马托克斯投降）", "巴拿马运河的建造", "首次登月"],
+                  explanation: "内战的重要事件包括萨姆特堡之战、《解放宣言》、葛底斯堡之战、谢尔曼进军以及阿波马托克斯投降。"),
             .init(text: "內戰有許多重要事件。請說出其中之一。",
                   options: ["珍珠港事件", "蓋茨堡之戰（或《解放宣言》、阿波馬托克斯投降）", "巴拿馬運河的建造", "首次登月"],
                   explanation: "內戰的重要事件包括薩姆特堡之戰、《解放宣言》、蓋茨堡之戰、謝爾曼進軍以及阿波馬托克斯投降。")
@@ -1219,7 +1219,7 @@ enum ChineseQuestions {
                   explanation: "联邦承认的印地安人部族包括切罗基、纳瓦霍、苏、阿帕奇、霍皮、黑脚、乔克陶、普埃布洛及其他许多部族。"),
             .init(text: "請說出一個美國的印地安人部族。",
                   options: ["埃及人", "切洛基（或納瓦荷、蘇、阿帕契、賀皮）", "維京人", "蒙古人"],
-                  explanation: "聯邦承認的印地安人部族包括切洛基、納瓦荷、蘇、阿帕契、賀皮、佈雷克非特、喬克陶、布耶布洛及其他許多部族。")
+                  explanation: "聯邦承認的印地安人部族包括切洛基、納瓦荷、蘇、阿帕契、賀皮、黑腳、喬克陶、普埃布洛及其他許多部族。")
         ]),
         UnifiedQuestion(id: "q_25_118", correctAnswer: 1, variants: [
             .init(text: "Name one example of an American innovation.",
@@ -1385,10 +1385,10 @@ enum ChineseQuestions {
                   explanation: "The U.S. entered the Korean War (1950-53) to stop the spread of communism after North Korea (communist) invaded South Korea."),
             .init(text: "美国为什么加入朝鲜战争？",
                   options: ["为获取朝鲜领土", "为阻止共产主义扩张", "为支援朝鲜君主制", "为营救美国人质"],
-                  explanation: "美国于朝鲜战争（1950-53 年）加入，因为共产主义朝鲜入侵南韩，旨在阻止共产主义扩张。"),
+                  explanation: "共产主义朝鲜入侵南韩后，美国加入朝鲜战争（1950-53 年），以阻止共产主义扩张。"),
             .init(text: "美國為什麼加入朝鮮戰爭？",
                   options: ["為獲取朝鮮領土", "為阻止共產主義擴張", "為支援朝鮮君主制", "為營救美國人質"],
-                  explanation: "美國於朝鮮戰爭（1950-53 年）加入，因為共產主義朝鮮入侵南韓，旨在阻止共產主義擴張。")
+                  explanation: "共產主義朝鮮入侵南韓後，美國加入朝鮮戰爭（1950-53 年），以阻止共產主義擴張。")
         ]),
         UnifiedQuestion(id: "q_25_111", correctAnswer: 1, variants: [
             .init(text: "Why did the United States enter the Vietnam War?",

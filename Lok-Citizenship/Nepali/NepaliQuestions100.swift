@@ -162,10 +162,10 @@ enum NepaliQuestions100 {
                   explanation: "अमेरिकी सिनेटरहरू ६ वर्षको कार्यकालको लागि सेवा गर्छन्। निर्वाचनहरू क्रमबद्ध गरिएका छन् ताकि हरेक दुई वर्षमा लगभग एक-तिहाई सेनेट सिटहरूमा प्रतिस्पर्धा हुन्छ।")
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
-            .init(text: "Who is one of your state's U.S. Senators now? (Varies by state)",
+            .init(text: "Who is one of your state's U.S. Senators now?",
                   options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
                   explanation: "U.S. Senators represent their state. The correct answer depends on which state you live in. Look up your two current senators at senate.gov before your interview."),
-            .init(text: "अहिले तपाईंको राज्यका एक अमेरिकी सिनेटर को हुन्? (राज्य अनुसार फरक)",
+            .init(text: "अहिले तपाईंको राज्यका एक अमेरिकी सिनेटर को हुन्?",
                   options: ["उत्तर फरक पर्छ — आफ्नो राज्य खोज्नुहोस्", "एलिजाबेथ वारेन", "मार्को रुबियो", "मिच म्याककोनेल"],
                   explanation: "अमेरिकी सिनेटरहरूले आफ्नो राज्यको प्रतिनिधित्व गर्छन्। सही उत्तर तपाईं कुन राज्यमा बस्नुहुन्छ त्यसमा निर्भर गर्छ। अन्तर्वार्ताअघि senate.gov मा आफ्ना दुई हालका सिनेटरहरू खोज्नुहोस्।")
         ]),
@@ -187,13 +187,13 @@ enum NepaliQuestions100 {
                   explanation: "U.S. Representatives serve 2-year terms. Because they must run every two years, all 435 House seats are on the ballot in every election cycle."),
             .init(text: "अमेरिकी प्रतिनिधि कति वर्षको लागि चुनिन्छन्?",
                   options: ["२ वर्ष", "४ वर्ष", "६ वर्ष", "८ वर्ष"],
-                  explanation: "अमेरिकी प्रतिनिधिहरू २ वर्षको कार्यकालको लागि सेवा गर्छन्। हरेक दुई वर्षमा दौडनुपर्ने हुनाले, सबै ४३५ प्रतिनिधि सभा सिटहरू हरेक निर्वाचन चक्रमा मतपत्रमा हुन्छन्।")
+                  explanation: "अमेरिकी प्रतिनिधिहरू २ वर्षको कार्यकालको लागि सेवा गर्छन्। हरेक दुई वर्षमा निर्वाचन लड्नुपर्ने हुनाले, सबै ४३५ प्रतिनिधि सभा सिटहरू हरेक निर्वाचन चक्रमा मतपत्रमा हुन्छन्।")
         ]),
         UnifiedQuestion(id: "q_08_023", correctAnswer: 0, variants: [
-            .init(text: "Name your U.S. Representative. (Varies by congressional district)",
+            .init(text: "Name your U.S. Representative.",
                   options: ["Answers will vary — research your district", "Nancy Pelosi", "Kevin McCarthy", "Hakeem Jeffries"],
                   explanation: "Your U.S. Representative represents your specific congressional district. Look up your representative at house.gov before your interview."),
-            .init(text: "तपाईंको अमेरिकी प्रतिनिधिको नाम लिनुहोस्। (कांग्रेसनल क्षेत्र अनुसार फरक)",
+            .init(text: "तपाईंको अमेरिकी प्रतिनिधिको नाम लिनुहोस्।",
                   options: ["उत्तर फरक पर्छ — आफ्नो क्षेत्र खोज्नुहोस्", "न्यान्सी पेलोसी", "केभिन म्याककार्थी", "हकिम जेफ्रीज"],
                   explanation: "तपाईंको अमेरिकी प्रतिनिधिले तपाईंको विशेष कांग्रेसनल क्षेत्रको प्रतिनिधित्व गर्छन्। अन्तर्वार्ताअघि house.gov मा आफ्नो प्रतिनिधि खोज्नुहोस्।")
         ]),
@@ -270,7 +270,7 @@ enum NepaliQuestions100 {
                   options: ["The Secretary of Defense", "A four-star general", "The President", "The Chairman of the Joint Chiefs of Staff"],
                   explanation: "The President serves as Commander in Chief of all U.S. armed forces, ensuring civilian control of the military — a key democratic principle."),
             .init(text: "सेनाका प्रधान सेनापति को हुन्?",
-                  options: ["रक्षा सचिव", "चार सितारा जनरल", "राष्ट्रपति", "संयुक्त सैन्य प्रमुखका अध्यक्ष"],
+                  options: ["रक्षा सचिव", "चार तारे जनरल", "राष्ट्रपति", "संयुक्त सैन्य प्रमुखका अध्यक्ष"],
                   explanation: "राष्ट्रपति सबै अमेरिकी सशस्त्र बलका प्रधान सेनापतिको रूपमा कार्य गर्छन्, जसले सेनाको नागरिक नियन्त्रण सुनिश्चित गर्छ — एक प्रमुख लोकतान्त्रिक सिद्धान्त।")
         ]),
         UnifiedQuestion(id: "q_08_033", correctAnswer: 2, variants: [
@@ -303,7 +303,7 @@ enum NepaliQuestions100 {
                   explanation: "Cabinet positions include the Vice President and 15 department heads such as Secretary of State, Defense, Treasury, and the Attorney General. (Chief Justice and Speaker lead judicial/legislative branches — not Cabinet.)"),
             .init(text: "दुई मन्त्रिपरिषद् स्तरका पदहरू के हुन्?",
                   options: ["सिनेटर र प्रतिनिधि", "गभर्नर र मेयर", "विदेश सचिव र रक्षा सचिव", "प्रधान न्यायाधीश र प्रतिनिधि सभाका सभामुख"],
-                  explanation: "मन्त्रिपरिषद् पदहरूमा उपराष्ट्रपति र विदेश सचिव, रक्षा सचिव, खजाना सचिव र महान्यायाधिवक्ता जस्ता १५ विभाग प्रमुखहरू समावेश छन्। (प्रधान न्यायाधीश र प्रतिनिधि सभाका सभामुख न्यायिक÷व्यवस्थापिका शाखाका नेता हुन्, मन्त्रिपरिषद्का होइनन्।)")
+                  explanation: "मन्त्रिपरिषद् पदहरूमा उपराष्ट्रपति र विदेश सचिव, रक्षा सचिव, खजाना सचिव र महान्यायाधिवक्ता जस्ता १५ विभाग प्रमुखहरू समावेश छन्। (प्रधान न्यायाधीश र प्रतिनिधि सभाका सभामुख न्यायिक/व्यवस्थापिका शाखाका नेता हुन्, मन्त्रिपरिषद्का होइनन्।)")
         ]),
         UnifiedQuestion(id: "q_08_037", correctAnswer: 3, variants: [
             .init(text: "What does the judicial branch do?",
@@ -358,18 +358,18 @@ enum NepaliQuestions100 {
                   explanation: "राज्य अधिकारहरूमा शिक्षा, प्रहरी सुरक्षा, दमकल विभाग, ड्राइभिङ लाइसेन्स र जोनिङ/भूमि प्रयोग निर्णयहरू प्रदान गर्नु समावेश छन्।")
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
-            .init(text: "Who is the Governor of your state now? (Varies by state)",
+            .init(text: "Who is the Governor of your state now?",
                   options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
                   explanation: "The Governor is the chief executive of a state. Look up your current Governor before your interview — USCIS will ask about YOUR state."),
-            .init(text: "अहिले तपाईंको राज्यका गभर्नर को हुन्? (राज्य अनुसार फरक)",
+            .init(text: "अहिले तपाईंको राज्यका गभर्नर को हुन्?",
                   options: ["उत्तर फरक पर्छ — आफ्नो राज्य खोज्नुहोस्", "रोन डिसान्टिस", "ग्याभिन न्युसम", "ग्रेग अब्बोट"],
                   explanation: "गभर्नर राज्यका प्रमुख कार्यकारी हुन्। अन्तर्वार्ताअघि आफ्नो हालका गभर्नर खोज्नुहोस् — USCIS ले तपाईंको राज्यबारे सोध्नेछ।")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [
-            .init(text: "What is the capital of your state? (Varies by state)",
+            .init(text: "What is the capital of your state?",
                   options: ["Answers will vary — research your state", "New York City", "Los Angeles", "Chicago"],
                   explanation: "Each state has its own capital city. Note: state capitals are often NOT the largest cities (e.g., Albany is NY's capital, not New York City)."),
-            .init(text: "तपाईंको राज्यको राजधानी कहाँ हो? (राज्य अनुसार फरक)",
+            .init(text: "तपाईंको राज्यको राजधानी कहाँ हो?",
                   options: ["उत्तर फरक पर्छ — आफ्नो राज्य खोज्नुहोस्", "न्यू योर्क सिटी", "लस एन्जेलस", "शिकागो"],
                   explanation: "प्रत्येक राज्यको आफ्नै राजधानी शहर छ। नोट: राज्यका राजधानीहरू प्रायः सबैभन्दा ठूला शहरहरू हुँदैनन् (उदाहरणका लागि, अल्बानी न्यू योर्कको राजधानी हो, न्यू योर्क सिटी होइन)।")
         ]),
@@ -434,7 +434,7 @@ enum NepaliQuestions100 {
                   explanation: "अमेरिकामा बस्ने सबै — नागरिक र गैर-नागरिक — लाई अभिव्यक्ति, बोली, सभा, निवेदन, धर्म र हतियार बोक्ने स्वतन्त्रता सहित अधिकारहरू छन्।")
         ]),
         UnifiedQuestion(id: "q_08_052", correctAnswer: 2, variants: [
-            .init(text: "Who do we show loyalty to when we say the Pledge of Allegiance?",
+            .init(text: "What do we show loyalty to when we say the Pledge of Allegiance?",
                   options: ["The President of the United States", "The U.S. Constitution and the courts", "The United States and the flag", "The military and veterans"],
                   explanation: "The Pledge of Allegiance is a declaration of loyalty to the United States and to its flag — the national symbol — pledging allegiance to 'one nation, under God, indivisible.'"),
             .init(text: "निष्ठाको प्रतिज्ञा गर्दा हामी कसप्रति वफादारी देखाउँछौं?",
@@ -714,7 +714,7 @@ enum NepaliQuestions100 {
                   options: ["Led the Underground Railroad to free enslaved people", "Served as the first Black President of the NAACP", "Fought for civil rights and equality for all Americans", "Wrote the Civil Rights Act of 1964"],
                   explanation: "Dr. Martin Luther King, Jr. was the most prominent leader of the Civil Rights Movement, advocating nonviolent protest. He received the Nobel Peace Prize in 1964."),
             .init(text: "मार्टिन लुथर किङ जुनियरले के गरे?",
-                  options: ["दासहरूलाई मुक्त गर्न अन्डरग्राउन्ड रेलरोडको नेतृत्व गरे", "NAACP का पहिलो अश्वेत राष्ट्रपति भए", "सबै अमेरिकीहरूका लागि नागरिक अधिकार र समानताका लागि लडे", "१९६४ को नागरिक अधिकार ऐन लेखे"],
+                  options: ["दासहरूलाई मुक्त गर्न अन्डरग्राउन्ड रेलरोडको नेतृत्व गरे", "NAACP का पहिलो अश्वेत अध्यक्ष भए", "सबै अमेरिकीहरूका लागि नागरिक अधिकार र समानताका लागि लडे", "१९६४ को नागरिक अधिकार ऐन लेखे"],
                   explanation: "डा. मार्टिन लुथर किङ जुनियर नागरिक अधिकार आन्दोलनका सबैभन्दा प्रमुख नेता थिए, जसले अहिंसात्मक विरोधको वकालत गरे। उनले सन् १९६४ मा नोबेल शान्ति पुरस्कार पाए।")
         ]),
         UnifiedQuestion(id: "q_08_086", correctAnswer: 2, variants: [
@@ -767,7 +767,7 @@ enum NepaliQuestions100 {
                   explanation: "U.S. territories include Puerto Rico, U.S. Virgin Islands, American Samoa, Guam, and the Northern Mariana Islands. Residents are U.S. nationals; Puerto Ricans are U.S. citizens."),
             .init(text: "अमेरिकाको एउटा क्षेत्र (टेरिटरी) को नाम लिनुहोस्।",
                   options: ["क्युबा", "पुएर्टो रिको", "डोमिनिकन गणतन्त्र", "फिलिपिन्स"],
-                  explanation: "अमेरिकी क्षेत्रहरूमा पुएर्टो रिको, अमेरिकी भर्जिन आइल्याण्ड्स, अमेरिकी सामोआ, गुआम र उत्तरी मारियाना आइल्याण्ड्स समावेश छन्। अधिकांश क्षेत्रका बासिन्दाहरू अमेरिकी राष्ट्रिय हुन्; पुएर्टो रिकनहरू अमेरिकी नागरिक हुन्।")
+                  explanation: "अमेरिकी क्षेत्रहरूमा पुएर्टो रिको, अमेरिकी भर्जिन आइल्याण्ड्स, अमेरिकी सामोआ, गुआम र उत्तरी मारियाना आइल्याण्ड्स समावेश छन्। यी क्षेत्रका बासिन्दाहरू अमेरिकी राष्ट्रिक (नेसनल) हुन्; पुएर्टो रिकोका बासिन्दाहरू अमेरिकी नागरिक हुन्।")
         ]),
         UnifiedQuestion(id: "q_08_092", correctAnswer: 3, variants: [
             .init(text: "Name one state that borders Canada.",
@@ -838,8 +838,8 @@ enum NepaliQuestions100 {
                   options: ["Valentine's Day and Easter", "Independence Day and Thanksgiving", "Hanukkah and Kwanzaa", "New Year's Eve and April Fool's Day"],
                   explanation: "Federal holidays include New Year's Day, MLK Day, Presidents' Day, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, and Christmas."),
             .init(text: "दुई राष्ट्रिय अमेरिकी बिदाहरूको नाम लिनुहोस्।",
-                  options: ["भ्यालेन्टाइन्स डे र इस्टर", "स्वतन्त्रता दिवस र थान्क्सगिभिङ", "हनुका र क्वान्जाा", "नयाँ वर्षको साँझ र अप्रिल फुल्स डे"],
-                  explanation: "संघीय बिदाहरूमा नयाँ वर्ष दिवस, MLK दिवस, राष्ट्रपति दिवस, स्मृति दिवस, स्वतन्त्रता दिवस, श्रम दिवस, कोलम्बस दिवस, दिग्गज दिवस, थान्क्सगिभिङ र क्रिसमस समावेश छन्।")
+                  options: ["भ्यालेन्टाइन्स डे र इस्टर", "स्वतन्त्रता दिवस र थान्क्सगिभिङ", "हनुका र क्वान्जा", "नयाँ वर्षको साँझ र अप्रिल फुल्स डे"],
+                  explanation: "संघीय बिदाहरूमा नयाँ वर्ष दिवस, MLK दिवस, राष्ट्रपति दिवस, स्मृति दिवस, स्वतन्त्रता दिवस, श्रम दिवस, कोलम्बस दिवस, भूतपूर्व सैनिक दिवस, थान्क्सगिभिङ र क्रिसमस समावेश छन्।")
         ]),
     ]
 }

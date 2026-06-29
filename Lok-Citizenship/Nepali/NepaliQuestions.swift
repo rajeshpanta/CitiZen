@@ -266,10 +266,10 @@ enum NepaliQuestions {
                   explanation: "१०औं संशोधनले संघीय सरकारलाई नदिइएका — र राज्यहरूलाई निषेध नगरिएका — कुनै पनि शक्तिहरू राज्य वा जनताका लागि सुरक्षित राख्छ।")
         ]),
         UnifiedQuestion(id: "q_25_097", correctAnswer: 1, variants: [
-            .init(text: "What amendment says all persons born or naturalized in the United States, and subject to the jurisdiction thereof, are U.S. citizens?",
+            .init(text: "What amendment gives citizenship to all persons born in the United States?",
                   options: ["13th Amendment", "14th Amendment", "15th Amendment", "19th Amendment"],
                   explanation: "The 14th Amendment (1868) grants citizenship to all persons born or naturalized in the United States — known as birthright citizenship."),
-            .init(text: "कुन संशोधनले अमेरिकामा जन्मेका वा प्राकृतिकीकरण भएका र यसको अधिकार क्षेत्रमा रहेका सबै व्यक्तिहरू अमेरिकी नागरिक हुन् भन्छ?",
+            .init(text: "कुन संशोधनले अमेरिकामा जन्मेका सबै व्यक्तिलाई नागरिकता दिन्छ?",
                   options: ["१३औं संशोधन", "१४औं संशोधन", "१५औं संशोधन", "१९औं संशोधन"],
                   explanation: "१४औं संशोधन (१८६८) ले अमेरिकामा जन्मेका वा प्राकृतिकीकरण भएका सबै व्यक्तिहरूलाई नागरिकता प्रदान गर्छ — यसलाई जन्मजात नागरिकता भनिन्छ।")
         ]),
@@ -370,8 +370,8 @@ enum NepaliQuestions {
                   options: ["For equal representation of small and large states (the Great Compromise)", "Because the Senate is the more important chamber", "To save election costs", "Because the Constitution forgot to specify"],
                   explanation: "Each state has 2 Senators for equal representation. This was the Great Compromise (Connecticut Compromise), balancing small-state and large-state interests."),
             .init(text: "प्रत्येक राज्यमा दुई सेनेटरहरू किन छन्?",
-                  options: ["साना र ठूला राज्यहरूको बराबर प्रतिनिधित्वका लागि (महासम्झौता)", "किनभने सेनेट बढी महत्वपूर्ण सदन हो", "निर्वाचन खर्च बचाउन", "किनभने संविधानले उल्लेख गर्न बिर्सियो"],
-                  explanation: "प्रत्येक राज्यमा बराबर प्रतिनिधित्वका लागि २ जना सेनेटरहरू छन्। यो महासम्झौता (कनेक्टिकट सम्झौता) थियो, जसले साना र ठूला राज्यका हितहरूलाई सन्तुलन गर्‍यो।")
+                  options: ["साना र ठूला राज्यहरूको बराबर प्रतिनिधित्वका लागि (महान सम्झौता)", "किनभने सेनेट बढी महत्वपूर्ण सदन हो", "निर्वाचन खर्च बचाउन", "किनभने संविधानले उल्लेख गर्न बिर्सियो"],
+                  explanation: "प्रत्येक राज्यमा बराबर प्रतिनिधित्वका लागि २ जना सेनेटरहरू छन्। यो महान सम्झौता (कनेक्टिकट सम्झौता) थियो, जसले साना र ठूला राज्यका हितहरूलाई सन्तुलन गर्‍यो।")
         ]),
         UnifiedQuestion(id: "q_25_029", correctAnswer: 0, variants: [
             .init(text: "Name your U.S. representative.",
@@ -531,11 +531,11 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_054", correctAnswer: 1, variants: [
             .init(text: "How many Supreme Court justices are usually needed to decide a case?",
-                  options: ["3", "6 (a quorum)", "9 (all)", "5"],
-                  explanation: "Per 28 U.S.C. §1, six (6) Justices constitute a quorum — the minimum number required to hear and decide a Supreme Court case. This is the official USCIS answer."),
+                  options: ["3", "5", "6", "9"],
+                  explanation: "The official USCIS answer is five (5) — a majority of the nine Justices is needed to decide a case. (Six Justices form a quorum to hear a case, but the answer to this question on the test is five.)"),
             .init(text: "मुद्दा निर्णय गर्न सर्वोच्च अदालतका कति न्यायाधीशहरू सामान्यतया आवश्यक हुन्छन्?",
-                  options: ["३", "६ (कोरम)", "९ (सबै)", "५"],
-                  explanation: "२८ U.S.C. §१ अनुसार, सर्वोच्च अदालतमा मुद्दा सुन्न र निर्णय गर्न आवश्यक न्यूनतम न्यायाधीशको संख्या — कोरम — ६ हो। यो USCIS को आधिकारिक उत्तर हो।")
+                  options: ["३", "५", "६", "९"],
+                  explanation: "USCIS को आधिकारिक उत्तर पाँच (५) हो — मुद्दा निर्णय गर्न नौ जना न्यायाधीशमध्ये बहुमत आवश्यक हुन्छ। (मुद्दा सुन्नका लागि छ जना न्यायाधीशले कोरम बनाउँछन्, तर परीक्षामा यस प्रश्नको उत्तर पाँच हो।)")
         ]),
         UnifiedQuestion(id: "q_25_055", correctAnswer: 3, variants: [
             .init(text: "How long do Supreme Court justices serve?",
@@ -610,7 +610,7 @@ enum NepaliQuestions {
                   options: ["All adults", "U.S. citizens only", "Anyone with a passport", "Only military veterans"],
                   explanation: "Only U.S. citizens have the rights to vote in federal elections, run for federal office, and serve on a jury."),
             .init(text: "अमेरिकामा संघीय निर्वाचनमा मतदान गर्न, संघीय पदका लागि उम्मेदवारी दिन र जुरीमा सेवा गर्न को सक्छ?",
-                  options: ["सबै वयस्कहरू", "केवल अमेरिकी नागरिकहरू", "राहदानी भएका जो कोही", "केवल सैनिक भूतपूर्व सैनिकहरू"],
+                  options: ["सबै वयस्कहरू", "केवल अमेरिकी नागरिकहरू", "राहदानी भएका जो कोही", "केवल भूतपूर्व सैनिकहरू"],
                   explanation: "केवल अमेरिकी नागरिकहरूले संघीय निर्वाचनमा मतदान गर्ने, संघीय पदका लागि उम्मेदवारी दिने र जुरीमा सेवा गर्ने अधिकार राख्छन्।")
         ]),
         UnifiedQuestion(id: "q_25_065", correctAnswer: 1, variants: [
@@ -798,7 +798,7 @@ enum NepaliQuestions {
                   options: ["Discovered electricity", "Wrote the Declaration of Independence and was 3rd President", "Led the Confederacy in the Civil War", "Invented the cotton gin"],
                   explanation: "Jefferson wrote the Declaration of Independence, was the 3rd President, doubled the U.S. with the Louisiana Purchase, and founded the University of Virginia."),
             .init(text: "थोमस जेफरसन धेरै कुराका लागि प्रसिद्ध छन्। एउटाको नाम लिनुहोस्।",
-                  options: ["बिजुली पत्ता लगाए", "स्वतन्त्रताको घोषणापत्र लेखे र तेस्रो राष्ट्रपति थिए", "गृहयुद्धमा कन्फेडेरेसीको नेतृत्व गरे", "कपास जीन आविष्कार गरे"],
+                  options: ["बिजुली पत्ता लगाए", "स्वतन्त्रताको घोषणापत्र लेखे र तेस्रो राष्ट्रपति थिए", "गृहयुद्धमा कन्फेडेरेसीको नेतृत्व गरे", "कपास ओटाउने यन्त्र आविष्कार गरे"],
                   explanation: "जेफरसनले स्वतन्त्रताको घोषणापत्र लेखे, तेस्रो राष्ट्रपति थिए, लुइसियाना खरिदद्वारा अमेरिकाको आकार दोब्बर बनाए, र भर्जिनिया विश्वविद्यालय स्थापना गरे।")
         ]),
         UnifiedQuestion(id: "q_25_088", correctAnswer: 0, variants: [
@@ -1039,7 +1039,7 @@ enum NepaliQuestions {
                   explanation: "The civil rights movement (1950s-1960s) fought to end racial discrimination and segregation. It led to the Civil Rights Act of 1964 and Voting Rights Act of 1965."),
             .init(text: "नागरिक अधिकार आन्दोलनले के गर्‍यो?",
                   options: ["महिलाहरूका लागि मतदान अधिकार जित्यो", "जातीय विभेद अन्त्य गर्न लड्यो", "बेलायतबाट स्वतन्त्रता ल्यायो", "सामाजिक सुरक्षा स्थापना गर्‍यो"],
-                  explanation: "नागरिक अधिकार आन्दोलन (१९५० र १९६० का दशक) जातीय विभेद र विभाजन अन्त्य गर्न लड्यो। यसले १९६४ को नागरिक अधिकार ऐन र १९६५ को मतदान अधिकार ऐन ल्यायो।")
+                  explanation: "नागरिक अधिकार आन्दोलन (१९५० र १९६० का दशक) जातीय विभेद र पृथकीकरण अन्त्य गर्न लड्यो। यसले १९६४ को नागरिक अधिकार ऐन र १९६५ को मतदान अधिकार ऐन ल्यायो।")
         ]),
         UnifiedQuestion(id: "q_25_113", correctAnswer: 1, variants: [
             .init(text: "Martin Luther King, Jr. is famous for many things. Name one.",

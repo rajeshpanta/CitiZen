@@ -227,13 +227,13 @@ enum ChineseQuestions100 {
                   explanation: "美國參議員任期為6年。")
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
-            .init(text: "Who is one of your state's U.S. Senators now? (Varies by state)",
+            .init(text: "Who is one of your state's U.S. Senators now?",
                   options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
                   explanation: "Look up your two current senators before your interview."),
-            .init(text: "你所在州现任美国参议员是谁？（因州而异）",
+            .init(text: "你所在州现任美国参议员是谁？",
                   options: ["答案因州而异——请查询您所在的州", "伊丽莎白·沃伦", "马可·卢比奥", "米奇·麦康奈尔"],
                   explanation: "请在面试前查询您所在州的两位现任参议员。"),
-            .init(text: "你所在州現任美國參議員是誰？（因州而異）",
+            .init(text: "你所在州現任美國參議員是誰？",
                   options: ["答案因州而異——請查詢您所在的州", "伊莉莎白·華倫", "馬可·盧比歐", "米奇·麥康奈爾"],
                   explanation: "請在面試前查詢您所在州的兩位現任參議員。")
         ])
@@ -264,13 +264,13 @@ enum ChineseQuestions100 {
                   explanation: "美國眾議員任期為2年。")
         ]),
         UnifiedQuestion(id: "q_08_023", correctAnswer: 0, variants: [
-            .init(text: "Name your U.S. Representative. (Varies by congressional district)",
+            .init(text: "Name your U.S. Representative.",
                   options: ["Answers will vary — research your district", "Nancy Pelosi", "Kevin McCarthy", "Hakeem Jeffries"],
                   explanation: "Look up your representative at house.gov before your interview."),
-            .init(text: "说出您的美国众议员姓名。（因国会选区而异）",
+            .init(text: "说出您的美国众议员姓名。",
                   options: ["答案因选区而异——请查询您的选区", "南希·佩洛西", "凯文·麦卡锡", "哈基姆·杰弗里斯"],
                   explanation: "请在面试前登录house.gov查询您的众议员。"),
-            .init(text: "說出您的美國眾議員姓名。（因國會選區而異）",
+            .init(text: "說出您的美國眾議員姓名。",
                   options: ["答案因選區而異——請查詢您的選區", "南希·裴洛西", "凱文·麥卡錫", "哈基姆·傑弗里斯"],
                   explanation: "請在面試前登錄house.gov查詢您的眾議員。")
         ]),
@@ -326,8 +326,8 @@ enum ChineseQuestions100 {
                   options: ["乔·拜登", "巴拉克·奥巴马", "唐纳德·特朗普", "卡玛拉·哈里斯"],
                   explanation: "唐纳德·特朗普是第47任总统，自2025年1月起开始第二届任期。"),
             .init(text: "現任美國總統的名字是什麼？",
-                  options: ["喬·拜登", "巴拉克·歐巴馬", "唐納德·特朗普", "卡瑪拉·哈里斯"],
-                  explanation: "唐納德·特朗普是第47任總統，自2025年1月起開始第二屆任期。")
+                  options: ["喬·拜登", "巴拉克·歐巴馬", "唐納德·川普", "卡瑪拉·哈里斯"],
+                  explanation: "唐納德·川普是第47任總統，自2025年1月起開始第二屆任期。")
         ]),
         UnifiedQuestion(id: "q_08_029", correctAnswer: 2, variants: [
             .init(text: "What is the name of the Vice President of the United States now?",
@@ -492,24 +492,24 @@ enum ChineseQuestions100 {
                   explanation: "州權力包括提供教育、警察保護和頒發駕照。")
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
-            .init(text: "Who is the Governor of your state now? (Varies by state)",
+            .init(text: "Who is the Governor of your state now?",
                   options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
                   explanation: "Look up your current Governor before your interview."),
-            .init(text: "你所在州现任州长是谁？（因州而异）",
+            .init(text: "你所在州现任州长是谁？",
                   options: ["答案因州而异——请查询您所在的州", "罗恩·德桑蒂斯", "加文·纽森", "格雷格·阿博特"],
                   explanation: "请在面试前查询您所在州的现任州长。"),
-            .init(text: "你所在州現任州長是誰？（因州而異）",
-                  options: ["答案因州而異——請查詢您所在的州", "朗·德桑蒂斯", "蓋文·紐森", "格雷格·雅培"],
+            .init(text: "你所在州現任州長是誰？",
+                  options: ["答案因州而異——請查詢您所在的州", "朗·德桑蒂斯", "蓋文·紐森", "格雷格·艾伯特"],
                   explanation: "請在面試前查詢您所在州的現任州長。")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [
-            .init(text: "What is the capital of your state? (Varies by state)",
+            .init(text: "What is the capital of your state?",
                   options: ["Answers will vary — research your state", "New York City", "Los Angeles", "Chicago"],
                   explanation: "Each state has its own capital city."),
-            .init(text: "你所在州的首府是什么？（因州而异）",
+            .init(text: "你所在州的首府是什么？",
                   options: ["答案因州而异——请查询您所在的州", "纽约市", "洛杉矶", "芝加哥"],
                   explanation: "每个州都有自己的首府城市。"),
-            .init(text: "你所在州的首府是什麼？（因州而異）",
+            .init(text: "你所在州的首府是什麼？",
                   options: ["答案因州而異——請查詢您所在的州", "紐約市", "洛杉磯", "芝加哥"],
                   explanation: "每個州都有自己的首府城市。")
         ]),
@@ -533,7 +533,7 @@ enum ChineseQuestions100 {
                   explanation: "唐纳德·特朗普是共和党成员。"),
             .init(text: "現任總統屬於哪個政黨？",
                   options: ["民主黨", "共和黨", "無黨派", "自由意志黨"],
-                  explanation: "唐納德·特朗普是共和黨成員。")
+                  explanation: "唐納德·川普是共和黨成員。")
         ]),
         UnifiedQuestion(id: "q_08_047", correctAnswer: 2, variants: [
             .init(text: "What is the name of the Speaker of the House of Representatives now?",
@@ -595,7 +595,7 @@ enum ChineseQuestions100 {
                   explanation: "美國境內的每個人都享有包括言論自由和宗教自由在內的權利。")
         ]),
         UnifiedQuestion(id: "q_08_052", correctAnswer: 2, variants: [
-            .init(text: "Who do we show loyalty to when we say the Pledge of Allegiance?",
+            .init(text: "What do we show loyalty to when we say the Pledge of Allegiance?",
                   options: ["The President of the United States", "The U.S. Constitution and the courts", "The United States and the flag", "The military and veterans"],
                   explanation: "The Pledge of Allegiance is a declaration of loyalty to the United States and its flag."),
             .init(text: "我们朗诵《效忠誓词》时，是对谁表示忠诚？",
@@ -768,10 +768,10 @@ enum ChineseQuestions100 {
                   options: ["Thomas Jefferson", "John Adams", "Hamilton, Madison, or Jay (Publius)", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by Alexander Hamilton, James Madison, and John Jay under the pen name 'Publius.' USCIS accepts any of their names."),
             .init(text: "《联邦党人文集》支持批准美国宪法。请说出其中一位作者的名字。",
-                  options: ["托马斯·杰斐逊", "约翰·亚当斯", "Hamilton、Madison 或 Jay（Publius）", "本杰明·富兰克林"],
+                  options: ["托马斯·杰斐逊", "约翰·亚当斯", "汉密尔顿、麦迪逊或杰伊（普布利乌斯）", "本杰明·富兰克林"],
                   explanation: "《联邦党人文集》由 Alexander Hamilton、James Madison 和 John Jay 以笔名「Publius」共同撰写。USCIS 接受任何一位的名字。"),
             .init(text: "《聯邦黨人文集》支持批准美國憲法。請說出其中一位作者的名字。",
-                  options: ["托馬斯·傑佛遜", "約翰·亞當斯", "Hamilton、Madison 或 Jay（Publius）", "班傑明·富蘭克林"],
+                  options: ["托馬斯·傑佛遜", "約翰·亞當斯", "漢米爾頓、麥迪森或傑伊（普布利烏斯）", "班傑明·富蘭克林"],
                   explanation: "《聯邦黨人文集》由 Alexander Hamilton、James Madison 和 John Jay 以筆名「Publius」共同撰寫。USCIS 接受任何一位的名字。")
         ]),
         UnifiedQuestion(id: "q_08_068", correctAnswer: 2, variants: [

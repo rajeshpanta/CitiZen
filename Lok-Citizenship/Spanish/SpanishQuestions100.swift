@@ -165,10 +165,10 @@ enum SpanishQuestions100 {
                   explanation: "Los senadores de EE. UU. cumplen mandatos de 6 años.")
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
-            .init(text: "Who is one of your state's U.S. Senators now? (Varies by state)",
+            .init(text: "Who is one of your state's U.S. Senators now?",
                   options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
                   explanation: "The correct answer depends on which state you live in. Look up your two current senators before your interview."),
-            .init(text: "¿Quién es actualmente uno de los senadores de EE. UU. de su estado? (Varía según el estado)",
+            .init(text: "¿Quién es actualmente uno de los senadores de EE. UU. de su estado?",
                   options: ["Las respuestas variarán — investigue su estado", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
                   explanation: "La respuesta correcta depende del estado donde vive. Busque a sus dos senadores actuales antes de su entrevista.")
         ])
@@ -193,10 +193,10 @@ enum SpanishQuestions100 {
                   explanation: "Los representantes de EE. UU. cumplen mandatos de 2 años.")
         ]),
         UnifiedQuestion(id: "q_08_023", correctAnswer: 0, variants: [
-            .init(text: "Name your U.S. Representative. (Varies by congressional district)",
+            .init(text: "Name your U.S. Representative.",
                   options: ["Answers will vary — research your district", "Nancy Pelosi", "Kevin McCarthy", "Hakeem Jeffries"],
                   explanation: "Look up your representative at house.gov before your interview."),
-            .init(text: "Nombre a su representante de EE. UU. (Varía según el distrito congresional)",
+            .init(text: "Nombre a su representante de EE. UU.",
                   options: ["Las respuestas variarán — investigue su distrito", "Nancy Pelosi", "Kevin McCarthy", "Hakeem Jeffries"],
                   explanation: "Consulte a su representante en house.gov antes de su entrevista.")
         ]),
@@ -361,18 +361,18 @@ enum SpanishQuestions100 {
                   explanation: "Los poderes de los estados incluyen brindar educación, protección policial y licencias de conducir.")
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
-            .init(text: "Who is the Governor of your state now? (Varies by state)",
+            .init(text: "Who is the Governor of your state now?",
                   options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
                   explanation: "Look up your current Governor before your interview."),
-            .init(text: "¿Quién es actualmente el Gobernador de su estado? (Varía según el estado)",
+            .init(text: "¿Quién es actualmente el Gobernador de su estado?",
                   options: ["Las respuestas variarán — investigue su estado", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
                   explanation: "Consulte quién es su Gobernador actual antes de su entrevista.")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [
-            .init(text: "What is the capital of your state? (Varies by state)",
+            .init(text: "What is the capital of your state?",
                   options: ["Answers will vary — research your state", "New York City", "Los Angeles", "Chicago"],
                   explanation: "Each state has its own capital city."),
-            .init(text: "¿Cuál es la capital de su estado? (Varía según el estado)",
+            .init(text: "¿Cuál es la capital de su estado?",
                   options: ["Las respuestas variarán — investigue su estado", "Nueva York", "Los Ángeles", "Chicago"],
                   explanation: "Cada estado tiene su propia ciudad capital.")
         ]),
@@ -437,10 +437,10 @@ enum SpanishQuestions100 {
                   explanation: "Todas las personas en EE. UU. —ciudadanos y no ciudadanos— tienen derechos, entre ellos la libertad de expresión y de religión.")
         ]),
         UnifiedQuestion(id: "q_08_052", correctAnswer: 2, variants: [
-            .init(text: "Who do we show loyalty to when we say the Pledge of Allegiance?",
+            .init(text: "What do we show loyalty to when we say the Pledge of Allegiance?",
                   options: ["The President of the United States", "The U.S. Constitution and the courts", "The United States and the flag", "The military and veterans"],
                   explanation: "The Pledge of Allegiance is a declaration of loyalty to the United States and its flag."),
-            .init(text: "¿A quién le expresamos lealtad cuando decimos el Juramento de Lealtad?",
+            .init(text: "¿A qué demostramos nuestra lealtad cuando decimos el Juramento de Lealtad?",
                   options: ["Al Presidente de los Estados Unidos", "A la Constitución de EE. UU. y los tribunales", "A los Estados Unidos y a la bandera", "A las fuerzas armadas y a los veteranos"],
                   explanation: "El Juramento de Lealtad es una declaración de fidelidad a los Estados Unidos y a su bandera.")
         ]),
