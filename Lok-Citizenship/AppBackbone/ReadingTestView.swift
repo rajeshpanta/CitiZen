@@ -104,7 +104,21 @@ struct ReadingTestView: View {
         // First mic tap counts as engagement — they're producing audio that
         // would be lost if they switched away.
         .onChange(of: voice.isRecording) { recording in
-            if recording { sessionActive = true }
+            if recording {
+                sessionActive = true
+            } else if lastDiff == nil,
+                      !session.isFinished,
+                      !voice.transcription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // The on-device recognizer auto-stops on end-of-speech silence
+                // (LocalSTTService finalizes on res.isFinal), flipping
+                // isRecording false while the captured reading is still in
+                // voice.transcription. The only grader (finishSentence) is
+                // otherwise reachable solely via the Done button shown while
+                // recording — so without grading here the user can't submit a
+                // sentence they just read aloud. Guarded by lastDiff == nil so
+                // an explicit Done tap (which already graded) can't double-grade.
+                finishSentence()
+            }
         }
         // Any submitted answer counts as engagement — even if they then
         // stop recording, the result is in `attempts` and abandoning would
@@ -468,6 +482,11 @@ struct ReadingTestView: View {
     }
 
     private func advanceSession() {
+        // Idempotent against a rapid double-tap on Continue: the result view
+        // (and thus this button) only exists while lastDiff != nil, so a second
+        // tap landing before SwiftUI removes it would otherwise call
+        // session.advance() twice and silently skip an unread sentence.
+        guard lastDiff != nil else { return }
         lastDiff = nil
         showEmptyWarning = false
         voice.clearTranscription()

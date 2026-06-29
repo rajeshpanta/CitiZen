@@ -7,7 +7,13 @@ final class NotificationManager: ObservableObject {
 
     static let shared = NotificationManager()
 
-    private let center = UNUserNotificationCenter.current()
+    // `nonisolated`: `UNUserNotificationCenter.current()` is a thread-safe
+    // singleton and is deliberately used off the main actor here — from the
+    // `scheduleQueue.async` block in `scheduleAll()` and the `nonisolated`
+    // `scheduleDailyReminder`/`scheduleStreakReminder` helpers. Without this,
+    // referencing the (otherwise @MainActor-isolated) property from those
+    // contexts is a warning today and an error under the Swift 6 language mode.
+    nonisolated private let center = UNUserNotificationCenter.current()
     private let defaults = UserDefaults.standard
 
     /// Serializes all cancel + add work so that rapid toggles (Settings
@@ -158,7 +164,10 @@ final class NotificationManager: ObservableObject {
         let hour = reminderHour
         let minute = reminderMinute
         let strings = localizedStrings
-        let streak = UserDefaults.standard.integer(forKey: "pm_currentStreak")
+        // Use the expiry-aware streak (captured on main before the queue hop)
+        // so a lapsed streak doesn't still schedule the "don't lose your streak"
+        // reminder — matching ProgressManager.currentStreak's missed-day expiry.
+        let streak = ProgressManager.shared.currentStreak
         scheduleQueue.async { [weak self] in
             guard let self else { return }
             self.center.removeAllPendingNotificationRequests()

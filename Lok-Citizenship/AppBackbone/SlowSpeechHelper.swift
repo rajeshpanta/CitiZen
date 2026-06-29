@@ -16,7 +16,13 @@ import Combine
 /// - One `AVSpeechSynthesizer` and one `OpenAITTSService` instance app-wide.
 /// - A new `speak` interrupts whichever engine is currently playing.
 /// - `stop()` interrupts both engines so callers don't have to know which is in use.
-final class SlowSpeechHelper: NSObject {
+// `@unchecked Sendable`: mirrors `LocalTTSService`. The non-Sendable
+// `AVSpeechSynthesizer` / `OpenAITTSService` members would otherwise trip the
+// Sendable-conformance check that the `static let shared` singleton requires.
+// Thread-safety contract: all state mutation happens on the main thread —
+// callers are SwiftUI Reading/Writing views, and the synthesizer delegate
+// callbacks plus the OpenAI completion hop back to main before touching state.
+final class SlowSpeechHelper: NSObject, @unchecked Sendable {
 
     static let shared = SlowSpeechHelper()
 

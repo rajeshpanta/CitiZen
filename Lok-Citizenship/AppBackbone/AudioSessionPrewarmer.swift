@@ -107,9 +107,15 @@ enum AudioSessionPrewarmer {
     /// speak immediately: Mock Interview "Start"/"Try Again", Audio-Only
     /// session start, Practice Quiz "Listen" button. Repeat calls
     /// supersede the prior pending continuation — most recent intent wins.
-    static func prewarm(then continuation: @escaping () -> Void) {
+    static func prewarm(then continuation: @escaping () -> Void,
+                        onFailure: (() -> Void)? = nil) {
         cancel()
-        guard configureSession() else { return }
+        // If the audio session can't be configured (another app is holding an
+        // exclusive, non-mixable session — an active call, CarPlay, some audio
+        // apps), NO audio can play. Report it via `onFailure` so the caller can
+        // surface a recoverable message instead of leaving its Start button a
+        // silent no-op. Callers that pass no handler keep the prior behavior.
+        guard configureSession() else { onFailure?(); return }
 
         let item = DispatchWorkItem {
             pending = nil

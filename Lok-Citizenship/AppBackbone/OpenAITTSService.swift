@@ -367,24 +367,39 @@ extension OpenAITTSService: AVAudioPlayerDelegate {
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            self.isSpeaking.send(false)
-            self.playCompletion?(flag)
+            // Fire the completion BEFORE emitting our own isSpeaking=false. On a
+            // failure (flag == false) the router's completion starts the local
+            // fallback, which raises local.isSpeaking=true; doing that first
+            // keeps the router's combined isSpeaking at `true` across the
+            // Nova→local handoff (no spurious intermediate true→false edge).
+            // Without this ordering, VoiceQuizController reads the intermediate
+            // false as "TTS finished" and auto-starts the mic over the fallback
+            // audio, silently mis-scoring the question. For flag == true there
+            // is no fallback, so the order is equivalent.
+            let completion = self.playCompletion
             self.playCompletion = nil
+            completion?(flag)
+            self.isSpeaking.send(false)
         }
     }
 
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            self.isSpeaking.send(false)
             // Purge the poisoned cache file so the next speak attempt
             // re-fetches instead of hitting the same bad bytes.
             if let url = self.currentPlayURL {
                 try? FileManager.default.removeItem(at: url)
                 self.currentPlayURL = nil
             }
-            self.playCompletion?(false)
+            // Completion BEFORE isSpeaking=false (see audioPlayerDidFinishPlaying):
+            // lets the router's local fallback raise its own isSpeaking=true
+            // first, so the Nova→local handoff produces no spurious true→false
+            // edge that would auto-start the mic over the fallback audio.
+            let completion = self.playCompletion
             self.playCompletion = nil
+            completion?(false)
+            self.isSpeaking.send(false)
         }
     }
 }

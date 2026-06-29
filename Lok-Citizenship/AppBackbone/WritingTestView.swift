@@ -139,6 +139,9 @@ struct WritingTestView: View {
                 // throttled identically.
                 if session.sessionPassed && RatingPrompt.shouldPrompt(for: .writingTestPassed) {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        // Don't present the rating prompt if the user already
+                        // navigated away (mirrors ReadingTestView's guard).
+                        guard isAppeared else { return }
                         requestReview()
                     }
                 }
@@ -405,6 +408,13 @@ struct WritingTestView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 guard isAppeared else { return }
                 speak(session.currentSentence)
+            }
+            // F5: re-raise the keyboard for the next sentence (mirrors onAppear
+            // and restartSession). Without this the field stays unfocused on
+            // sentences 2 and 3 and the user has to tap before they can type.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                guard isAppeared else { return }
+                inputFocused = true
             }
         }
     }

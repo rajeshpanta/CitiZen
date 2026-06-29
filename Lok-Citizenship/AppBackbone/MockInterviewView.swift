@@ -98,10 +98,13 @@ struct MockInterviewView: View {
     @Environment(\.requestReview) private var requestReview
 
     private let interviewQuestionCount = 10
-    // Snapshot of the pass threshold at session start. Stored as @State so the
-    // engine and UI always agree even if the user visits Settings mid-interview.
-    // Set once in startInterviewIfPossible(); default 6 covers the 2008 track.
-    @State private var requiredCorrect: Int = 6
+    // Snapshot of the pass threshold. Initialized from the active set so the
+    // ready screen shows the correct threshold (6 for the 2008/100 set, 8 for
+    // the 2020/128 set) — and the 2020 disclaimer appears — on the very first
+    // frame. Re-snapshotted in startInterviewIfPossible() so a mid-session
+    // Settings change can't desync the engine from the UI.
+    @State private var requiredCorrect: Int =
+        ProgressManager.shared.questionSet == .set2008 ? 6 : 8
 
     // Custom init to wire voice controller to quiz logic
     init(language: AppLanguage) {
@@ -135,6 +138,10 @@ struct MockInterviewView: View {
     /// the question into a mic that wasn't authorized yet — every
     /// question dead-ended at the 10 s listening timeout.
     @State private var pendingStartInterview = false
+    /// Set when the audio session can't be configured at start (another app
+    /// holds exclusive audio). Drives a recoverable alert instead of letting
+    /// Start be a silent no-op or starting a silent, auto-failing interview.
+    @State private var audioUnavailable = false
 
     private var s: UIStrings { UIStrings.forLanguage(language) }
 
@@ -177,7 +184,7 @@ struct MockInterviewView: View {
     private func startInterviewIfPossible() {
         switch voice.authorizationStatus {
         case .authorized:
-            AudioSessionPrewarmer.prewarm {
+            AudioSessionPrewarmer.prewarm(then: {
                 let req = ProgressManager.shared.questionSet == .set2008 ? 6 : 8
                 requiredCorrect = req
                 quizLogic.startMockInterview(
@@ -186,7 +193,12 @@ struct MockInterviewView: View {
                     requiredCorrect: req
                 )
                 voice.start()
-            }
+            }, onFailure: {
+                // Don't start a silent, auto-failing interview when no audio
+                // can play — surface a recoverable message. The ready screen
+                // stays put (totalQuestions == 0), so Start re-tries cleanly.
+                audioUnavailable = true
+            })
         case .notDetermined:
             pendingStartInterview = true
             voice.requestAuthorization()
@@ -313,6 +325,9 @@ struct MockInterviewView: View {
             }
         } message: {
             Text(s.endInterviewMessage)
+        }
+        .alert(s.mockAudioUnavailable, isPresented: $audioUnavailable) {
+            Button(s.a11yClose, role: .cancel) { }
         }
         .sheet(isPresented: $showPaywall) {
             // Trigger string mirrors the convention in PracticeSelectionView
@@ -1214,14 +1229,14 @@ struct MockInterviewView: View {
                         // legitimate second attempt (Pro user) gets counted.
                         if store.isPro || ProgressManager.shared.canAccessFreeMockInterview {
                             mockRecorded = false
-                            AudioSessionPrewarmer.prewarm {
+                            AudioSessionPrewarmer.prewarm(then: {
                                 quizLogic.startMockInterview(
                                     from: QuestionPool.activePool(for: language),
                                     questionCount: interviewQuestionCount,
                                     requiredCorrect: requiredCorrect
                                 )
                                 voice.restart()
-                            }
+                            }, onFailure: { audioUnavailable = true })
                         } else {
                             showPaywall = true
                         }

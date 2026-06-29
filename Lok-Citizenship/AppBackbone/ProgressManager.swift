@@ -37,9 +37,28 @@ final class ProgressManager {
     // MARK: - Streak Tracking
     // ─────────────────────────────────────────────────────────────
 
-    var currentStreak: Int {
+    /// Raw stored streak counter. Maintained by `updateStreak()`. Use
+    /// `currentStreak` for anything user-facing — it applies missed-day expiry.
+    private var storedStreak: Int {
         get { defaults.integer(forKey: "pm_currentStreak") }
         set { defaults.set(newValue, forKey: "pm_currentStreak") }
+    }
+
+    /// Effective current streak. The raw counter is only mutated on quiz
+    /// completion, so after the user skips a day it would otherwise stay frozen
+    /// at its old value and the readiness dashboard / notifications would show
+    /// an inflated streak until the next completion. Recompute from
+    /// `lastActiveDate` at read time: the streak is only "live" if the last
+    /// active day was today or yesterday; a gap of 2+ days means it's already
+    /// broken → 0. (A backward clock jump is treated as still-live, mirroring
+    /// `updateStreak()`.)
+    var currentStreak: Int {
+        guard let last = lastActiveDate else { return 0 }
+        let cal = Calendar.current
+        let days = cal.dateComponents([.day],
+                                      from: cal.startOfDay(for: last),
+                                      to: cal.startOfDay(for: Date())).day ?? 0
+        return days <= 1 ? storedStreak : 0
     }
 
     var longestStreak: Int {
@@ -91,21 +110,21 @@ final class ProgressManager {
                 break
             case 1:
                 // Consecutive day — extend streak
-                currentStreak += 1
+                storedStreak += 1
             case let d where d < 0:
                 // Clock went backward (timezone change, NTP correction) — preserve streak
                 break
             default:
                 // Gap of 2+ days — streak resets
-                currentStreak = 1
+                storedStreak = 1
             }
         } else {
             // First ever session
-            currentStreak = 1
+            storedStreak = 1
         }
 
-        if currentStreak > longestStreak {
-            longestStreak = currentStreak
+        if storedStreak > longestStreak {
+            longestStreak = storedStreak
         }
 
         lastActiveDate = Date()

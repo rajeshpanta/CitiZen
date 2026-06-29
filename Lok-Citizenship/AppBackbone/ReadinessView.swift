@@ -167,15 +167,16 @@ struct ReadinessView: View {
         // actual practice array size.
         let levelTotal = levelQuestions.count
         let pct = levelTotal > 0 ? Double(masteredInLevel) / Double(levelTotal) : 0
-        // 9 entries (indices 0…8): index 0 is unused padding so `level` (1-based)
-        // can be used directly as a subscript. Levels 6-8 are English/Spanish-only
-        // — the 8-practice 2025 USCIS layout. Without these, ReadinessView would
-        // crash with an out-of-bounds subscript the moment a user reached
-        // practice 6.
+        // 11 entries (indices 0…10): index 0 is unused padding so `level`
+        // (1-based) can be used directly as a subscript. Levels 6-8 extend the
+        // 128-question track; levels 9-10 belong to the 100-question (2008)
+        // track — which is the DEFAULT. Without entries for 9 and 10 those two
+        // rows rendered with a blank difficulty name and a flat gray bar.
         let labels = ["", s.levelEasy, s.levelMedium, s.levelHard, s.levelAdvanced,
-                      s.levelExpert, s.levelMaster, s.levelElite, s.levelGrandmaster]
+                      s.levelExpert, s.levelMaster, s.levelElite, s.levelGrandmaster,
+                      s.levelLegend, s.levelChampion]
         let colors: [Color] = [.clear, .green, .green, .yellow, .orange, .red,
-                               .purple, .indigo, .brown]
+                               .purple, .indigo, .brown, .orange, .yellow]
         let levelLabel = labels[safe: level] ?? ""
         let levelColor = colors[safe: level] ?? .gray
 
@@ -347,7 +348,7 @@ struct ReadinessView: View {
                 // together, which would let a Spanish learner's wrong
                 // answers pull down the accuracy figure shown on the
                 // English readiness screen (and vice versa).
-                Text("\(tracker.accuracyPercentage(for: localeKey))%")
+                Text("\(tracker.accuracyPercentage(for: localeKey, inPool: QuestionPool.activePool(for: language)))%")
                     .font(.title.bold())
                     .foregroundColor(.green)
                 Text(s.readinessAccuracy)

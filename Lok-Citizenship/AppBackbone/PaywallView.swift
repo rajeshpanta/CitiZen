@@ -297,13 +297,12 @@ struct PaywallView: View {
                         .padding(.top, 2)
                 }
             }
-        } else if store.isLoadingProducts {
-            VStack(spacing: 8) {
-                ProgressView().tint(.white)
-                Text(s.paywallLoadingPricing)
-                    .font(.footnote).foregroundColor(.gray)
-            }
-        } else {
+        } else if store.productLoadFailed {
+            // Only show the failure state when a load actually FAILED — not when
+            // products simply haven't been fetched yet (first render, before the
+            // view's .task runs). Reading the dedicated flag instead of falling
+            // through on empty-products stops the paywall from flashing a red
+            // "pricing unavailable" error on its very first frame.
             VStack(spacing: 12) {
                 Text(s.paywallPricingUnavailable)
                     .font(.footnote).foregroundColor(.red)
@@ -312,6 +311,13 @@ struct PaywallView: View {
                     Task { await store.loadProducts(forceReload: true) }
                 }
                 .font(.footnote).foregroundColor(.blue)
+            }
+        } else {
+            // Loading, or load not yet attempted — show a spinner either way.
+            VStack(spacing: 8) {
+                ProgressView().tint(.white)
+                Text(s.paywallLoadingPricing)
+                    .font(.footnote).foregroundColor(.gray)
             }
         }
     }

@@ -27,16 +27,35 @@ struct QuizMode {
     /// Number of correct answers needed for early pass. Nil = no early pass (practice).
     let requiredCorrect: Int?
 
+    /// Stable identifier used for analytics. Set explicitly per preset so the
+    /// `quizStarted` and `quizCompleted` events for the same session always
+    /// agree. Previously `finish()` inferred the name from `requiredCorrect`,
+    /// which made both audio-only and review sessions report as "practice"
+    /// on completion while their start event said otherwise.
+    let analyticsName: String
+
     // MARK: - Presets
 
     static let practice = QuizMode(
         maxMistakes: 4,
-        requiredCorrect: nil
+        requiredCorrect: nil,
+        analyticsName: "practice"
     )
 
     static let audioOnly = QuizMode(
         maxMistakes: .max,
-        requiredCorrect: nil
+        requiredCorrect: nil,
+        analyticsName: "audio_only"
+    )
+
+    /// Review Mistakes: no failure limit so every missed question is always
+    /// reviewable. A practice-mode (4-mistake) review of a small missed set
+    /// could otherwise fail-out and hide the remaining questions before the
+    /// user ever reached them.
+    static let review = QuizMode(
+        maxMistakes: .max,
+        requiredCorrect: nil,
+        analyticsName: "review"
     )
 
     static func mockInterview(
@@ -45,7 +64,8 @@ struct QuizMode {
     ) -> QuizMode {
         QuizMode(
             maxMistakes: questionCount - requiredCorrect + 1,
-            requiredCorrect: requiredCorrect
+            requiredCorrect: requiredCorrect,
+            analyticsName: "mock_interview"
         )
     }
 
@@ -323,6 +343,18 @@ final class UnifiedQuizLogic: ObservableObject {
         }
     }
 
+    /// Start a Review-Mistakes session. Same adaptive ordering as practice but
+    /// with NO failure limit — the user is here to re-see questions they missed,
+    /// so hitting a 4-mistake cap (and hiding the rest of the set) would defeat
+    /// the purpose. Used by QuizView for `reviewMistakes` / `reviewMistakes100`.
+    func startReview() {
+        mode = .review
+        resetWith(adaptiveShuffle(questions))
+        if tracksProgress {
+            Analytics.track(.quizStarted(mode: "review", language: languageTag, level: levelTag))
+        }
+    }
+
     /// Start a mock interview, picking questions from the pool.
     func startMockInterview(from pool: [UnifiedQuestion],
                             questionCount: Int = 10,
@@ -409,7 +441,7 @@ final class UnifiedQuizLogic: ObservableObject {
         let passed = terminal == .passed || terminal == .completed
         progress.recordQuizCompletion(passed: passed)
 
-        let modeName = mode.requiredCorrect == nil ? "practice" : "mock_interview"
+        let modeName = mode.analyticsName
         Analytics.track(.quizCompleted(
             mode: modeName,
             score: scorePercentage,

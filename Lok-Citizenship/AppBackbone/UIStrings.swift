@@ -18,9 +18,14 @@ struct UIStrings {
     /// printf-style: "%d questions due for review"
     let reviewMistakesSubtitleFormat: String
     let reviewMistakesEmpty: String
+    /// Shown on the Review-Mistakes card when the user HAS practiced this pool
+    /// but nothing is currently due (distinct from the never-practiced state).
+    let reviewMistakesAllCaughtUp: String
     let practiceLevels: String
     let civicsPractice: String
     let civicsPracticeSubtitle: String
+    /// Civics Practice card subtitle for the 100-question (2008) track.
+    let civicsPracticeSubtitle100: String
     let readingWriting: String
     let handsFree: String
     let readingPractice: String
@@ -41,6 +46,11 @@ struct UIStrings {
     let levelMaster: String
     let levelElite: String
     let levelGrandmaster: String
+    /// Top two ranks of the 100-question (2008) track — levels 9 and 10.
+    /// Localized across all four languages (these replace the old hardcoded
+    /// English "Legend"/"Champion" literals in PracticeLevelsView/ReadinessView).
+    let levelLegend: String
+    let levelChampion: String
     /// printf-style: "%d days until your interview"
     let daysUntilInterviewFormat: String
     /// printf-style: "%d%% ready · master %d/day" — pct, dailyTarget
@@ -364,6 +374,9 @@ struct UIStrings {
     let endInterviewTitle: String
     let endInterviewMessage: String
     let endInterviewKeep: String
+    /// Shown when the audio session can't be configured at interview start
+    /// (another app holds exclusive audio), so no voice could play.
+    let mockAudioUnavailable: String
 
     // MARK: - Local notifications (daily + streak reminders)
 
@@ -482,6 +495,8 @@ struct UIStrings {
     let settingsReminderTime: String
     let settingsEnableNotifications: String
     let settingsRemindersCaption: String
+    /// Caption under the daily-reminder toggle noting the fixed 8 PM streak nudge.
+    let settingsStreakReminderCaption: String
     let settingsInterviewHeader: String
     let settingsHasScheduledInterview: String
     let settingsInterviewDate: String
@@ -568,9 +583,11 @@ extension UIStrings {
         reviewMistakes: "Review Mistakes",
         reviewMistakesSubtitleFormat: "%d questions due for review",
         reviewMistakesEmpty: "Complete some practice first",
+        reviewMistakesAllCaughtUp: "All caught up — nothing due for review right now",
         practiceLevels: "Practice Levels",
         civicsPractice: "Civics Practice",
         civicsPracticeSubtitle: "128 official questions • 8 practice levels",
+        civicsPracticeSubtitle100: "100 official questions • 10 practice levels",
         readingWriting: "Reading & Writing",
         handsFree: "Hands-Free",
         readingPractice: "Reading Practice",
@@ -588,6 +605,8 @@ extension UIStrings {
         levelMaster: "Master",
         levelElite: "Elite",
         levelGrandmaster: "Grandmaster",
+        levelLegend: "Legend",
+        levelChampion: "Champion",
         daysUntilInterviewFormat: "%d days until your interview",
         dailyTargetSubtitleFormat: "%d%% ready · master %d/day",
         interviewReadyLabel: "100% ready · you're prepared",
@@ -821,6 +840,7 @@ extension UIStrings {
         endInterviewTitle: "End mock interview?",
         endInterviewMessage: "This will count as a failed attempt. You'll see your results so far.",
         endInterviewKeep: "Keep going",
+        mockAudioUnavailable: "Couldn't start audio. Close any app using your mic or speaker, then try again.",
 
         notifDailyTitle: "Time to study!",
         notifDailyBody: "A few minutes of practice keeps you on track for your citizenship test.",
@@ -898,6 +918,7 @@ extension UIStrings {
         settingsReminderTime: "Reminder Time",
         settingsEnableNotifications: "Enable Notifications",
         settingsRemindersCaption: "Get daily reminders to study and streak alerts.",
+        settingsStreakReminderCaption: "Streak reminder: daily at 8:00 PM",
         settingsInterviewHeader: "Interview",
         settingsHasScheduledInterview: "I have a scheduled interview",
         settingsInterviewDate: "Interview Date",
@@ -934,9 +955,11 @@ extension UIStrings {
         reviewMistakes: "Revisar errores",
         reviewMistakesSubtitleFormat: "%d preguntas para repasar",
         reviewMistakesEmpty: "Completa primero algo de práctica",
+        reviewMistakesAllCaughtUp: "Todo al día: nada para repasar por ahora",
         practiceLevels: "Niveles de práctica",
         civicsPractice: "Práctica de Civismo",
         civicsPracticeSubtitle: "128 preguntas oficiales • 8 niveles de práctica",
+        civicsPracticeSubtitle100: "100 preguntas oficiales • 10 niveles de práctica",
         readingWriting: "Lectura y escritura",
         handsFree: "Manos libres",
         readingPractice: "Práctica de lectura",
@@ -954,6 +977,8 @@ extension UIStrings {
         levelMaster: "Maestro",
         levelElite: "Élite",
         levelGrandmaster: "Gran maestro",
+        levelLegend: "Leyenda",
+        levelChampion: "Campeón",
         daysUntilInterviewFormat: "%d días para tu entrevista",
         dailyTargetSubtitleFormat: "%d%% listo · domina %d/día",
         interviewReadyLabel: "100% listo · estás preparado",
@@ -1187,6 +1212,7 @@ extension UIStrings {
         endInterviewTitle: "¿Terminar entrevista simulada?",
         endInterviewMessage: "Esto contará como un intento fallido. Verás tus resultados hasta ahora.",
         endInterviewKeep: "Seguir",
+        mockAudioUnavailable: "No se pudo iniciar el audio. Cierra cualquier app que use el micrófono o el altavoz y vuelve a intentarlo.",
 
         notifDailyTitle: "¡Hora de estudiar!",
         notifDailyBody: "Unos minutos de práctica te mantienen encaminado hacia tu examen de ciudadanía.",
@@ -1264,6 +1290,7 @@ extension UIStrings {
         settingsReminderTime: "Hora del recordatorio",
         settingsEnableNotifications: "Activar notificaciones",
         settingsRemindersCaption: "Recibe recordatorios diarios para estudiar y alertas de racha.",
+        settingsStreakReminderCaption: "Recordatorio de racha: todos los días a las 8:00 p. m.",
         settingsInterviewHeader: "Entrevista",
         settingsHasScheduledInterview: "Tengo una entrevista programada",
         settingsInterviewDate: "Fecha de la entrevista",
@@ -1300,9 +1327,11 @@ extension UIStrings {
         reviewMistakes: "गल्तीहरू समीक्षा",
         reviewMistakesSubtitleFormat: "%d प्रश्नहरू समीक्षाका लागि",
         reviewMistakesEmpty: "पहिले केही अभ्यास गर्नुहोस्",
+        reviewMistakesAllCaughtUp: "सबै अद्यावधिक — अहिले समीक्षाका लागि केही बाँकी छैन",
         practiceLevels: "अभ्यास स्तरहरू",
         civicsPractice: "नागरिक अभ्यास",
         civicsPracticeSubtitle: "१२८ आधिकारिक प्रश्न • ८ अभ्यास तह",
+        civicsPracticeSubtitle100: "१०० आधिकारिक प्रश्न • १० अभ्यास तह",
         readingWriting: "पढाइ र लेखाइ",
         handsFree: "हात-मुक्त",
         readingPractice: "पढाइ अभ्यास",
@@ -1320,6 +1349,8 @@ extension UIStrings {
         levelMaster: "निपुण",
         levelElite: "विशिष्ट",
         levelGrandmaster: "महाविज्ञ",
+        levelLegend: "दिग्गज",
+        levelChampion: "विजेता",
         daysUntilInterviewFormat: "तपाईंको अन्तर्वार्तामा %d दिन बाँकी",
         dailyTargetSubtitleFormat: "%d%% तयार · दैनिक %d सिक्नुहोस्",
         interviewReadyLabel: "100% तयार · तपाईं तयार हुनुहुन्छ",
@@ -1429,8 +1460,8 @@ extension UIStrings {
         onboardingHearSample: "नमूना सुन्नुहोस्",
         onboardingSampleText: "संयुक्त राज्य अमेरिकाको राजधानी के हो?",
         notificationsTitle: "नियमित रहनुहोस्",
-        notificationsSubtitle: "दैनिक सम्झौटाले तपाईंको लगातारलाई जिवन्त राख्छ",
-        notificationsEnable: "दैनिक सम्झौटा सक्षम गर्नुहोस्",
+        notificationsSubtitle: "दैनिक रिमाइन्डरले तपाईंको स्ट्रिक जीवन्त राख्छ",
+        notificationsEnable: "दैनिक रिमाइन्डर सक्षम गर्नुहोस्",
         notificationsSkip: "अहिले होइन",
         onboardingStartAtLevelFormat: "स्तर %d बाट सुरु गर्नुहोस्",
         recommendedBadge: "सिफारिस",
@@ -1553,6 +1584,7 @@ extension UIStrings {
         endInterviewTitle: "मक इन्टरभ्यू समाप्त गर्ने?",
         endInterviewMessage: "यो असफल प्रयासको रूपमा गनिनेछ। तपाईंले अहिलेसम्मको परिणाम देख्नुहुनेछ।",
         endInterviewKeep: "जारी राख्नुहोस्",
+        mockAudioUnavailable: "अडियो सुरु गर्न सकिएन। माइक वा स्पिकर प्रयोग गरिरहेको कुनै एप बन्द गरेर फेरि प्रयास गर्नुहोस्।",
 
         notifDailyTitle: "अध्ययनको समय!",
         notifDailyBody: "केही मिनेटको अभ्यासले तपाईंलाई नागरिकता परीक्षाको लागि तयार राख्छ।",
@@ -1630,6 +1662,7 @@ extension UIStrings {
         settingsReminderTime: "रिमाइन्डर समय",
         settingsEnableNotifications: "सूचनाहरू सक्रिय गर्नुहोस्",
         settingsRemindersCaption: "अध्ययन गर्न र स्ट्रिक कायम राख्न दैनिक रिमाइन्डरहरू पाउनुहोस्।",
+        settingsStreakReminderCaption: "स्ट्रिक रिमाइन्डर: हरेक दिन बेलुका ८:०० बजे",
         settingsInterviewHeader: "अन्तर्वार्ता",
         settingsHasScheduledInterview: "मेरो अन्तर्वार्ता तालिका छ",
         settingsInterviewDate: "अन्तर्वार्ता मिति",
@@ -1666,9 +1699,11 @@ extension UIStrings {
         reviewMistakes: "复习错题",
         reviewMistakesSubtitleFormat: "%d 道题待复习",
         reviewMistakesEmpty: "请先完成一些练习",
+        reviewMistakesAllCaughtUp: "全部完成——目前没有需要复习的内容",
         practiceLevels: "练习等级",
         civicsPractice: "公民练习",
         civicsPracticeSubtitle: "128 道官方题 • 8 个练习等级",
+        civicsPracticeSubtitle100: "100 道官方题 • 10 个练习等级",
         readingWriting: "阅读与写作",
         handsFree: "免提模式",
         readingPractice: "阅读练习",
@@ -1686,6 +1721,8 @@ extension UIStrings {
         levelMaster: "大师",
         levelElite: "精英",
         levelGrandmaster: "宗师",
+        levelLegend: "传奇",
+        levelChampion: "冠军",
         daysUntilInterviewFormat: "距离面试还有 %d 天",
         dailyTargetSubtitleFormat: "%d%% 就绪 · 每天掌握 %d 题",
         interviewReadyLabel: "100% 就绪 · 你已经准备好了",
@@ -1919,6 +1956,7 @@ extension UIStrings {
         endInterviewTitle: "结束模拟面试？",
         endInterviewMessage: "这将记录为一次失败的尝试。您将看到目前为止的结果。",
         endInterviewKeep: "继续",
+        mockAudioUnavailable: "无法启动音频。请关闭正在使用麦克风或扬声器的其他应用，然后重试。",
 
         notifDailyTitle: "该学习了！",
         notifDailyBody: "几分钟的练习能让您为公民考试做好准备。",
@@ -1996,6 +2034,7 @@ extension UIStrings {
         settingsReminderTime: "提醒时间",
         settingsEnableNotifications: "开启通知",
         settingsRemindersCaption: "开启每日学习提醒与连续天数通知。",
+        settingsStreakReminderCaption: "连续天数提醒：每天晚上 8:00",
         settingsInterviewHeader: "面试",
         settingsHasScheduledInterview: "我已预约面试",
         settingsInterviewDate: "面试日期",

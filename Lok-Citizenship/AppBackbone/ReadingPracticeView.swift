@@ -267,10 +267,13 @@ struct ReadingPracticeView: View {
         }
         // Cloud playback emits true the instant audio starts. Use that
         // as the authoritative "loading done" signal — more reliable
-        // than guessing at a fixed delay. The 6-second nonce-guarded
-        // timeout below is purely a safety net for the cloud-failure +
-        // local-fallback path (AVSpeechSynthesizer doesn't go through
-        // this publisher), so loading would otherwise stick.
+        // than guessing at a fixed delay. The local AVSpeech fallback
+        // ALSO feeds this publisher (SlowSpeechHelper.isSpeakingPublisher
+        // OR-combines the synthesizer's didStart), so the spinner clears
+        // on that path too. The 6-second nonce-guarded timeout below is a
+        // backstop only for the case where neither engine ever starts
+        // (e.g. a dead audio session), which would otherwise leave the
+        // spinner stuck.
         .onReceive(SlowSpeechHelper.shared.isSpeakingPublisher) { speaking in
             if speaking { isSpeakerLoading = false }
         }

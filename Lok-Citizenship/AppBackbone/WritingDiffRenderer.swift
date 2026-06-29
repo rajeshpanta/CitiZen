@@ -2,9 +2,11 @@ import Foundation
 
 /// Word-level diff + similarity for the Writing practice screen.
 ///
-/// Uses token-level Levenshtein distance (so word **order** matters — "right to vote" !=
-/// "vote to right"), which matches how a USCIS officer grades the writing test more
-/// closely than the old Jaccard set-overlap logic.
+/// Uses token-level longest-common-subsequence coverage (so word **order** matters —
+/// "right to vote" != "vote to right"), which matches how a USCIS officer grades the
+/// writing test more closely than the old Jaccard set-overlap logic. The same LCS
+/// match drives BOTH the pass verdict (`ratio`) and the green/red word highlight, so
+/// the two can never contradict each other.
 ///
 /// Pure algorithm, no network, no AI, no external dependencies.
 enum WritingDiffRenderer {
@@ -48,12 +50,17 @@ enum WritingDiffRenderer {
         let userTokensLC = tokenize(preserveCase: false, input)
         let expTokensLC  = expTokens.map { $0.lowercased() }
 
-        let distance = editDistance(expTokensLC, userTokensLC)
-        let denom = max(expTokensLC.count, userTokensLC.count, 1)
-        let ratio = 1.0 - (Double(distance) / Double(denom))
-
+        // Derive the pass verdict (`ratio`) and the displayed "X of Y words
+        // correct" highlight from the SAME LCS match so they can't disagree.
+        // (Previously `ratio` came from a separate edit-distance score, so a
+        // user who typed the whole sentence plus extra words got every expected
+        // word matched — all green, "Y of Y correct" — yet a sub-threshold edit
+        // distance flipped the verdict to "Incorrect".) Word order still
+        // matters because LCS is a subsequence; missing, reordered, or
+        // substituted words all lower the coverage.
         let matches = longestCommonSubsequenceMask(from: expTokensLC, into: userTokensLC)
         let correct = matches.filter { $0 }.count
+        let ratio = expTokensLC.isEmpty ? 0.0 : Double(correct) / Double(expTokensLC.count)
 
         return Diff(
             ratio: ratio,
@@ -89,31 +96,6 @@ enum WritingDiffRenderer {
         return finalized
             .split(separator: " ", omittingEmptySubsequences: true)
             .map(String.init)
-    }
-
-    /// Classic Levenshtein edit distance on arrays (insert/delete/substitute = cost 1).
-    private static func editDistance(_ a: [String], _ b: [String]) -> Int {
-        let n = a.count
-        let m = b.count
-        if n == 0 { return m }
-        if m == 0 { return n }
-
-        var prev = Array(0...m)
-        var curr = Array(repeating: 0, count: m + 1)
-
-        for i in 1...n {
-            curr[0] = i
-            for j in 1...m {
-                let cost = a[i - 1] == b[j - 1] ? 0 : 1
-                curr[j] = min(
-                    prev[j] + 1,         // delete
-                    curr[j - 1] + 1,     // insert
-                    prev[j - 1] + cost   // substitute
-                )
-            }
-            swap(&prev, &curr)
-        }
-        return prev[m]
     }
 
     /// Returns a Bool mask the same length as `expected`. `true` at index i means

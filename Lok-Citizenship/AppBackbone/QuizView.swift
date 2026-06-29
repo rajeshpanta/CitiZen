@@ -76,12 +76,13 @@ struct QuizView: View {
             ? WhisperSTTService()
             : ServiceLocator.shared.sttService
         // Use the shared `TTSRouter` (default arg of VoiceQuizController).
-        // The router is language-aware: English text → OpenAI nova (premium
-        // voice, matches Mock Interview); non-English (Spanish / Mandarin /
-        // Nepali) → on-device `LocalTTSService` so the natural locale
-        // voices are used instead of an American-accented nova reading
-        // foreign words. SlowSpeechHelper (Reading / Writing) follows the
-        // same English→OpenAI rule.
+        // When the Supabase backend is configured, the router uses OpenAI
+        // `nova` for ALL languages (English, Spanish, Mandarin, Nepali):
+        // OpenAI auto-detects the language from the text, and for Nepali it's
+        // strictly better than the iOS fallback (no ne-NP voice pack → iOS
+        // degrades to Hindi). It automatically falls back to on-device
+        // `LocalTTSService` when the backend is unconfigured or the cloud call
+        // fails. SlowSpeechHelper (Reading / Writing) follows the same rule.
         let vc = VoiceQuizController(quizLogic: logic, stt: stt)
         vc.autoAdvance = false  // practice mode: view controls answer flow
         _quizLogic = StateObject(wrappedValue: logic)
@@ -116,11 +117,17 @@ struct QuizView: View {
     /// across variant toggles (the user's mid-quiz language switch doesn't
     /// change which AppLanguage owns the quiz).
     private var appLanguage: AppLanguage {
-        switch config.localeForVariant(config.defaultVariantIndex) {
-        case "ne-NP": return .nepali
-        case "es-ES": return .spanish
-        case "zh-CN", "zh-TW": return .chinese
-        default: return .english
+        // Match by language family rather than exact locale literals so this
+        // can't drift from AppLanguage's raw values again. AppLanguage.spanish
+        // is "es-US" (not "es-ES"), so the old "es-ES" case silently fell
+        // through to English — rendering the Spanish Review-Misses quiz,
+        // paywall, and share card in English for Spanish learners.
+        let code = config.localeForVariant(config.defaultVariantIndex)
+        switch code {
+        case "ne-NP":                       return .nepali
+        case let c where c.hasPrefix("es"): return .spanish
+        case let c where c.hasPrefix("zh"): return .chinese
+        default:                            return .english
         }
     }
 
@@ -271,9 +278,12 @@ struct QuizView: View {
             quizLogic.languageTag = localeCode
             quizLogic.levelTag = level
 
-            // 100-question track: start in interview mode (6/10 pass, early-exit).
+            // Review Mistakes: no-fail mode so a small missed set can't fail-out.
+            // 100-question track: interview mode (6/10 pass, early-exit).
             // 128-question track: standard practice mode (4-mistake limit).
-            if let required = config.requiredCorrect {
+            if config.isReview {
+                quizLogic.startReview()
+            } else if let required = config.requiredCorrect {
                 quizLogic.startMockInterview(
                     from: config.questions,
                     questionCount: config.questions.count,
@@ -1037,7 +1047,9 @@ private extension QuizView {
                 quizLogic.levelTag = level
 
                 quizLogic.selectedVariantIndex = config.defaultVariantIndex
-                if let required = config.requiredCorrect {
+                if config.isReview {
+                    quizLogic.startReview()
+                } else if let required = config.requiredCorrect {
                     quizLogic.startMockInterview(
                         from: config.questions,
                         questionCount: config.questions.count,

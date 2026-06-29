@@ -45,6 +45,10 @@ struct AudioOnlyView: View {
     @State private var pickedLength: SessionLength = .medium
     @State private var showExitConfirm: Bool = false
     @State private var showReviewMissed: Bool = false
+    /// Set when the audio session can't be configured at start (another app
+    /// holds exclusive audio) — drives a recoverable alert instead of a silent
+    /// dead Start button. Mirrors MockInterviewView.audioUnavailable.
+    @State private var showAudioUnavailable: Bool = false
     /// Guard against re-entering `.finished` actions: when the controller
     /// flips `phase = .finished`, we want to (a) speak the score summary
     /// once and (b) move to the finished stage. SwiftUI's `.onReceive`
@@ -176,6 +180,9 @@ struct AudioOnlyView: View {
             Button(s.audioOnlyExitConfirmCancel, role: .cancel) { }
         } message: {
             Text(s.audioOnlyExitConfirmMessage)
+        }
+        .alert(s.mockAudioUnavailable, isPresented: $showAudioUnavailable) {
+            Button(s.a11yClose, role: .cancel) { }
         }
         .sheet(isPresented: $showReviewMissed) {
             // Pass the same `variantIndex` the controller used so the
@@ -390,7 +397,7 @@ struct AudioOnlyView: View {
     private func startSession() {
         switch voice.authorizationStatus {
         case .authorized:
-            AudioSessionPrewarmer.prewarm {
+            AudioSessionPrewarmer.prewarm(then: {
                 let pool = QuestionPool.activePool(for: language)
                 quizLogic.languageTag = language.rawValue
                 // SessionLength.full's rawValue (999) is greater than any
@@ -401,7 +408,12 @@ struct AudioOnlyView: View {
                 didAnnounceFinish = false
                 stage = .session
                 voice.start()
-            }
+            }, onFailure: {
+                // Audio session couldn't be configured — surface a recoverable
+                // message instead of a silent dead Start button (mirrors Mock
+                // Interview). The length picker stays put, so Start re-tries.
+                showAudioUnavailable = true
+            })
         case .notDetermined:
             // First-launch path: arm the pending flag so the
             // authorizationStatus onChange handler can complete the start
@@ -574,6 +586,17 @@ struct AudioOnlyView: View {
             VStack(spacing: 12) {
                 // Try Again — restart with the same length.
                 Button {
+                    // Stop the still-playing score summary and reset the voice
+                    // controller before restarting. The summary speaks through
+                    // the SAME shared TTSRouter the controller observes, so its
+                    // isSpeaking=true would otherwise make the next question's
+                    // stopSpeaking() emit a spurious true→false edge that
+                    // auto-opens the mic over the first question's audio
+                    // (silent wrong answer). voice.stop() → stopAudio()
+                    // synchronously clears ttsCurrentlyPlaying so that edge
+                    // becomes a no-op.
+                    summaryAnnouncement?.cancel()
+                    voice.stop()
                     didAnnounceFinish = false
                     startSession()
                 } label: {

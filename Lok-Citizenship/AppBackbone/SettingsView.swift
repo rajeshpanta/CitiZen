@@ -59,7 +59,7 @@ struct SettingsView: View {
                             ),
                             displayedComponents: .hourAndMinute
                         )
-                        Text("Streak reminder: daily at 8:00 PM")
+                        Text(s.settingsStreakReminderCaption)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

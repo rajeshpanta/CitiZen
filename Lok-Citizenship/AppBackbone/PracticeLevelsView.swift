@@ -503,8 +503,8 @@ struct PracticeLevelsView: View {
         case 6: return (s.levelMaster,       .purple, "6.circle.fill")
         case 7: return (s.levelElite,        .indigo, "7.circle.fill")
         case 8: return (s.levelGrandmaster,  .brown,  "8.circle.fill")
-        case 9: return ("Legend",            .orange, "9.circle.fill")
-        case 10: return ("Champion",         .yellow, "10.circle.fill")
+        case 9: return (s.levelLegend,       .orange, "9.circle.fill")
+        case 10: return (s.levelChampion,    .yellow, "10.circle.fill")
         default: return ("", .gray, "circle")
         }
     }

@@ -73,12 +73,56 @@ final class QuestionTracker: ObservableObject {
         } else {
             records = [:]
         }
+
+        // Fold any legacy Traditional-Chinese (zh-TW) records into the
+        // canonical zh-CN bucket. Earlier builds tagged Traditional-variant
+        // answers with the TTS locale "zh-TW", but every read path keys off
+        // zh-CN, so that progress was invisible. Recover it so returning
+        // 繁體 learners keep their mastery / review history.
+        let twKeys = records.keys.filter { $0.hasPrefix("zh-TW::") }
+        if !twKeys.isEmpty {
+            for twKey in twKeys {
+                guard let tw = records[twKey] else { continue }
+                let qid = String(twKey.dropFirst("zh-TW::".count))
+                let cnKey = "zh-CN::\(qid)"
+                records[cnKey] = records[cnKey].map { Self.merge($0, tw) } ?? tw
+                records[twKey] = nil
+            }
+            save()
+        }
     }
 
     // MARK: - Composite key helper
 
+    /// Canonicalize a locale to its record bucket. Simplified and Traditional
+    /// Chinese (`zh-CN` / `zh-TW`) are ONE learner over ONE question bank, so
+    /// they share a bucket — otherwise answers given with the Traditional
+    /// toggle (TTS locale `zh-TW`) would be written to a key no readiness /
+    /// review path ever reads (those all key off `AppLanguage.chinese` ==
+    /// `zh-CN`), silently nullifying a 繁體 learner's progress.
+    private static func canonicalLocale(_ lang: String) -> String {
+        lang.hasPrefix("zh") ? "zh-CN" : lang
+    }
+
     private static func compositeKey(qid: String, lang: String) -> String {
-        "\(lang)::\(qid)"
+        "\(canonicalLocale(lang))::\(qid)"
+    }
+
+    /// Merge two records for the same question (used when folding a legacy
+    /// `zh-TW` record into its canonical `zh-CN` bucket).
+    private static func merge(_ a: QuestionRecord, _ b: QuestionRecord) -> QuestionRecord {
+        var r = QuestionRecord()
+        r.attempts = a.attempts + b.attempts
+        r.correct = a.correct + b.correct
+        // Use the streak from whichever record was attempted MORE RECENTLY, not
+        // max(): consecutiveCorrect is path-dependent (reset to 0 on any wrong
+        // answer), so max() could resurrect a streak the user no longer has and
+        // wrongly mark a freshly-missed question as mastered / hide it from review.
+        r.consecutiveCorrect = (a.lastAttempted ?? .distantPast) >= (b.lastAttempted ?? .distantPast)
+            ? a.consecutiveCorrect : b.consecutiveCorrect
+        r.lastAttempted = [a.lastAttempted, b.lastAttempted].compactMap { $0 }.max()
+        r.lastCorrect = [a.lastCorrect, b.lastCorrect].compactMap { $0 }.max()
+        return r
     }
 
     // MARK: - Record an answer
@@ -121,7 +165,7 @@ final class QuestionTracker: ObservableObject {
     /// `SpacedRepetitionEngine.dueQuestions` can take it without any
     /// awareness of the per-language storage layout).
     func recordsForLanguage(_ language: String) -> [String: QuestionRecord] {
-        let prefix = "\(language)::"
+        let prefix = "\(Self.canonicalLocale(language))::"
         var out: [String: QuestionRecord] = [:]
         for (key, record) in records where key.hasPrefix(prefix) {
             let qid = String(key.dropFirst(prefix.count))
@@ -142,7 +186,7 @@ final class QuestionTracker: ObservableObject {
     /// record-level count (suitable for telemetry that wants historical
     /// totals, not per-pool readiness).
     func masteredCount(for language: String, inPool pool: [UnifiedQuestion]? = nil) -> Int {
-        let prefix = "\(language)::"
+        let prefix = "\(Self.canonicalLocale(language))::"
         let validIDs = pool.map { Set($0.map(\.id)) }
         return records.reduce(0) { acc, entry in
             guard entry.key.hasPrefix(prefix), entry.value.consecutiveCorrect >= 3 else { return acc }
@@ -157,7 +201,7 @@ final class QuestionTracker: ObservableObject {
     /// Number of questions attempted but not yet mastered in this language.
     /// See `masteredCount(for:inPool:)` for `inPool` semantics.
     func learningCount(for language: String, inPool pool: [UnifiedQuestion]? = nil) -> Int {
-        let prefix = "\(language)::"
+        let prefix = "\(Self.canonicalLocale(language))::"
         let validIDs = pool.map { Set($0.map(\.id)) }
         return records.reduce(0) { acc, entry in
             guard entry.key.hasPrefix(prefix),
@@ -175,10 +219,15 @@ final class QuestionTracker: ObservableObject {
     /// Returns 0 if the user has never answered any question in this
     /// language. Used by `ReadinessView`'s streak/accuracy summary so
     /// the figure shown actually reflects the language being viewed.
-    func accuracyPercentage(for language: String) -> Int {
-        let prefix = "\(language)::"
+    func accuracyPercentage(for language: String, inPool pool: [UnifiedQuestion]? = nil) -> Int {
+        let prefix = "\(Self.canonicalLocale(language))::"
+        let validIDs = pool.map { Set($0.map(\.id)) }
         var attempts = 0, correct = 0
         for (key, record) in records where key.hasPrefix(prefix) {
+            if let validIDs {
+                let qid = String(key.dropFirst(prefix.count))
+                guard validIDs.contains(qid) else { continue }
+            }
             attempts += record.attempts
             correct += record.correct
         }

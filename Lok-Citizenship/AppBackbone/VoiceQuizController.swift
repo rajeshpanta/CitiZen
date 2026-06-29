@@ -690,6 +690,12 @@ final class VoiceQuizController: ObservableObject {
     /// to show what the user said). All other callers omit it.
     private func recordAnswer(_ answerIndex: Int, spokenText: String? = nil) {
         stopAudio()
+        // An answer committed from the listening-timeout recovery state (Skip
+        // or tapping a fallback option while the "didn't hear you" banner is up)
+        // must clear didTimeout, or the banner persists alongside the
+        // wrong-answer feedback and its Replay button can re-listen on an
+        // already-scored question.
+        didTimeout = false
 
         // Snapshot data about the CURRENT question before mutating state.
         let answeredQuestion = quizLogic.currentQuestion

@@ -82,6 +82,15 @@ final class LocalTTSService: NSObject, TextToSpeechService, @unchecked Sendable 
         // other audio path in the app. Idempotent — no-op when the
         // session is already correctly configured.
         guard AudioSessionPrewarmer.configureSession() else {
+            // Audio session couldn't be configured — no speech will play. Emit a
+            // synthetic true→false transition (not just false) so subscribers
+            // that drive flow off the isSpeaking *edge* — notably
+            // VoiceQuizController.onTTSFinished, which moves auto-advance out of
+            // .speakingQuestion — aren't left waiting for an edge that would
+            // otherwise never arrive (which freezes Mock Interview / Audio-Only
+            // on a silent screen). Without the leading `true`, the controller
+            // only ever sees false→false and the transition check drops it.
+            isSpeaking.send(true)
             isSpeaking.send(false)
             // Return Just(()) so the subscriber receives the value synchronously
             // after subscribing. PassthroughSubject doesn't replay past sends,

@@ -70,23 +70,40 @@ final class TTSRouter: TextToSpeechService {
             // as a no-op so no crash, but it's a clearer contract this way).
             guard self.inFlightSubject === subject else { return }
             if success {
-                subject.send(())
-                subject.send(completion: .finished)
-                self.inFlightSubject = nil
+                self.finish(subject)
             } else {
                 // OpenAI couldn't produce audio (no key accepted, network fail, API error).
                 // Fall back to local TTS.
                 self.fallbackSub = self.local.speak(text, languageCode: languageCode)
                     .sink { [weak self] _ in
                         guard let self, self.inFlightSubject === subject else { return }
-                        subject.send(())
-                        subject.send(completion: .finished)
-                        self.inFlightSubject = nil
+                        self.finish(subject)
                     }
             }
         }
 
         return subject.eraseToAnyPublisher()
+    }
+
+    /// Deliver the returned publisher's terminal on the NEXT runloop tick.
+    /// Callers subscribe to the publisher synchronously *after* `speak()`
+    /// returns. In the fully-synchronous failure path — a cached MP3 whose
+    /// playback fails the audio-session-config guard, where the local fallback
+    /// ALSO resolves synchronously via `Just(())` — a same-tick send would fire
+    /// before the caller has subscribed. `PassthroughSubject` doesn't replay,
+    /// so the value would be lost and value-driven consumers (the Audio-Only
+    /// replay / "moving on" advance and the answer-feedback auto-advance) would
+    /// stall with no watchdog. Deferring guarantees the subscriber is attached
+    /// first; it costs one runloop in the common (async network) path, which is
+    /// imperceptible. The identity guard drops the send if `stopSpeaking()` (or
+    /// a newer `speak()`) already terminated/replaced this subject.
+    private func finish(_ subject: PassthroughSubject<Void, Never>) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.inFlightSubject === subject else { return }
+            subject.send(())
+            subject.send(completion: .finished)
+            self.inFlightSubject = nil
+        }
     }
 
     func stopSpeaking() {

@@ -724,13 +724,25 @@ struct PracticeSelectionView: View {
         // never opened the Nepali quiz shouldn't have `q_1_01` show up
         // in their Spanish review queue.
         let records = tracker.recordsForLanguage(language.rawValue)
-        let dueCount = SpacedRepetitionEngine.dueCount(from: pool, records: records)
+        // Cap the displayed count to the same limit the launched session uses
+        // (dueQuestions is capped at `reviewLimit`). Otherwise the badge could
+        // read "30 due" while a single tap only opens a 15-question review.
+        let reviewLimit = 15
+        let dueCount = min(
+            SpacedRepetitionEngine.dueCount(from: pool, records: records),
+            reviewLimit
+        )
+        // Distinguish the two zero-due states: a learner who has practiced
+        // questions in THIS pool but has nothing due right now (all caught up)
+        // vs. one who has never practiced — only the latter should be told to
+        // "complete some practice first".
+        let hasPoolRecords = pool.contains { records[$0.id] != nil }
 
         if dueCount > 0 {
             NavigationLink(
                 destination: QuizView(
                     config: .reviewMistakes(
-                        questions: SpacedRepetitionEngine.dueQuestions(from: pool, records: records),
+                        questions: SpacedRepetitionEngine.dueQuestions(from: pool, records: records, limit: reviewLimit),
                         language: language
                     ),
                     level: 0
@@ -782,7 +794,7 @@ struct PracticeSelectionView: View {
                     Text(s.reviewMistakes)
                         .font(.headline)
                         .foregroundColor(.white.opacity(0.4))
-                    Text(s.reviewMistakesEmpty)
+                    Text(hasPoolRecords ? s.reviewMistakesAllCaughtUp : s.reviewMistakesEmpty)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.3))
                 }
@@ -839,7 +851,8 @@ struct PracticeSelectionView: View {
                 Text(s.civicsPractice)
                     .font(.headline)
                     .foregroundColor(.white)
-                Text(s.civicsPracticeSubtitle)
+                Text(ProgressManager.shared.questionSet == .set2008
+                     ? s.civicsPracticeSubtitle100 : s.civicsPracticeSubtitle)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.85))
             }

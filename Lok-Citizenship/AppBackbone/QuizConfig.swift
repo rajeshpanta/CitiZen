@@ -37,6 +37,12 @@ struct QuizConfig {
     /// Nil (default) = standard practice mode (4-mistake limit).
     var requiredCorrect: Int? = nil
 
+    /// When true, QuizView starts the session in no-fail Review mode
+    /// (`UnifiedQuizLogic.startReview()`) instead of practice/interview mode.
+    /// Set by the `reviewMistakes` / `reviewMistakes100` factories so a small
+    /// review set can never fail-out and hide the remaining missed questions.
+    var isReview: Bool = false
+
     /// One button in the language toggle bar.
     struct LanguageToggle {
         let label: String       // e.g. "🇺🇸 English", "🇳🇵 नेपाली"
@@ -99,13 +105,17 @@ extension QuizConfig {
     }
 
     /// Review Mistakes quiz using the same config style as the given language.
+    /// Runs in no-fail Review mode (see `isReview`).
     static func reviewMistakes(questions: [UnifiedQuestion], language: AppLanguage) -> QuizConfig {
+        var config: QuizConfig
         switch language {
-        case .english: return .english(questions: questions)
-        case .nepali:  return .nepali(questions: questions)
-        case .spanish: return .spanish(questions: questions)
-        case .chinese: return .chinese(questions: questions)
+        case .english: config = .english(questions: questions)
+        case .nepali:  config = .nepali(questions: questions)
+        case .spanish: config = .spanish(questions: questions)
+        case .chinese: config = .chinese(questions: questions)
         }
+        config.isReview = true
+        return config
     }
 
     // MARK: - 100-question track (interview mode: 6/10 to pass)
@@ -140,18 +150,21 @@ extension QuizConfig {
         return config
     }
 
-    /// Review mistakes for the 100-question track.
-    /// Uses practice mode (4-mistake limit), NOT interview mode, because the
-    /// review set is always fewer than 10 questions. Applying requiredCorrect=6
-    /// to a 5-question set makes maxMistakes = 0, which would fail the quiz
-    /// immediately after the first answer (incorrectAnswers=0 >= maxMistakes=0).
+    /// Review mistakes for the 100-question track. Runs in no-fail Review mode
+    /// (`isReview = true` → `UnifiedQuizLogic.startReview`, maxMistakes = .max),
+    /// NOT interview mode — a sub-10-question missed set must never be
+    /// failed-out, or the remaining missed questions would be hidden before the
+    /// user reaches them. Same no-fail mode as `reviewMistakes`.
     static func reviewMistakes100(questions: [UnifiedQuestion], language: AppLanguage) -> QuizConfig {
+        var config: QuizConfig
         switch language {
-        case .english: return .english(questions: questions)
-        case .nepali:  return .nepali(questions: questions)
-        case .spanish: return .spanish(questions: questions)
-        case .chinese: return .chinese(questions: questions)
+        case .english: config = .english(questions: questions)
+        case .nepali:  config = .nepali(questions: questions)
+        case .spanish: config = .spanish(questions: questions)
+        case .chinese: config = .chinese(questions: questions)
         }
+        config.isReview = true
+        return config
     }
 
     /// English + Chinese Simplified + Chinese Traditional trilingual quiz.
