@@ -55,7 +55,7 @@ struct ShareCardView: View {
 
             Divider().background(Color.white.opacity(0.3))
 
-            Text("Preparing for U.S. Citizenship with CitiZen")
+            Text(s.shareCardTagline)
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.5))
                 .multilineTextAlignment(.center)

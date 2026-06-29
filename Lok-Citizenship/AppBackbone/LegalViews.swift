@@ -6,6 +6,8 @@ import SwiftUI
 
 struct PrivacyPolicyView: View {
     @Environment(\.dismiss) private var dismiss
+    var language: AppLanguage = .english
+    private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
         NavigationStack {
@@ -15,11 +17,11 @@ struct PrivacyPolicyView: View {
                     .foregroundColor(.primary)
                     .padding(20)
             }
-            .navigationTitle("Privacy Policy")
+            .navigationTitle(s.paywallPrivacy)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button(s.resultDone) { dismiss() }
                 }
             }
         }
@@ -28,7 +30,7 @@ struct PrivacyPolicyView: View {
     private var privacyText: String {
         """
         Privacy Policy for CitiZen
-        Last Updated: April 27, 2026
+        Last Updated: June 29, 2026
 
         SmallPanta ("we", "our", or "us") built the CitiZen app to help users prepare for the United States citizenship test. This Privacy Policy explains how we handle your information when you use our app.
 
@@ -47,14 +49,15 @@ struct PrivacyPolicyView: View {
         - Your location
         - Any data from other apps on your device
 
-        2. Microphone and Speech Recognition
+        2. Microphone, Speech, and Voice
 
         CitiZen uses your device's microphone and speech recognition to let you practice answering citizenship test questions out loud — simulating the real USCIS interview experience.
 
-        - For practice quizzes and reading/writing exercises, voice is processed on your device using Apple's Speech framework. No audio leaves your device for these features.
-        - For the Mock Interview feature, your spoken answer is recorded as a short audio clip and sent over a secure connection to our backend (hosted on Supabase) which forwards it to OpenAI's Whisper service for transcription. The transcript is returned to your device and used to evaluate your answer. The audio clip is processed transiently and is not retained by us; it is subject to OpenAI's API data policy (OpenAI states API audio is not used to train their models and is retained only as needed to provide the service). You can avoid sending audio off-device by tapping answer choices instead of speaking.
-        - We log non-content metadata for each Mock Interview transcription request (timestamp, audio size in bytes, language code, and a per-install random identifier) for abuse prevention and rate limiting. We do not log or store the audio content or the resulting transcript.
-        - You can use the app without the microphone by tapping answers instead.
+        - For practice quizzes and reading/writing exercises, your spoken answers are transcribed on your device using Apple's Speech framework. Your voice audio does not leave your device for these features.
+        - To read questions aloud in a natural voice (text-to-speech), the question and answer TEXT — not your voice — may be sent over a secure connection to our backend (hosted on Supabase) and OpenAI's text-to-speech service. If this is unavailable, the app falls back to the built-in system voice.
+        - For the Mock Interview feature, your spoken answer is recorded as a short audio clip and sent over a secure connection to our backend (Supabase), which forwards it to OpenAI's Whisper service for transcription. The transcript — together with the question and answer choices — may also be sent to OpenAI's language model to evaluate whether your answer is correct. Audio and transcripts are processed transiently and are not retained by us; they are subject to OpenAI's API data policy (OpenAI states API data is not used to train their models and is retained only as needed to provide the service).
+        - We log non-content metadata for each request (timestamp, audio size in bytes, language code, and a per-install random identifier) for abuse prevention and rate limiting. We do not log or store the audio content or the resulting transcript.
+        - You can avoid sending anything off-device by tapping answer choices instead of speaking, and you can use the built-in system voice instead of the enhanced voice.
 
         3. In-App Purchases
 
@@ -66,24 +69,25 @@ struct PrivacyPolicyView: View {
 
         4. Analytics
 
-        We collect anonymous, aggregated usage data to improve the app:
+        We collect anonymous usage data to improve the app. This is sent to our backend (Supabase) and includes:
 
-        - Which features are used (e.g., quiz started, quiz completed)
-        - General app performance metrics
-        - No personally identifiable information is included
-        - No data is sold to third parties
+        - Which features are used (e.g., quiz started/completed, voice used, language selected)
+        - In-app purchase events (e.g., purchase started, completed, restored)
+        - App version and a per-install random device identifier
+        - No name, email, location, or other personally identifiable information is included
+        - This data is not used to track you across other apps or websites, and is not sold to third parties
 
         5. Data Storage
 
-        Your quiz progress, scores, and preferences are stored locally on your device using standard iOS storage. We do not operate servers that store these.
+        Your quiz progress, scores, and preferences are stored locally on your device using standard iOS storage. We do not store these on our servers.
 
-        Mock Interview transcription requests pass through our backend on Supabase, which logs only the metadata listed in section 2 (no audio, no transcript). If you delete the app, locally stored data is permanently removed.
+        Voice requests pass through our backend on Supabase, which logs only the non-content metadata listed in section 2 (no audio, no transcript). Anonymous analytics events (section 4) are stored on our backend. If you delete the app, locally stored data is permanently removed.
 
         6. Third-Party Service Providers
 
-        We use the following service providers to operate the Mock Interview feature:
-        - Supabase (database and edge function hosting; receives audio in transit and metadata)
-        - OpenAI (Whisper speech-to-text; receives audio for transcription)
+        We use the following service providers to operate the voice and analytics features:
+        - Supabase (backend and edge-function hosting; receives audio, text, and metadata in transit, and stores analytics events and request metadata)
+        - OpenAI (Whisper speech-to-text for transcription, a language model for answer matching, and text-to-speech for spoken question playback; receives audio, transcripts, and question text)
 
         Both are bound by their respective privacy and data-processing terms.
 
@@ -121,6 +125,8 @@ struct PrivacyPolicyView: View {
 
 struct TermsOfUseView: View {
     @Environment(\.dismiss) private var dismiss
+    var language: AppLanguage = .english
+    private var s: UIStrings { UIStrings.forLanguage(language) }
 
     var body: some View {
         NavigationStack {
@@ -130,11 +136,11 @@ struct TermsOfUseView: View {
                     .foregroundColor(.primary)
                     .padding(20)
             }
-            .navigationTitle("Terms of Use")
+            .navigationTitle(s.paywallTerms)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button(s.resultDone) { dismiss() }
                 }
             }
         }

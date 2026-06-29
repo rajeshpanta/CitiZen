@@ -27,34 +27,39 @@
 </head>
 <body>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last Updated: April 9, 2026</p>
+    <p class="updated">Last Updated: June 29, 2026</p>
 
     <p>SmallPanta ("we", "our", or "us") built the CitiZen app to help users prepare for the United States citizenship test. This Privacy Policy explains how we handle your information when you use our app.</p>
 
     <h2>1. Information We Collect</h2>
     <p>CitiZen is designed with privacy in mind. We collect minimal data:</p>
-    <p><strong>Device-Local Data Only:</strong></p>
+    <p><strong>Stored on your device only:</strong></p>
     <ul>
-        <li>Quiz scores and progress (stored on your device only)</li>
-        <li>Study streak and statistics (stored on your device only)</li>
-        <li>Language preferences (stored on your device only)</li>
-        <li>Daily question count (stored on your device only)</li>
+        <li>Quiz scores and progress</li>
+        <li>Study streak and statistics</li>
+        <li>Language preferences</li>
+        <li>Daily question count</li>
+    </ul>
+    <p><strong>Sent to our backend for voice and analytics features (see sections 2 and 4):</strong></p>
+    <ul>
+        <li>For voice features: question/answer text (for spoken playback), and — in the Mock Interview — a short recording of your spoken answer and its transcript</li>
+        <li>Anonymous usage and purchase events, app version, and a per-install random identifier</li>
     </ul>
     <p><strong>We do NOT collect:</strong></p>
     <ul>
         <li>Your name, email, or any personal contact information</li>
         <li>Your location</li>
-        <li>Your voice recordings (speech is processed on-device and never stored or transmitted)</li>
         <li>Any data from other apps on your device</li>
     </ul>
 
-    <h2>2. Microphone and Speech Recognition</h2>
+    <h2>2. Microphone, Speech, and Voice</h2>
     <p>CitiZen uses your device's microphone and speech recognition to let you practice answering citizenship test questions out loud — simulating the real USCIS interview experience.</p>
     <ul>
-        <li>Voice data is processed on-device using Apple's Speech framework</li>
-        <li>We prefer on-device speech recognition when available</li>
-        <li>No voice recordings are stored, saved, or transmitted to any server</li>
-        <li>You can use the app without the microphone by tapping answers instead</li>
+        <li>For practice quizzes and reading/writing exercises, your spoken answers are transcribed on your device using Apple's Speech framework. Your voice audio does not leave your device for these features.</li>
+        <li>To read questions aloud in a natural voice (text-to-speech), the question and answer <strong>text</strong> — not your voice — may be sent over a secure connection to our backend (hosted on Supabase) and OpenAI's text-to-speech service. If this is unavailable, the app falls back to the built-in system voice.</li>
+        <li>For the Mock Interview feature, your spoken answer is recorded as a short audio clip and sent over a secure connection to our backend (Supabase), which forwards it to OpenAI's Whisper service for transcription. The transcript — together with the question and answer choices — may also be sent to OpenAI's language model to evaluate whether your answer is correct. Audio and transcripts are processed transiently and are not retained by us; they are subject to OpenAI's API data policy (OpenAI states API data is not used to train their models and is retained only as needed to provide the service).</li>
+        <li>We log non-content metadata for each request (timestamp, audio size in bytes, language code, and a per-install random identifier) for abuse prevention and rate limiting. We do not log or store the audio content or the resulting transcript.</li>
+        <li>You can avoid sending anything off-device by tapping answer choices instead of speaking, and you can use the built-in system voice instead of the enhanced voice.</li>
     </ul>
 
     <h2>3. In-App Purchases</h2>
@@ -66,36 +71,46 @@
     </ul>
 
     <h2>4. Analytics</h2>
-    <p>We collect anonymous, aggregated usage data to improve the app:</p>
+    <p>We collect anonymous usage data to improve the app. This is sent to our backend (Supabase) and includes:</p>
     <ul>
-        <li>Which features are used (e.g., quiz started, quiz completed)</li>
-        <li>General app performance metrics</li>
-        <li>No personally identifiable information is included</li>
-        <li>No data is sold to third parties</li>
+        <li>Which features are used (e.g., quiz started/completed, voice used, language selected)</li>
+        <li>In-app purchase events (e.g., purchase started, completed, restored)</li>
+        <li>App version and a per-install random device identifier</li>
+        <li>No name, email, location, or other personally identifiable information is included</li>
+        <li>This data is not used to track you across other apps or websites, and is not sold to third parties</li>
     </ul>
 
     <h2>5. Data Storage</h2>
-    <p>All your quiz progress, scores, and preferences are stored locally on your device using standard iOS storage. We do not operate servers that store your personal data.</p>
-    <p>If you delete the app, all locally stored data is permanently removed.</p>
+    <p>Your quiz progress, scores, and preferences are stored locally on your device using standard iOS storage. We do not store these on our servers.</p>
+    <p>Voice requests pass through our backend on Supabase, which logs only the non-content metadata listed in section 2 (no audio, no transcript). Anonymous analytics events (section 4) are stored on our backend. If you delete the app, locally stored data is permanently removed.</p>
 
-    <h2>6. Children's Privacy</h2>
+    <h2>6. Third-Party Service Providers</h2>
+    <p>We use the following service providers to operate the voice and analytics features:</p>
+    <ul>
+        <li>Supabase (backend and edge-function hosting; receives audio, text, and metadata in transit, and stores analytics events and request metadata)</li>
+        <li>OpenAI (Whisper speech-to-text for transcription, a language model for answer matching, and text-to-speech for spoken question playback; receives audio, transcripts, and question text)</li>
+    </ul>
+    <p>Both are bound by their respective privacy and data-processing terms.</p>
+
+    <h2>7. Children's Privacy</h2>
     <p>CitiZen is not directed at children under 13. We do not knowingly collect personal information from children. The app is designed for adults preparing for the U.S. citizenship test.</p>
 
-    <h2>7. Third-Party Services</h2>
+    <h2>8. Advertising</h2>
     <p>CitiZen does not integrate with third-party advertising networks. We do not share your data with advertisers.</p>
 
-    <h2>8. Your Rights</h2>
-    <p>Since we store data only on your device, you have full control:</p>
+    <h2>9. Your Rights</h2>
+    <p>You have full control over your data:</p>
     <ul>
-        <li>Delete the app to remove all data</li>
+        <li>Delete the app to remove all locally stored data</li>
         <li>Deny microphone permission to disable voice features</li>
+        <li>Use the Mock Interview by tapping answer choices instead of speaking, if you do not wish to send audio to our service providers</li>
         <li>Manage your subscription through Apple ID settings</li>
     </ul>
 
-    <h2>9. Changes to This Policy</h2>
+    <h2>10. Changes to This Policy</h2>
     <p>We may update this Privacy Policy from time to time. Changes will be reflected in the "Last Updated" date above. Continued use of the app after changes constitutes acceptance.</p>
 
-    <h2>10. Contact Us</h2>
+    <h2>11. Contact Us</h2>
     <p>If you have questions about this Privacy Policy, contact us at:<br>
     <a href="mailto:support@citizenapp.us">support@citizenapp.us</a></p>
 

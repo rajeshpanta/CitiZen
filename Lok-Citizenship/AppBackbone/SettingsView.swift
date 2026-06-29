@@ -244,8 +244,8 @@ struct SettingsView: View {
         // which is hardcoded dark.
         .preferredColorScheme(.dark)
         .navigationTitle(s.navSettings)
-        .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
-        .sheet(isPresented: $showTerms) { TermsOfUseView() }
+        .sheet(isPresented: $showPrivacy) { PrivacyPolicyView(language: language) }
+        .sheet(isPresented: $showTerms) { TermsOfUseView(language: language) }
         .sheet(isPresented: $showPaywall) {
             PaywallView(trigger: "settings_upgrade", language: language)
         }

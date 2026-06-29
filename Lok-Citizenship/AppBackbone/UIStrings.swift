@@ -121,6 +121,8 @@ struct UIStrings {
     let resultShareResult: String          // "Share Result"
     let resultTryAgain: String             // "Try Again"
     let resultDone: String                 // "Done"
+    /// Footer tagline on the shareable result card.
+    let shareCardTagline: String
     let resultPracticeCivics: String       // "Practice Civics" — Mock result button, sends user to civics practice
     /// "Review %d misses" — Phase 2: post-quiz button that opens a fresh
     /// quiz containing only the questions the user got wrong this session.
@@ -226,11 +228,15 @@ struct UIStrings {
     let paywallLifetime: String
     let paywallLifetimeSubtitle: String
     let paywallMonthly: String
-    /// "3-day free trial, then %@/mo" — %@ is the monthly price.
+    /// "%1$@-day free trial, then %2$@/mo" — %1$@ is the trial length in days
+    /// (read live from StoreKit), %2$@ is the monthly price.
     let paywallMonthlySubtitleFormat: String
+    /// "%@/mo" — fallback subtitle when the monthly product has no free-trial offer.
+    let paywallMonthlySubtitleNoTrialFormat: String
     let paywallFree: String
     let paywallBestValue: String
-    let paywall3DaysFree: String
+    /// "%@ DAYS FREE" — %@ is the trial length in days, read live from StoreKit.
+    let paywallFreeTrialBadgeFormat: String
     let paywallProcessing: String
     let paywallStartFreeTrial: String
     let paywallContinue: String
@@ -240,8 +246,10 @@ struct UIStrings {
     let paywallCostFilingFee: String
     let paywallCostAttorney: String
     let paywallCostAppBrand: String
-    /// "A %@/month subscription after 3-day free trial..." — %@ is the monthly price.
+    /// "A %1$@/month subscription after %2$@-day free trial..." — %1$@ price, %2$@ trial days.
     let paywallDisclosureFormat: String
+    /// "A %@/month subscription. ..." — fallback disclosure when there is no free trial.
+    let paywallDisclosureNoTrialFormat: String
     let paywallPurchaseFailed: String
     let paywallVerificationIssue: String
     let paywallDismiss: String
@@ -660,6 +668,7 @@ extension UIStrings {
         resultShareResult: "Share Result",
         resultTryAgain: "Try Again",
         resultDone: "Done",
+        shareCardTagline: "Preparing for U.S. Citizenship with CitiZen",
         resultPracticeCivics: "Practice Civics",
         resultReviewMissesFormat: "Review %d misses",
         tryWritingPracticeBtn: "Try Writing Practice",
@@ -749,10 +758,11 @@ extension UIStrings {
         paywallLifetime: "Lifetime",
         paywallLifetimeSubtitle: "One payment, forever yours",
         paywallMonthly: "Monthly",
-        paywallMonthlySubtitleFormat: "3-day free trial, then %@/mo",
+        paywallMonthlySubtitleFormat: "%1$@-day free trial, then %2$@/mo",
+        paywallMonthlySubtitleNoTrialFormat: "%@/mo",
         paywallFree: "FREE",
         paywallBestValue: "BEST VALUE",
-        paywall3DaysFree: "3 DAYS FREE",
+        paywallFreeTrialBadgeFormat: "%@ DAYS FREE",
         paywallProcessing: "Processing…",
         paywallStartFreeTrial: "Start Free Trial",
         paywallContinue: "Continue",
@@ -762,7 +772,8 @@ extension UIStrings {
         paywallCostFilingFee: "USCIS filing fee",
         paywallCostAttorney: "Immigration attorney",
         paywallCostAppBrand: "CitiZen Pro",
-        paywallDisclosureFormat: "A %@/month subscription after 3-day free trial. Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. You can manage and cancel your subscription in your Apple ID Account Settings.",
+        paywallDisclosureFormat: "A %1$@/month subscription after %2$@-day free trial. Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. You can manage and cancel your subscription in your Apple ID Account Settings.",
+        paywallDisclosureNoTrialFormat: "A %@/month subscription. Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. You can manage and cancel your subscription in your Apple ID Account Settings.",
         paywallPurchaseFailed: "Purchase failed. Please try again.",
         paywallVerificationIssue: "Verification Issue",
         paywallDismiss: "Dismiss",
@@ -1032,6 +1043,7 @@ extension UIStrings {
         resultShareResult: "Compartir resultado",
         resultTryAgain: "Intentar de nuevo",
         resultDone: "Listo",
+        shareCardTagline: "Preparándote para la ciudadanía de EE. UU. con CitiZen",
         resultPracticeCivics: "Practicar Cívica",
         resultReviewMissesFormat: "Repasar %d errores",
         tryWritingPracticeBtn: "Probar práctica de escritura",
@@ -1121,10 +1133,11 @@ extension UIStrings {
         paywallLifetime: "Compra única",
         paywallLifetimeSubtitle: "Un solo pago, tuyo para siempre",
         paywallMonthly: "Mensual",
-        paywallMonthlySubtitleFormat: "3 días de prueba gratis, luego %@/mes",
+        paywallMonthlySubtitleFormat: "%1$@ días de prueba gratis, luego %2$@/mes",
+        paywallMonthlySubtitleNoTrialFormat: "%@/mes",
         paywallFree: "GRATIS",
         paywallBestValue: "MEJOR OFERTA",
-        paywall3DaysFree: "3 DÍAS GRATIS",
+        paywallFreeTrialBadgeFormat: "%@ DÍAS GRATIS",
         paywallProcessing: "Procesando…",
         paywallStartFreeTrial: "Comenzar prueba gratis",
         paywallContinue: "Continuar",
@@ -1134,7 +1147,8 @@ extension UIStrings {
         paywallCostFilingFee: "Tarifa de solicitud USCIS",
         paywallCostAttorney: "Abogado de inmigración",
         paywallCostAppBrand: "CitiZen Pro",
-        paywallDisclosureFormat: "Una suscripción de %@/mes después de 3 días de prueba gratuita. El pago se cargará a tu cuenta Apple ID al confirmar la compra. La suscripción se renueva automáticamente a menos que se desactive la renovación automática al menos 24 horas antes del final del período actual. Puedes gestionar y cancelar tu suscripción en la configuración de tu cuenta Apple ID.",
+        paywallDisclosureFormat: "Una suscripción de %1$@/mes después de %2$@ días de prueba gratuita. El pago se cargará a tu cuenta Apple ID al confirmar la compra. La suscripción se renueva automáticamente a menos que se desactive la renovación automática al menos 24 horas antes del final del período actual. Puedes gestionar y cancelar tu suscripción en la configuración de tu cuenta Apple ID.",
+        paywallDisclosureNoTrialFormat: "Una suscripción de %@/mes. El pago se cargará a tu cuenta Apple ID al confirmar la compra. La suscripción se renueva automáticamente a menos que se desactive la renovación automática al menos 24 horas antes del final del período actual. Puedes gestionar y cancelar tu suscripción en la configuración de tu cuenta Apple ID.",
         paywallPurchaseFailed: "La compra falló. Intenta de nuevo.",
         paywallVerificationIssue: "Problema de verificación",
         paywallDismiss: "Cerrar",
@@ -1404,6 +1418,7 @@ extension UIStrings {
         resultShareResult: "परिणाम साझा गर्नुहोस्",
         resultTryAgain: "फेरि प्रयास गर्नुहोस्",
         resultDone: "सकियो",
+        shareCardTagline: "CitiZen सँग अमेरिकी नागरिकताको तयारी",
         resultPracticeCivics: "नागरिक अभ्यास",
         resultReviewMissesFormat: "%d गल्ती समीक्षा गर्नुहोस्",
         tryWritingPracticeBtn: "लेखन अभ्यास प्रयास गर्नुहोस्",
@@ -1493,10 +1508,11 @@ extension UIStrings {
         paywallLifetime: "आजीवन",
         paywallLifetimeSubtitle: "एकचोटि तिर्नुहोस्, सधैंभरि तपाईंको",
         paywallMonthly: "मासिक",
-        paywallMonthlySubtitleFormat: "३ दिन निःशुल्क परीक्षण, त्यसपछि %@/महिना",
+        paywallMonthlySubtitleFormat: "%1$@ दिन निःशुल्क परीक्षण, त्यसपछि %2$@/महिना",
+        paywallMonthlySubtitleNoTrialFormat: "%@/महिना",
         paywallFree: "निःशुल्क",
         paywallBestValue: "उत्तम मूल्य",
-        paywall3DaysFree: "३ दिन निःशुल्क",
+        paywallFreeTrialBadgeFormat: "%@ दिन निःशुल्क",
         paywallProcessing: "प्रक्रियामा…",
         paywallStartFreeTrial: "निःशुल्क परीक्षण सुरु",
         paywallContinue: "जारी राख्नुहोस्",
@@ -1506,7 +1522,8 @@ extension UIStrings {
         paywallCostFilingFee: "USCIS आवेदन शुल्क",
         paywallCostAttorney: "अध्यागमन वकिल",
         paywallCostAppBrand: "CitiZen Pro",
-        paywallDisclosureFormat: "३-दिनको निःशुल्क परीक्षणपछि %@/महिनाको सदस्यता। भुक्तानी पुष्टि गर्दा तपाईंको Apple ID खातामा शुल्क लाग्नेछ। हालको अवधि सकिनुभन्दा कम्तिमा २४ घण्टा अगाडि स्वत:-नवीकरण बन्द नगरेसम्म सदस्यता स्वत: नवीकरण हुनेछ। तपाईं आफ्नो सदस्यता Apple ID खाता सेटिङमा व्यवस्थापन र रद्द गर्न सक्नुहुन्छ।",
+        paywallDisclosureFormat: "%2$@-दिनको निःशुल्क परीक्षणपछि %1$@/महिनाको सदस्यता। भुक्तानी पुष्टि गर्दा तपाईंको Apple ID खातामा शुल्क लाग्नेछ। हालको अवधि सकिनुभन्दा कम्तिमा २४ घण्टा अगाडि स्वत:-नवीकरण बन्द नगरेसम्म सदस्यता स्वत: नवीकरण हुनेछ। तपाईं आफ्नो सदस्यता Apple ID खाता सेटिङमा व्यवस्थापन र रद्द गर्न सक्नुहुन्छ।",
+        paywallDisclosureNoTrialFormat: "%@/महिनाको सदस्यता। भुक्तानी पुष्टि गर्दा तपाईंको Apple ID खातामा शुल्क लाग्नेछ। हालको अवधि सकिनुभन्दा कम्तिमा २४ घण्टा अगाडि स्वत:-नवीकरण बन्द नगरेसम्म सदस्यता स्वत: नवीकरण हुनेछ। तपाईं आफ्नो सदस्यता Apple ID खाता सेटिङमा व्यवस्थापन र रद्द गर्न सक्नुहुन्छ।",
         paywallPurchaseFailed: "खरिद असफल। कृपया फेरि प्रयास गर्नुहोस्।",
         paywallVerificationIssue: "प्रमाणीकरण समस्या",
         paywallDismiss: "बन्द गर्नुहोस्",
@@ -1776,6 +1793,7 @@ extension UIStrings {
         resultShareResult: "分享结果",
         resultTryAgain: "再试一次",
         resultDone: "完成",
+        shareCardTagline: "用 CitiZen 备考美国公民入籍",
         resultPracticeCivics: "练习公民题",
         resultReviewMissesFormat: "复习 %d 道错题",
         tryWritingPracticeBtn: "试试写作练习",
@@ -1865,10 +1883,11 @@ extension UIStrings {
         paywallLifetime: "终身",
         paywallLifetimeSubtitle: "一次付费, 终身使用",
         paywallMonthly: "月度",
-        paywallMonthlySubtitleFormat: "3 天免费试用, 之后 %@/月",
+        paywallMonthlySubtitleFormat: "%1$@ 天免费试用, 之后 %2$@/月",
+        paywallMonthlySubtitleNoTrialFormat: "%@/月",
         paywallFree: "免费",
         paywallBestValue: "最超值",
-        paywall3DaysFree: "3 天免费",
+        paywallFreeTrialBadgeFormat: "%@ 天免费",
         paywallProcessing: "处理中…",
         paywallStartFreeTrial: "开始免费试用",
         paywallContinue: "继续",
@@ -1878,7 +1897,8 @@ extension UIStrings {
         paywallCostFilingFee: "USCIS 申请费",
         paywallCostAttorney: "移民律师",
         paywallCostAppBrand: "CitiZen Pro",
-        paywallDisclosureFormat: "3 天免费试用后为 %@/月订阅. 确认购买时将从你的 Apple ID 账户扣款. 除非在当前周期结束前至少 24 小时关闭自动续订, 订阅将自动续订. 你可以在 Apple ID 账户设置中管理和取消订阅.",
+        paywallDisclosureFormat: "%2$@ 天免费试用后为 %1$@/月订阅. 确认购买时将从你的 Apple ID 账户扣款. 除非在当前周期结束前至少 24 小时关闭自动续订, 订阅将自动续订. 你可以在 Apple ID 账户设置中管理和取消订阅.",
+        paywallDisclosureNoTrialFormat: "%@/月订阅. 确认购买时将从你的 Apple ID 账户扣款. 除非在当前周期结束前至少 24 小时关闭自动续订, 订阅将自动续订. 你可以在 Apple ID 账户设置中管理和取消订阅.",
         paywallPurchaseFailed: "购买失败, 请重试.",
         paywallVerificationIssue: "验证问题",
         paywallDismiss: "关闭",

@@ -293,7 +293,15 @@ struct QuizView: View {
                 quizLogic.startQuiz()
             }
             syncVoiceConfig()
-            voice.requestAuthorization()
+            // Only front-load the mic / speech-recognition permission prompt for
+            // voice-centric modes (the mock interview, where every answer is spoken).
+            // For plain practice and review the mic is optional and button-driven, so
+            // we defer the prompt until the user actually taps to speak — the mic
+            // button (tryStartListening) requests it contextually. This avoids two
+            // back-to-back system dialogs on a screen voice may never be used on.
+            if config.requiredCorrect != nil {
+                voice.requestAuthorization()
+            }
         }
         .onDisappear {
             // Defensive cleanup. Quit/Back buttons already call voice.stop(),

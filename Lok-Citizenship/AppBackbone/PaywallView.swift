@@ -188,8 +188,8 @@ struct PaywallView: View {
             }
         }
         .interactiveDismissDisabled(purchasing)
-        .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
-        .sheet(isPresented: $showTerms) { TermsOfUseView() }
+        .sheet(isPresented: $showPrivacy) { PrivacyPolicyView(language: language) }
+        .sheet(isPresented: $showTerms) { TermsOfUseView(language: language) }
         .alert(s.paywallVerificationIssue,
                isPresented: Binding(
                    get: { store.entitlementVerificationFailed },
@@ -240,12 +240,14 @@ struct PaywallView: View {
                 }
 
                 if let monthly = store.products.first(where: { $0.id == StoreManager.monthlyID }) {
+                    let trialDays = monthlyTrialDays
                     planCard(
                         id: StoreManager.monthlyID,
                         title: s.paywallMonthly,
-                        subtitle: String(format: s.paywallMonthlySubtitleFormat, monthly.displayPrice),
-                        price: s.paywallFree,
-                        badge: s.paywall3DaysFree,
+                        subtitle: trialDays.map { String(format: s.paywallMonthlySubtitleFormat, String($0), monthly.displayPrice) }
+                            ?? String(format: s.paywallMonthlySubtitleNoTrialFormat, monthly.displayPrice),
+                        price: trialDays != nil ? s.paywallFree : monthly.displayPrice,
+                        badge: trialDays.map { String(format: s.paywallFreeTrialBadgeFormat, String($0)) },
                         savingsBadge: nil
                     )
                 }
@@ -289,7 +291,8 @@ struct PaywallView: View {
                 // Subscription disclosure (Apple Guideline 3.1.2(c))
                 if selectedProductID == StoreManager.monthlyID,
                    let monthly = store.products.first(where: { $0.id == StoreManager.monthlyID }) {
-                    Text(String(format: s.paywallDisclosureFormat, monthly.displayPrice))
+                    Text(monthlyTrialDays.map { String(format: s.paywallDisclosureFormat, monthly.displayPrice, String($0)) }
+                            ?? String(format: s.paywallDisclosureNoTrialFormat, monthly.displayPrice))
                         .font(.system(size: 10))
                         .foregroundColor(.white.opacity(0.35))
                         .multilineTextAlignment(.center)
@@ -324,8 +327,28 @@ struct PaywallView: View {
 
     private var ctaButtonLabel: String {
         if purchasing { return s.paywallProcessing }
-        if selectedProductID == StoreManager.monthlyID { return s.paywallStartFreeTrial }
+        if selectedProductID == StoreManager.monthlyID {
+            return monthlyTrialDays != nil ? s.paywallStartFreeTrial : s.paywallContinue
+        }
         return s.paywallContinue
+    }
+
+    /// Free-trial length in days for the monthly product, read live from the
+    /// loaded StoreKit introductory offer so the paywall copy always matches
+    /// App Store Connect and can never drift from a hardcoded value. Returns
+    /// nil when the monthly product has no free-trial introductory offer.
+    private var monthlyTrialDays: Int? {
+        guard let monthly = store.products.first(where: { $0.id == StoreManager.monthlyID }),
+              let offer = monthly.subscription?.introductoryOffer,
+              offer.paymentMode == .freeTrial else { return nil }
+        let period = offer.period
+        switch period.unit {
+        case .day:   return period.value
+        case .week:  return period.value * 7
+        case .month: return period.value * 30
+        case .year:  return period.value * 365
+        @unknown default: return period.value
+        }
     }
 
     // ═════════════════════════════════════════════════════════════
