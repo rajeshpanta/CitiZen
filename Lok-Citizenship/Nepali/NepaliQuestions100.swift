@@ -163,10 +163,10 @@ enum NepaliQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
             .init(text: "Who is one of your state's U.S. Senators now?",
-                  options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "U.S. Senators represent their state. The correct answer depends on which state you live in. Look up your two current senators at senate.gov before your interview."),
             .init(text: "अहिले तपाईंको राज्यका एक अमेरिकी सिनेटर को हुन्?",
-                  options: ["उत्तर फरक पर्छ — आफ्नो राज्य खोज्नुहोस्", "एलिजाबेथ वारेन", "मार्को रुबियो", "मिच म्याककोनेल"],
+                  options: ["उत्तर फरक पर्छ — आफ्नो राज्य खोज्नुहोस्", "डोनाल्ड ट्रम्प", "जो बाइडेन", "कमला ह्यारिस"],
                   explanation: "अमेरिकी सिनेटरहरूले आफ्नो राज्यको प्रतिनिधित्व गर्छन्। सही उत्तर तपाईं कुन राज्यमा बस्नुहुन्छ त्यसमा निर्भर गर्छ। अन्तर्वार्ताअघि senate.gov मा आफ्ना दुई हालका सिनेटरहरू खोज्नुहोस्।")
         ]),
     ]
@@ -359,10 +359,10 @@ enum NepaliQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
             .init(text: "Who is the Governor of your state now?",
-                  options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "The Governor is the chief executive of a state. Look up your current Governor before your interview — USCIS will ask about YOUR state."),
             .init(text: "अहिले तपाईंको राज्यका गभर्नर को हुन्?",
-                  options: ["उत्तर फरक पर्छ — आफ्नो राज्य खोज्नुहोस्", "रोन डिसान्टिस", "ग्याभिन न्युसम", "ग्रेग अब्बोट"],
+                  options: ["उत्तर फरक पर्छ — आफ्नो राज्य खोज्नुहोस्", "डोनाल्ड ट्रम्प", "जो बाइडेन", "कमला ह्यारिस"],
                   explanation: "गभर्नर राज्यका प्रमुख कार्यकारी हुन्। अन्तर्वार्ताअघि आफ्नो हालका गभर्नर खोज्नुहोस् — USCIS ले तपाईंको राज्यबारे सोध्नेछ।")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [

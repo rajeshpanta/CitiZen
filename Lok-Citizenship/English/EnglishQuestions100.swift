@@ -117,7 +117,7 @@ enum EnglishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
             .init(text: "Who is one of your state's U.S. Senators now?",
-                  options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "U.S. Senators represent their state. The correct answer depends on which state you live in. Look up your two current senators at senate.gov before your interview.")
         ])
     ]
@@ -244,7 +244,7 @@ enum EnglishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
             .init(text: "Who is the Governor of your state now?",
-                  options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "The Governor is the chief executive of a state. Look up your current Governor before your interview — USCIS will ask about YOUR state.")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [

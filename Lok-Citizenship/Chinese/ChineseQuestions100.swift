@@ -228,13 +228,13 @@ enum ChineseQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
             .init(text: "Who is one of your state's U.S. Senators now?",
-                  options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Look up your two current senators before your interview."),
             .init(text: "你所在州现任美国参议员是谁？",
-                  options: ["答案因州而异——请查询您所在的州", "伊丽莎白·沃伦", "马可·卢比奥", "米奇·麦康奈尔"],
+                  options: ["答案因州而异——请查询您所在的州", "唐纳德·特朗普", "乔·拜登", "卡玛拉·哈里斯"],
                   explanation: "请在面试前查询您所在州的两位现任参议员。"),
             .init(text: "你所在州現任美國參議員是誰？",
-                  options: ["答案因州而異——請查詢您所在的州", "伊莉莎白·華倫", "馬可·盧比歐", "米奇·麥康奈爾"],
+                  options: ["答案因州而異——請查詢您所在的州", "唐納德·川普", "喬·拜登", "卡瑪拉·哈里斯"],
                   explanation: "請在面試前查詢您所在州的兩位現任參議員。")
         ])
     ]
@@ -493,13 +493,13 @@ enum ChineseQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
             .init(text: "Who is the Governor of your state now?",
-                  options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Look up your current Governor before your interview."),
             .init(text: "你所在州现任州长是谁？",
-                  options: ["答案因州而异——请查询您所在的州", "罗恩·德桑蒂斯", "加文·纽森", "格雷格·阿博特"],
+                  options: ["答案因州而异——请查询您所在的州", "唐纳德·特朗普", "乔·拜登", "卡玛拉·哈里斯"],
                   explanation: "请在面试前查询您所在州的现任州长。"),
             .init(text: "你所在州現任州長是誰？",
-                  options: ["答案因州而異——請查詢您所在的州", "朗·德桑蒂斯", "蓋文·紐森", "格雷格·艾伯特"],
+                  options: ["答案因州而異——請查詢您所在的州", "唐納德·川普", "喬·拜登", "卡瑪拉·哈里斯"],
                   explanation: "請在面試前查詢您所在州的現任州長。")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [

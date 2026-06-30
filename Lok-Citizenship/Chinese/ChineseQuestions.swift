@@ -144,13 +144,13 @@ enum ChineseQuestions {
         UnifiedQuestion(id: "q_25_119", correctAnswer: 1, variants: [
             .init(text: "What is the capital of the United States?",
                   options: ["New York City", "Washington, D.C.", "Philadelphia", "Boston"],
-                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The District of Columbia is named after Christopher Columbus."),
+                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The city is named after George Washington, and the District of Columbia after Christopher Columbus."),
             .init(text: "美国的首都是哪里？",
                   options: ["纽约市", "华盛顿哥伦比亚特区", "费城", "波士顿"],
-                  explanation: "华盛顿哥伦比亚特区自 1800 年起成为美国首都。哥伦比亚特区以克里斯托弗·哥伦布命名。"),
+                  explanation: "华盛顿哥伦比亚特区自 1800 年起一直是美国首都。该市以乔治·华盛顿命名，哥伦比亚特区以克里斯托弗·哥伦布命名。"),
             .init(text: "美國的首都是哪裡？",
                   options: ["紐約市", "華盛頓哥倫比亞特區", "費城", "波士頓"],
-                  explanation: "華盛頓哥倫比亞特區自 1800 年起成為美國首都。哥倫比亞特區以克里斯多福·哥倫布命名。")
+                  explanation: "華盛頓哥倫比亞特區自 1800 年起一直是美國首都。該市以喬治·華盛頓命名，哥倫比亞特區以克里斯多福·哥倫布命名。")
         ]),
         UnifiedQuestion(id: "q_25_121", correctAnswer: 2, variants: [
             .init(text: "Why does the flag have 13 stripes?",
@@ -764,13 +764,13 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_058", correctAnswer: 2, variants: [
             .init(text: "Name one power that is only for the federal government.",
-                  options: ["Issue driver's licenses", "Run public schools", "Declare war (or print money)", "Provide police services"],
+                  options: ["Issue driver's licenses", "Run public schools", "Declare war", "Provide police services"],
                   explanation: "Federal-only powers include declaring war, printing paper money, minting coins, creating an army, making treaties, and setting foreign policy."),
             .init(text: "请说出一项仅属于联邦政府的权力。",
-                  options: ["颁发驾驶执照", "管理公立学校", "宣战（或印制货币）", "提供警务服务"],
+                  options: ["颁发驾驶执照", "管理公立学校", "宣战", "提供警务服务"],
                   explanation: "仅属于联邦政府的权力包括宣战、印制纸币、铸造硬币、组建军队、签订条约和制定外交政策。"),
             .init(text: "請說出一項僅屬於聯邦政府的權力。",
-                  options: ["頒發駕駛執照", "管理公立學校", "宣戰（或印製貨幣）", "提供警務服務"],
+                  options: ["頒發駕駛執照", "管理公立學校", "宣戰", "提供警務服務"],
                   explanation: "僅屬於聯邦政府的權力包括宣戰、印製紙幣、鑄造硬幣、組建軍隊、簽訂條約和制定外交政策。")
         ]),
         UnifiedQuestion(id: "q_25_059", correctAnswer: 2, variants: [
@@ -786,13 +786,13 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_061", correctAnswer: 0, variants: [
             .init(text: "Who is the governor of your state now?",
-                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Gavin Newsom"],
+                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Each state has its own Governor. Look up your current Governor on your state government's website. (Territories have appointed governors; D.C. has a mayor instead.)"),
             .init(text: "您所在州现任州长是谁？",
-                  options: ["依您所在州而定", "唐纳德·特朗普", "乔·拜登", "加文·纽森"],
+                  options: ["依您所在州而定", "唐纳德·特朗普", "乔·拜登", "卡马拉·哈里斯"],
                   explanation: "每个州都有自己的州长。请在所在州政府的网站上查询现任州长。（领地的州长由任命产生；哥伦比亚特区设市长而非州长。）"),
             .init(text: "您所在州現任州長是誰？",
-                  options: ["依您所在州而定", "唐納德·川普", "喬·拜登", "加文·紐森"],
+                  options: ["依您所在州而定", "唐納德·川普", "喬·拜登", "卡馬拉·哈里斯"],
                   explanation: "每個州都有自己的州長。請在所在州政府的網站上查詢現任州長。（領地的州長由任命產生；哥倫比亞特區設市長而非州長。）")
         ]),
         UnifiedQuestion(id: "q_25_062", correctAnswer: 0, variants: [
@@ -1032,13 +1032,13 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_083", correctAnswer: 1, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "James Madison (or Hamilton, or Jay)", "George Washington", "Benjamin Franklin"],
+                  options: ["Thomas Jefferson", "James Madison", "George Washington", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by James Madison, Alexander Hamilton, and John Jay (under the pen name \"Publius\") to argue for ratifying the Constitution."),
             .init(text: "《联邦论》支持《美国宪法》的通过。请说出其作者之一。",
-                  options: ["托马斯·杰斐逊", "詹姆斯·麦迪逊（或汉密尔顿、杰伊）", "乔治·华盛顿", "本杰明·富兰克林"],
+                  options: ["托马斯·杰斐逊", "詹姆斯·麦迪逊", "乔治·华盛顿", "本杰明·富兰克林"],
                   explanation: "《联邦论》由詹姆斯·麦迪逊、亚历山大·汉密尔顿和约翰·杰伊（笔名「普布利乌斯」）撰写，旨在论证批准宪法。"),
             .init(text: "《聯邦論》支持《美國憲法》的通過。請說出其作者之一。",
-                  options: ["湯瑪士·傑佛遜", "詹姆士·麥迪森（或漢密爾頓、傑伊）", "喬治·華盛頓", "班哲明·富蘭克林"],
+                  options: ["湯瑪士·傑佛遜", "詹姆士·麥迪森", "喬治·華盛頓", "班哲明·富蘭克林"],
                   explanation: "《聯邦論》由詹姆士·麥迪森、亞歷山大·漢密爾頓和約翰·傑伊（筆名「普布利烏斯」）撰寫，旨在論證批准憲法。")
         ]),
         UnifiedQuestion(id: "q_25_084", correctAnswer: 1, variants: [
@@ -1124,13 +1124,13 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_091", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1800s.",
-                  options: ["World War I", "Civil War (or War of 1812, Mexican-American War, Spanish-American War)", "Vietnam War", "Korean War"],
+                  options: ["World War I", "Civil War", "Vietnam War", "Korean War"],
                   explanation: "Wars fought by the U.S. in the 1800s include the War of 1812, the Mexican-American War, the Civil War, and the Spanish-American War."),
             .init(text: "请说出美国在 1800 年代参与的一场战争。",
-                  options: ["第一次世界大战", "内战（或 1812 年战争、美墨战争、美西战争）", "越南战争", "朝鲜战争"],
+                  options: ["第一次世界大战", "内战", "越南战争", "朝鲜战争"],
                   explanation: "美国在 1800 年代参与的战争包括 1812 年战争、美墨战争、内战及美西战争。"),
             .init(text: "請說出美國在 1800 年代參與的一場戰爭。",
-                  options: ["第一次世界大戰", "內戰（或 1812 年戰爭、美墨戰爭、美西戰爭）", "越南戰爭", "朝鮮戰爭"],
+                  options: ["第一次世界大戰", "內戰", "越南戰爭", "朝鮮戰爭"],
                   explanation: "美國在 1800 年代參與的戰爭包括 1812 年戰爭、美墨戰爭、內戰及美西戰爭。")
         ]),
         UnifiedQuestion(id: "q_25_092", correctAnswer: 2, variants: [
@@ -1146,13 +1146,13 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_093", correctAnswer: 1, variants: [
             .init(text: "The Civil War had many important events. Name one.",
-                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg (or Emancipation Proclamation, Surrender at Appomattox)", "Construction of the Panama Canal", "The first moon landing"],
+                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg", "Construction of the Panama Canal", "The first moon landing"],
                   explanation: "Important Civil War events include the Battle of Fort Sumter, Emancipation Proclamation, Battle of Gettysburg, Sherman's March, and the Surrender at Appomattox."),
             .init(text: "内战有许多重要事件。请说出其中之一。",
-                  options: ["珍珠港事件", "葛底斯堡之战（或《解放宣言》、阿波马托克斯投降）", "巴拿马运河的建造", "首次登月"],
+                  options: ["珍珠港事件", "葛底斯堡之战", "巴拿马运河的建造", "首次登月"],
                   explanation: "内战的重要事件包括萨姆特堡之战、《解放宣言》、葛底斯堡之战、谢尔曼进军以及阿波马托克斯投降。"),
             .init(text: "內戰有許多重要事件。請說出其中之一。",
-                  options: ["珍珠港事件", "蓋茨堡之戰（或《解放宣言》、阿波馬托克斯投降）", "巴拿馬運河的建造", "首次登月"],
+                  options: ["珍珠港事件", "蓋茨堡之戰", "巴拿馬運河的建造", "首次登月"],
                   explanation: "內戰的重要事件包括薩姆特堡之戰、《解放宣言》、蓋茨堡之戰、謝爾曼進軍以及阿波馬托克斯投降。")
         ]),
         UnifiedQuestion(id: "q_25_094", correctAnswer: 1, variants: [
@@ -1212,24 +1212,24 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_117", correctAnswer: 1, variants: [
             .init(text: "Name one American Indian tribe in the United States.",
-                  options: ["The Egyptians", "Cherokee (or Navajo, Sioux, Apache, Hopi)", "The Vikings", "The Mongols"],
+                  options: ["The Egyptians", "Cherokee", "The Vikings", "The Mongols"],
                   explanation: "Recognized American Indian tribes include the Cherokee, Navajo, Sioux, Apache, Hopi, Blackfeet, Choctaw, Pueblo, and many others."),
             .init(text: "请说出一个美国的印地安人部族。",
-                  options: ["埃及人", "切罗基（或纳瓦霍、苏、阿帕奇、霍皮）", "维京人", "蒙古人"],
+                  options: ["埃及人", "切罗基", "维京人", "蒙古人"],
                   explanation: "联邦承认的印地安人部族包括切罗基、纳瓦霍、苏、阿帕奇、霍皮、黑脚、乔克陶、普埃布洛及其他许多部族。"),
             .init(text: "請說出一個美國的印地安人部族。",
-                  options: ["埃及人", "切洛基（或納瓦荷、蘇、阿帕契、賀皮）", "維京人", "蒙古人"],
+                  options: ["埃及人", "切洛基", "維京人", "蒙古人"],
                   explanation: "聯邦承認的印地安人部族包括切洛基、納瓦荷、蘇、阿帕契、賀皮、黑腳、喬克陶、普埃布洛及其他許多部族。")
         ]),
         UnifiedQuestion(id: "q_25_118", correctAnswer: 1, variants: [
             .init(text: "Name one example of an American innovation.",
-                  options: ["The wheel", "The airplane (or light bulb, automobile, skyscraper)", "Paper", "Pottery"],
+                  options: ["The wheel", "The airplane", "Paper", "Pottery"],
                   explanation: "American innovations include the light bulb (Edison), the airplane (Wright Brothers), the automobile assembly line (Ford), skyscrapers, and the integrated circuit."),
             .init(text: "请举出一例美国的创新发明。",
-                  options: ["车轮", "飞机（或灯泡、汽车、摩天大楼）", "纸张", "陶器"],
+                  options: ["车轮", "飞机", "纸张", "陶器"],
                   explanation: "美国的创新包括灯泡（爱迪生）、飞机（莱特兄弟）、汽车装配线（福特）、摩天大楼及集成电路。"),
             .init(text: "請舉出一例美國的創新發明。",
-                  options: ["車輪", "飛機（或燈泡、汽車、摩天大樓）", "紙張", "陶器"],
+                  options: ["車輪", "飛機", "紙張", "陶器"],
                   explanation: "美國的創新包括燈泡（愛迪生）、飛機（萊特兄弟）、汽車裝配線（福特）、摩天大樓及積體電路。")
         ]),
         UnifiedQuestion(id: "q_25_120", correctAnswer: 1, variants: [
@@ -1282,24 +1282,24 @@ enum ChineseQuestions {
     static let practice8: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_25_100", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1900s.",
-                  options: ["The Civil War", "World War II (or WWI, Korean War, Vietnam War, Persian Gulf War)", "American Revolution", "War of 1812"],
+                  options: ["The Civil War", "World War II", "American Revolution", "War of 1812"],
                   explanation: "U.S. wars in the 1900s include World War I, World War II, the Korean War, the Vietnam War, and the Persian Gulf War."),
             .init(text: "请说出美国在 1900 年代参与的一场战争。",
-                  options: ["内战", "第二次世界大战（或一战、朝鲜战争、越南战争、波斯湾战争）", "美国革命", "1812 年战争"],
+                  options: ["内战", "第二次世界大战", "美国革命", "1812 年战争"],
                   explanation: "美国在 1900 年代参与的战争包括第一次世界大战、第二次世界大战、朝鲜战争、越南战争及波斯湾战争。"),
             .init(text: "請說出美國在 1900 年代參與的一場戰爭。",
-                  options: ["內戰", "第二次世界大戰（或一戰、朝鮮戰爭、越南戰爭、波斯灣戰爭）", "美國革命", "1812 年戰爭"],
+                  options: ["內戰", "第二次世界大戰", "美國革命", "1812 年戰爭"],
                   explanation: "美國在 1900 年代參與的戰爭包括第一次世界大戰、第二次世界大戰、朝鮮戰爭、越南戰爭及波斯灣戰爭。")
         ]),
         UnifiedQuestion(id: "q_25_101", correctAnswer: 1, variants: [
             .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships (and to support the Allies)", "To gain new territory", "To stop the spread of communism"],
+                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships", "To gain new territory", "To stop the spread of communism"],
                   explanation: "The U.S. entered WWI in 1917 because Germany attacked U.S. civilian ships and to support the Allied Powers (England, France, Italy, and Russia)."),
             .init(text: "美国为什么加入第一次世界大战？",
-                  options: ["为支援德国", "因为德国袭击美国民用船只（并为支援协约国）", "为获取新领土", "为阻止共产主义扩张"],
+                  options: ["为支援德国", "因为德国袭击美国民用船只", "为获取新领土", "为阻止共产主义扩张"],
                   explanation: "美国于 1917 年加入第一次世界大战，因为德国袭击了美国民用船只，并为支持协约国（英国、法国、意大利和俄国）。"),
             .init(text: "美國為什麼加入第一次世界大戰？",
-                  options: ["為支援德國", "因為德國襲擊美國民用船隻（並為支援協約國）", "為獲取新領土", "為阻止共產主義擴張"],
+                  options: ["為支援德國", "因為德國襲擊美國民用船隻", "為獲取新領土", "為阻止共產主義擴張"],
                   explanation: "美國於 1917 年加入第一次世界大戰，因為德國襲擊了美國民用船隻，並為支持協約國（英國、法國、意大利和俄國）。")
         ]),
         UnifiedQuestion(id: "q_25_103", correctAnswer: 1, variants: [
@@ -1370,13 +1370,13 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_109", correctAnswer: 1, variants: [
             .init(text: "During the Cold War, what was one main concern of the United States?",
-                  options: ["Trade deficits", "Communism (and nuclear war)", "Immigration", "Energy independence"],
+                  options: ["Trade deficits", "Communism", "Immigration", "Energy independence"],
                   explanation: "Main U.S. concerns during the Cold War were the spread of communism and the threat of nuclear war between the superpowers."),
             .init(text: "冷战期间美国主要的顾虑之一是什么？",
-                  options: ["贸易赤字", "共产主义（和核战争）", "移民", "能源独立"],
+                  options: ["贸易赤字", "共产主义", "移民", "能源独立"],
                   explanation: "冷战期间美国的主要顾虑是共产主义扩张及超级大国之间的核战争威胁。"),
             .init(text: "冷戰期間美國主要的顧慮之一是什麼？",
-                  options: ["貿易赤字", "共產主義（和核戰爭）", "移民", "能源獨立"],
+                  options: ["貿易赤字", "共產主義", "移民", "能源獨立"],
                   explanation: "冷戰期間美國的主要顧慮是共產主義擴張及超級大國之間的核戰爭威脅。")
         ]),
         UnifiedQuestion(id: "q_25_110", correctAnswer: 1, variants: [
@@ -1447,13 +1447,13 @@ enum ChineseQuestions {
         ]),
         UnifiedQuestion(id: "q_25_116", correctAnswer: 2, variants: [
             .init(text: "Name one U.S. military conflict after the September 11, 2001 attacks.",
-                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan (or War in Iraq, War on Terror)", "The Civil War"],
+                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan", "The Civil War"],
                   explanation: "U.S. conflicts after 9/11 include the Global War on Terror, the War in Afghanistan (2001-2021), and the War in Iraq (2003-2011)."),
             .init(text: "请说出 2001 年 9·11 袭击事件之后美国参与的一场军事冲突。",
-                  options: ["朝鲜战争", "越南战争", "阿富汗战争（或伊拉克战争、反恐战争）", "内战"],
+                  options: ["朝鲜战争", "越南战争", "阿富汗战争", "内战"],
                   explanation: "9·11 之后美国参与的冲突包括全球反恐战争、阿富汗战争（2001-2021 年）及伊拉克战争（2003-2011 年）。"),
             .init(text: "請說出 2001 年 9·11 襲擊事件之後美國參與的一場軍事衝突。",
-                  options: ["朝鮮戰爭", "越南戰爭", "阿富汗戰爭（或伊拉克戰爭、反恐戰爭）", "內戰"],
+                  options: ["朝鮮戰爭", "越南戰爭", "阿富汗戰爭", "內戰"],
                   explanation: "9·11 之後美國參與的衝突包括全球反恐戰爭、阿富汗戰爭（2001-2021 年）及伊拉克戰爭（2003-2011 年）。")
         ])
     ]

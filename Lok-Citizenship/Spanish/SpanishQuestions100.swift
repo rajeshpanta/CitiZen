@@ -166,10 +166,10 @@ enum SpanishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_020", correctAnswer: 0, variants: [
             .init(text: "Who is one of your state's U.S. Senators now?",
-                  options: ["Answers will vary — research your state", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "The correct answer depends on which state you live in. Look up your two current senators before your interview."),
             .init(text: "¿Quién es actualmente uno de los senadores de EE. UU. de su estado?",
-                  options: ["Las respuestas variarán — investigue su estado", "Elizabeth Warren", "Marco Rubio", "Mitch McConnell"],
+                  options: ["Las respuestas variarán — investigue su estado", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "La respuesta correcta depende del estado donde vive. Busque a sus dos senadores actuales antes de su entrevista.")
         ])
     ]
@@ -362,10 +362,10 @@ enum SpanishQuestions100 {
         ]),
         UnifiedQuestion(id: "q_08_043", correctAnswer: 0, variants: [
             .init(text: "Who is the Governor of your state now?",
-                  options: ["Answers will vary — research your state", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
+                  options: ["Answers will vary — research your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Look up your current Governor before your interview."),
             .init(text: "¿Quién es actualmente el Gobernador de su estado?",
-                  options: ["Las respuestas variarán — investigue su estado", "Ron DeSantis", "Gavin Newsom", "Greg Abbott"],
+                  options: ["Las respuestas variarán — investigue su estado", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Consulte quién es su Gobernador actual antes de su entrevista.")
         ]),
         UnifiedQuestion(id: "q_08_044", correctAnswer: 0, variants: [

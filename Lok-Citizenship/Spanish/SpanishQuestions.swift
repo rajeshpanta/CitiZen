@@ -104,10 +104,10 @@ enum SpanishQuestions {
         UnifiedQuestion(id: "q_25_119", correctAnswer: 1, variants: [
             .init(text: "What is the capital of the United States?",
                   options: ["New York City", "Washington, D.C.", "Philadelphia", "Boston"],
-                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The District of Columbia is named after Christopher Columbus."),
+                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The city is named after George Washington, and the District of Columbia after Christopher Columbus."),
             .init(text: "¿Cuál es la capital de los Estados Unidos?",
                   options: ["Ciudad de Nueva York", "Washington, D. C.", "Filadelfia", "Boston"],
-                  explanation: "Washington, D. C. es la capital de EE. UU. desde 1800. El Distrito de Columbia lleva el nombre de Cristóbal Colón.")
+                  explanation: "Washington, D. C. es la capital de EE. UU. desde 1800. La ciudad lleva el nombre de George Washington, y el Distrito de Columbia, el de Cristóbal Colón.")
         ]),
         UnifiedQuestion(id: "q_25_121", correctAnswer: 2, variants: [
             .init(text: "Why does the flag have 13 stripes?",
@@ -559,10 +559,10 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_058", correctAnswer: 2, variants: [
             .init(text: "Name one power that is only for the federal government.",
-                  options: ["Issue driver's licenses", "Run public schools", "Declare war (or print money)", "Provide police services"],
+                  options: ["Issue driver's licenses", "Run public schools", "Declare war", "Provide police services"],
                   explanation: "Federal-only powers include declaring war, printing paper money, minting coins, creating an army, making treaties, and setting foreign policy."),
             .init(text: "Nombre un poder que solo corresponde al gobierno federal.",
-                  options: ["Expedir licencias de conducir", "Administrar escuelas públicas", "Declarar la guerra (o imprimir dinero)", "Proporcionar servicios policiales"],
+                  options: ["Expedir licencias de conducir", "Administrar escuelas públicas", "Declarar la guerra", "Proporcionar servicios policiales"],
                   explanation: "Los poderes exclusivamente federales incluyen declarar la guerra, imprimir papel moneda, acuñar monedas, crear un ejército, firmar tratados y fijar la política exterior.")
         ]),
         UnifiedQuestion(id: "q_25_059", correctAnswer: 2, variants: [
@@ -575,10 +575,10 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_061", correctAnswer: 0, variants: [
             .init(text: "Who is the governor of your state now?",
-                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Gavin Newsom"],
+                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Each state has its own Governor. Look up your current Governor on your state government's website. (Territories have appointed governors; D.C. has a mayor instead.)"),
             .init(text: "¿Quién es actualmente el gobernador de su estado?",
-                  options: ["Depende de su estado", "Donald Trump", "Joe Biden", "Gavin Newsom"],
+                  options: ["Depende de su estado", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Cada estado tiene su propio gobernador. Consulte quién es el gobernador actual en el sitio web del gobierno de su estado. (Los territorios tienen gobernadores designados; D. C. tiene un alcalde en su lugar.)")
         ]),
         UnifiedQuestion(id: "q_25_062", correctAnswer: 0, variants: [
@@ -755,10 +755,10 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_083", correctAnswer: 1, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "James Madison (or Hamilton, or Jay)", "George Washington", "Benjamin Franklin"],
+                  options: ["Thomas Jefferson", "James Madison", "George Washington", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by James Madison, Alexander Hamilton, and John Jay (under the pen name \"Publius\") to argue for ratifying the Constitution."),
             .init(text: "Los Documentos Federalistas apoyaron la aprobación de la Constitución de EE. UU. Nombre a uno de los autores.",
-                  options: ["Thomas Jefferson", "James Madison (o Hamilton, o Jay)", "George Washington", "Benjamin Franklin"],
+                  options: ["Thomas Jefferson", "James Madison", "George Washington", "Benjamin Franklin"],
                   explanation: "Los Documentos Federalistas fueron escritos por James Madison, Alexander Hamilton y John Jay (bajo el seudónimo «Publius») para argumentar a favor de la ratificación de la Constitución.")
         ]),
         UnifiedQuestion(id: "q_25_084", correctAnswer: 1, variants: [
@@ -823,10 +823,10 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_091", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1800s.",
-                  options: ["World War I", "Civil War (or War of 1812, Mexican-American War, Spanish-American War)", "Vietnam War", "Korean War"],
+                  options: ["World War I", "Civil War", "Vietnam War", "Korean War"],
                   explanation: "Wars fought by the U.S. in the 1800s include the War of 1812, the Mexican-American War, the Civil War, and the Spanish-American War."),
             .init(text: "Nombre una guerra librada por EE. UU. en el siglo XIX.",
-                  options: ["La Primera Guerra Mundial", "La Guerra Civil (o Guerra de 1812, Guerra México-Estadounidense, Guerra Hispano-Estadounidense)", "La Guerra de Vietnam", "La Guerra de Corea"],
+                  options: ["La Primera Guerra Mundial", "La Guerra Civil", "La Guerra de Vietnam", "La Guerra de Corea"],
                   explanation: "Entre las guerras libradas por EE. UU. en el siglo XIX se incluyen la Guerra de 1812, la Guerra México-Estadounidense, la Guerra Civil y la Guerra Hispano-Estadounidense.")
         ]),
         UnifiedQuestion(id: "q_25_092", correctAnswer: 2, variants: [
@@ -839,10 +839,10 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_093", correctAnswer: 1, variants: [
             .init(text: "The Civil War had many important events. Name one.",
-                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg (or Emancipation Proclamation, Surrender at Appomattox)", "Construction of the Panama Canal", "The first moon landing"],
+                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg", "Construction of the Panama Canal", "The first moon landing"],
                   explanation: "Important Civil War events include the Battle of Fort Sumter, Emancipation Proclamation, Battle of Gettysburg, Sherman's March, and the Surrender at Appomattox."),
             .init(text: "La Guerra Civil tuvo muchos eventos importantes. Nombre uno.",
-                  options: ["El bombardeo de Pearl Harbor", "La Batalla de Gettysburg (o la Proclamación de Emancipación, la Rendición de Appomattox)", "La construcción del Canal de Panamá", "La primera llegada a la Luna"],
+                  options: ["El bombardeo de Pearl Harbor", "La Batalla de Gettysburg", "La construcción del Canal de Panamá", "La primera llegada a la Luna"],
                   explanation: "Entre los eventos importantes de la Guerra Civil se incluyen la Batalla de Fort Sumter, la Proclamación de Emancipación, la Batalla de Gettysburg, la Marcha de Sherman y la Rendición de Appomattox.")
         ]),
         UnifiedQuestion(id: "q_25_094", correctAnswer: 1, variants: [
@@ -887,18 +887,18 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_117", correctAnswer: 1, variants: [
             .init(text: "Name one American Indian tribe in the United States.",
-                  options: ["The Egyptians", "Cherokee (or Navajo, Sioux, Apache, Hopi)", "The Vikings", "The Mongols"],
+                  options: ["The Egyptians", "Cherokee", "The Vikings", "The Mongols"],
                   explanation: "Recognized American Indian tribes include the Cherokee, Navajo, Sioux, Apache, Hopi, Blackfeet, Choctaw, Pueblo, and many others."),
             .init(text: "Nombre una tribu indígena americana de Estados Unidos.",
-                  options: ["Los egipcios", "Cherokee (o Navajo, Sioux, Apache, Hopi)", "Los vikingos", "Los mongoles"],
+                  options: ["Los egipcios", "Cherokee", "Los vikingos", "Los mongoles"],
                   explanation: "Entre las tribus indígenas americanas reconocidas se incluyen los Cherokee, Navajo, Sioux, Apache, Hopi, Blackfeet, Choctaw, Pueblo y muchos otros.")
         ]),
         UnifiedQuestion(id: "q_25_118", correctAnswer: 1, variants: [
             .init(text: "Name one example of an American innovation.",
-                  options: ["The wheel", "The airplane (or light bulb, automobile, skyscraper)", "Paper", "Pottery"],
+                  options: ["The wheel", "The airplane", "Paper", "Pottery"],
                   explanation: "American innovations include the light bulb (Edison), the airplane (Wright Brothers), the automobile assembly line (Ford), skyscrapers, and the integrated circuit."),
             .init(text: "Nombre un ejemplo de una innovación estadounidense.",
-                  options: ["La rueda", "El avión (o la bombilla, el automóvil, el rascacielos)", "El papel", "La alfarería"],
+                  options: ["La rueda", "El avión", "El papel", "La alfarería"],
                   explanation: "Entre las innovaciones estadounidenses se incluyen la bombilla (Edison), el avión (los hermanos Wright), la cadena de montaje del automóvil (Ford), los rascacielos y el circuito integrado.")
         ]),
         UnifiedQuestion(id: "q_25_120", correctAnswer: 1, variants: [
@@ -939,18 +939,18 @@ enum SpanishQuestions {
     static let practice8: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_25_100", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1900s.",
-                  options: ["The Civil War", "World War II (or WWI, Korean War, Vietnam War, Persian Gulf War)", "American Revolution", "War of 1812"],
+                  options: ["The Civil War", "World War II", "American Revolution", "War of 1812"],
                   explanation: "U.S. wars in the 1900s include World War I, World War II, the Korean War, the Vietnam War, and the Persian Gulf War."),
             .init(text: "Nombre una guerra librada por EE. UU. en el siglo XX.",
-                  options: ["La Guerra Civil", "La Segunda Guerra Mundial (o la Primera Guerra Mundial, la Guerra de Corea, la Guerra de Vietnam, la Guerra del Golfo Pérsico)", "La Revolución Americana", "La Guerra de 1812"],
+                  options: ["La Guerra Civil", "La Segunda Guerra Mundial", "La Revolución Americana", "La Guerra de 1812"],
                   explanation: "Las guerras de EE. UU. en el siglo XX incluyen la Primera Guerra Mundial, la Segunda Guerra Mundial, la Guerra de Corea, la Guerra de Vietnam y la Guerra del Golfo Pérsico.")
         ]),
         UnifiedQuestion(id: "q_25_101", correctAnswer: 1, variants: [
             .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships (and to support the Allies)", "To gain new territory", "To stop the spread of communism"],
+                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships", "To gain new territory", "To stop the spread of communism"],
                   explanation: "The U.S. entered WWI in 1917 because Germany attacked U.S. civilian ships and to support the Allied Powers (England, France, Italy, and Russia)."),
             .init(text: "¿Por qué entró Estados Unidos en la Primera Guerra Mundial?",
-                  options: ["Para ayudar a Alemania", "Porque Alemania atacó barcos civiles de EE. UU. (y para apoyar a los Aliados)", "Para ganar nuevos territorios", "Para detener la expansión del comunismo"],
+                  options: ["Para ayudar a Alemania", "Porque Alemania atacó barcos civiles de EE. UU.", "Para ganar nuevos territorios", "Para detener la expansión del comunismo"],
                   explanation: "EE. UU. entró en la Primera Guerra Mundial en 1917 porque Alemania atacó barcos civiles estadounidenses y para apoyar a las Potencias Aliadas (Inglaterra, Francia, Italia y Rusia).")
         ]),
         UnifiedQuestion(id: "q_25_103", correctAnswer: 1, variants: [
@@ -1003,10 +1003,10 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_109", correctAnswer: 1, variants: [
             .init(text: "During the Cold War, what was one main concern of the United States?",
-                  options: ["Trade deficits", "Communism (and nuclear war)", "Immigration", "Energy independence"],
+                  options: ["Trade deficits", "Communism", "Immigration", "Energy independence"],
                   explanation: "Main U.S. concerns during the Cold War were the spread of communism and the threat of nuclear war between the superpowers."),
             .init(text: "Durante la Guerra Fría, ¿cuál fue una de las principales preocupaciones de EE. UU.?",
-                  options: ["Los déficits comerciales", "El comunismo (y la guerra nuclear)", "La inmigración", "La independencia energética"],
+                  options: ["Los déficits comerciales", "El comunismo", "La inmigración", "La independencia energética"],
                   explanation: "Las principales preocupaciones de EE. UU. durante la Guerra Fría fueron la expansión del comunismo y la amenaza de una guerra nuclear entre las superpotencias.")
         ]),
         UnifiedQuestion(id: "q_25_110", correctAnswer: 1, variants: [
@@ -1059,10 +1059,10 @@ enum SpanishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_116", correctAnswer: 2, variants: [
             .init(text: "Name one U.S. military conflict after the September 11, 2001 attacks.",
-                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan (or War in Iraq, War on Terror)", "The Civil War"],
+                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan", "The Civil War"],
                   explanation: "U.S. conflicts after 9/11 include the Global War on Terror, the War in Afghanistan (2001-2021), and the War in Iraq (2003-2011)."),
             .init(text: "Nombre un conflicto militar de EE. UU. posterior a los ataques del 11 de septiembre de 2001.",
-                  options: ["La Guerra de Corea", "La Guerra de Vietnam", "La Guerra de Afganistán (o la Guerra de Irak, la Guerra contra el Terrorismo)", "La Guerra Civil"],
+                  options: ["La Guerra de Corea", "La Guerra de Vietnam", "La Guerra de Afganistán", "La Guerra Civil"],
                   explanation: "Entre los conflictos de EE. UU. tras el 11-S se incluyen la Guerra Global contra el Terrorismo, la Guerra de Afganistán (2001-2021) y la Guerra de Irak (2003-2011).")
         ])
     ]

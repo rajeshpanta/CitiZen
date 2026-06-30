@@ -71,7 +71,7 @@ enum EnglishQuestions {
         UnifiedQuestion(id: "q_25_119", correctAnswer: 1, variants: [
             .init(text: "What is the capital of the United States?",
                   options: ["New York City", "Washington, D.C.", "Philadelphia", "Boston"],
-                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The District of Columbia is named after Christopher Columbus.")
+                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The city is named after George Washington, and the District of Columbia after Christopher Columbus.")
         ]),
         UnifiedQuestion(id: "q_25_121", correctAnswer: 2, variants: [
             .init(text: "Why does the flag have 13 stripes?",
@@ -361,7 +361,7 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_058", correctAnswer: 2, variants: [
             .init(text: "Name one power that is only for the federal government.",
-                  options: ["Issue driver's licenses", "Run public schools", "Declare war (or print money)", "Provide police services"],
+                  options: ["Issue driver's licenses", "Run public schools", "Declare war", "Provide police services"],
                   explanation: "Federal-only powers include declaring war, printing paper money, minting coins, creating an army, making treaties, and setting foreign policy.")
         ]),
         UnifiedQuestion(id: "q_25_059", correctAnswer: 2, variants: [
@@ -371,7 +371,7 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_061", correctAnswer: 0, variants: [
             .init(text: "Who is the governor of your state now?",
-                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Gavin Newsom"],
+                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Each state has its own Governor. Look up your current Governor on your state government's website. (Territories have appointed governors; D.C. has a mayor instead.)")
         ]),
         UnifiedQuestion(id: "q_25_062", correctAnswer: 0, variants: [
@@ -485,7 +485,7 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_083", correctAnswer: 1, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "James Madison (or Hamilton, or Jay)", "George Washington", "Benjamin Franklin"],
+                  options: ["Thomas Jefferson", "James Madison", "George Washington", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by James Madison, Alexander Hamilton, and John Jay (under the pen name \"Publius\") to argue for ratifying the Constitution.")
         ]),
         UnifiedQuestion(id: "q_25_084", correctAnswer: 1, variants: [
@@ -529,7 +529,7 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_091", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1800s.",
-                  options: ["World War I", "Civil War (or War of 1812, Mexican-American War, Spanish-American War)", "Vietnam War", "Korean War"],
+                  options: ["World War I", "Civil War", "Vietnam War", "Korean War"],
                   explanation: "Wars fought by the U.S. in the 1800s include the War of 1812, the Mexican-American War, the Civil War, and the Spanish-American War.")
         ]),
         UnifiedQuestion(id: "q_25_092", correctAnswer: 2, variants: [
@@ -539,7 +539,7 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_093", correctAnswer: 1, variants: [
             .init(text: "The Civil War had many important events. Name one.",
-                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg (or Emancipation Proclamation, Surrender at Appomattox)", "Construction of the Panama Canal", "The first moon landing"],
+                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg", "Construction of the Panama Canal", "The first moon landing"],
                   explanation: "Important Civil War events include the Battle of Fort Sumter, Emancipation Proclamation, Battle of Gettysburg, Sherman's March, and the Surrender at Appomattox.")
         ]),
         UnifiedQuestion(id: "q_25_094", correctAnswer: 1, variants: [
@@ -569,12 +569,12 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_117", correctAnswer: 1, variants: [
             .init(text: "Name one American Indian tribe in the United States.",
-                  options: ["The Egyptians", "Cherokee (or Navajo, Sioux, Apache, Hopi)", "The Vikings", "The Mongols"],
+                  options: ["The Egyptians", "Cherokee", "The Vikings", "The Mongols"],
                   explanation: "Recognized American Indian tribes include the Cherokee, Navajo, Sioux, Apache, Hopi, Blackfeet, Choctaw, Pueblo, and many others.")
         ]),
         UnifiedQuestion(id: "q_25_118", correctAnswer: 1, variants: [
             .init(text: "Name one example of an American innovation.",
-                  options: ["The wheel", "The airplane (or light bulb, automobile, skyscraper)", "Paper", "Pottery"],
+                  options: ["The wheel", "The airplane", "Paper", "Pottery"],
                   explanation: "American innovations include the light bulb (Edison), the airplane (Wright Brothers), the automobile assembly line (Ford), skyscrapers, and the integrated circuit.")
         ]),
         UnifiedQuestion(id: "q_25_120", correctAnswer: 1, variants: [
@@ -603,12 +603,12 @@ enum EnglishQuestions {
     static let practice8: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_25_100", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1900s.",
-                  options: ["The Civil War", "World War II (or WWI, Korean War, Vietnam War, Persian Gulf War)", "American Revolution", "War of 1812"],
+                  options: ["The Civil War", "World War II", "American Revolution", "War of 1812"],
                   explanation: "U.S. wars in the 1900s include World War I, World War II, the Korean War, the Vietnam War, and the Persian Gulf War.")
         ]),
         UnifiedQuestion(id: "q_25_101", correctAnswer: 1, variants: [
             .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships (and to support the Allies)", "To gain new territory", "To stop the spread of communism"],
+                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships", "To gain new territory", "To stop the spread of communism"],
                   explanation: "The U.S. entered WWI in 1917 because Germany attacked U.S. civilian ships and to support the Allied Powers (England, France, Italy, and Russia).")
         ]),
         UnifiedQuestion(id: "q_25_103", correctAnswer: 1, variants: [
@@ -643,7 +643,7 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_109", correctAnswer: 1, variants: [
             .init(text: "During the Cold War, what was one main concern of the United States?",
-                  options: ["Trade deficits", "Communism (and nuclear war)", "Immigration", "Energy independence"],
+                  options: ["Trade deficits", "Communism", "Immigration", "Energy independence"],
                   explanation: "Main U.S. concerns during the Cold War were the spread of communism and the threat of nuclear war between the superpowers.")
         ]),
         UnifiedQuestion(id: "q_25_110", correctAnswer: 1, variants: [
@@ -678,7 +678,7 @@ enum EnglishQuestions {
         ]),
         UnifiedQuestion(id: "q_25_116", correctAnswer: 2, variants: [
             .init(text: "Name one U.S. military conflict after the September 11, 2001 attacks.",
-                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan (or War in Iraq, War on Terror)", "The Civil War"],
+                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan", "The Civil War"],
                   explanation: "U.S. conflicts after 9/11 include the Global War on Terror, the War in Afghanistan (2001-2021), and the War in Iraq (2003-2011).")
         ])
     ]

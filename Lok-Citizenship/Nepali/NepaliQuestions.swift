@@ -112,10 +112,10 @@ enum NepaliQuestions {
         UnifiedQuestion(id: "q_25_119", correctAnswer: 1, variants: [
             .init(text: "What is the capital of the United States?",
                   options: ["New York City", "Washington, D.C.", "Philadelphia", "Boston"],
-                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The District of Columbia is named after Christopher Columbus."),
+                  explanation: "Washington, D.C. has been the U.S. capital since 1800. The city is named after George Washington, and the District of Columbia after Christopher Columbus."),
             .init(text: "संयुक्त राज्य अमेरिकाको राजधानी के हो?",
                   options: ["न्यूयोर्क सहर", "वाशिङ्टन, डी.सी.", "फिलाडेल्फिया", "बोस्टन"],
-                  explanation: "वाशिङ्टन, डी.सी. १८०० देखि अमेरिकाको राजधानी रहेको छ। डिस्ट्रिक्ट अफ कोलम्बियाको नाम क्रिस्टोफर कोलम्बसको नाममा राखिएको हो।")
+                  explanation: "वाशिङ्टन, डी.सी. १८०० देखि अमेरिकाको राजधानी रहेको छ। यो सहरको नाम जर्ज वाशिङ्टनको नाममा र डिस्ट्रिक्ट अफ कोलम्बियाको नाम क्रिस्टोफर कोलम्बसको नाममा राखिएको हो।")
         ]),
         UnifiedQuestion(id: "q_25_121", correctAnswer: 2, variants: [
             .init(text: "Why does the flag have 13 stripes?",
@@ -567,10 +567,10 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_058", correctAnswer: 2, variants: [
             .init(text: "Name one power that is only for the federal government.",
-                  options: ["Issue driver's licenses", "Run public schools", "Declare war (or print money)", "Provide police services"],
+                  options: ["Issue driver's licenses", "Run public schools", "Declare war", "Provide police services"],
                   explanation: "Federal-only powers include declaring war, printing paper money, minting coins, creating an army, making treaties, and setting foreign policy."),
             .init(text: "केवल संघीय सरकारको लागि भएको एउटा शक्तिको नाम लिनुहोस्।",
-                  options: ["सवारी चालक अनुमतिपत्र जारी गर्ने", "सार्वजनिक विद्यालयहरू सञ्चालन गर्ने", "युद्ध घोषणा गर्ने (वा पैसा छाप्ने)", "प्रहरी सेवा प्रदान गर्ने"],
+                  options: ["सवारी चालक अनुमतिपत्र जारी गर्ने", "सार्वजनिक विद्यालयहरू सञ्चालन गर्ने", "युद्ध घोषणा गर्ने", "प्रहरी सेवा प्रदान गर्ने"],
                   explanation: "केवल संघीय शक्तिहरूमा युद्ध घोषणा गर्ने, कागजी मुद्रा छाप्ने, सिक्का बनाउने, सेना सिर्जना गर्ने, सन्धि बनाउने र विदेश नीति स्थापना गर्ने समावेश छन्।")
         ]),
         UnifiedQuestion(id: "q_25_059", correctAnswer: 2, variants: [
@@ -583,10 +583,10 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_061", correctAnswer: 0, variants: [
             .init(text: "Who is the governor of your state now?",
-                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Gavin Newsom"],
+                  options: ["Depends on your state", "Donald Trump", "Joe Biden", "Kamala Harris"],
                   explanation: "Each state has its own Governor. Look up your current Governor on your state government's website. (Territories have appointed governors; D.C. has a mayor instead.)"),
             .init(text: "तपाईंको राज्यका हालका गभर्नर को हुन्?",
-                  options: ["तपाईंको राज्यमा निर्भर", "डोनाल्ड ट्रम्प", "जो बाइडेन", "ग्याभिन न्युसम"],
+                  options: ["तपाईंको राज्यमा निर्भर", "डोनाल्ड ट्रम्प", "जो बाइडेन", "कमला ह्यारिस"],
                   explanation: "प्रत्येक राज्यको आफ्नै गभर्नर हुन्छ। आफ्नो राज्य सरकारको वेबसाइटमा हालका गभर्नरको जानकारी हेर्नुहोस्। (क्षेत्रहरूका गभर्नरहरू नियुक्त गरिएका हुन्छन्; डि.सी. मा गभर्नरको सट्टा मेयर हुन्छ।)")
         ]),
         UnifiedQuestion(id: "q_25_062", correctAnswer: 0, variants: [
@@ -763,10 +763,10 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_083", correctAnswer: 1, variants: [
             .init(text: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                  options: ["Thomas Jefferson", "James Madison (or Hamilton, or Jay)", "George Washington", "Benjamin Franklin"],
+                  options: ["Thomas Jefferson", "James Madison", "George Washington", "Benjamin Franklin"],
                   explanation: "The Federalist Papers were written by James Madison, Alexander Hamilton, and John Jay (under the pen name \"Publius\") to argue for ratifying the Constitution."),
             .init(text: "फेडेरलिस्ट पेपर्सले अमेरिकी संविधानको पारित हुनलाई समर्थन गरेको थियो। यसका एक लेखकको नाम लिनुहोस्।",
-                  options: ["थोमस जेफरसन", "जेम्स म्याडिसन (वा ह्यामिल्टन, वा जे)", "जर्ज वाशिंगटन", "बेन्जामिन फ्र्याङ्कलिन"],
+                  options: ["थोमस जेफरसन", "जेम्स म्याडिसन", "जर्ज वाशिंगटन", "बेन्जामिन फ्र्याङ्कलिन"],
                   explanation: "फेडेरलिस्ट पेपर्स जेम्स म्याडिसन, अलेक्जान्डर ह्यामिल्टन र जोन जेले (कलमी नाम «पब्लियस» मा) संविधान अनुमोदनको पक्षमा तर्क गर्न लेखेका थिए।")
         ]),
         UnifiedQuestion(id: "q_25_084", correctAnswer: 1, variants: [
@@ -831,10 +831,10 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_091", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1800s.",
-                  options: ["World War I", "Civil War (or War of 1812, Mexican-American War, Spanish-American War)", "Vietnam War", "Korean War"],
+                  options: ["World War I", "Civil War", "Vietnam War", "Korean War"],
                   explanation: "Wars fought by the U.S. in the 1800s include the War of 1812, the Mexican-American War, the Civil War, and the Spanish-American War."),
             .init(text: "१८०० का दशकमा अमेरिकाले लडेको एक युद्धको नाम लिनुहोस्।",
-                  options: ["पहिलो विश्वयुद्ध", "गृहयुद्ध (वा १८१२ को युद्ध, मेक्सिकन-अमेरिकी युद्ध, स्पेनिश-अमेरिकी युद्ध)", "भियतनाम युद्ध", "कोरियाली युद्ध"],
+                  options: ["पहिलो विश्वयुद्ध", "गृहयुद्ध", "भियतनाम युद्ध", "कोरियाली युद्ध"],
                   explanation: "१८०० का दशकमा अमेरिकाले लडेका युद्धहरूमा १८१२ को युद्ध, मेक्सिकन-अमेरिकी युद्ध, गृहयुद्ध र स्पेनिश-अमेरिकी युद्ध समावेश छन्।")
         ]),
         UnifiedQuestion(id: "q_25_092", correctAnswer: 2, variants: [
@@ -847,10 +847,10 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_093", correctAnswer: 1, variants: [
             .init(text: "The Civil War had many important events. Name one.",
-                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg (or Emancipation Proclamation, Surrender at Appomattox)", "Construction of the Panama Canal", "The first moon landing"],
+                  options: ["The bombing of Pearl Harbor", "The Battle of Gettysburg", "Construction of the Panama Canal", "The first moon landing"],
                   explanation: "Important Civil War events include the Battle of Fort Sumter, Emancipation Proclamation, Battle of Gettysburg, Sherman's March, and the Surrender at Appomattox."),
             .init(text: "गृहयुद्धमा धेरै महत्वपूर्ण घटनाहरू थिए। एउटाको नाम लिनुहोस्।",
-                  options: ["पर्ल हार्बरको बम विस्फोट", "गेटिसबर्गको लडाई (वा मुक्तिको घोषणा, अप्पोम्याटक्समा आत्मसमर्पण)", "पनामा नहरको निर्माण", "पहिलो चन्द्रमामा अवतरण"],
+                  options: ["पर्ल हार्बरको बम विस्फोट", "गेटिसबर्गको लडाई", "पनामा नहरको निर्माण", "पहिलो चन्द्रमामा अवतरण"],
                   explanation: "गृहयुद्धका महत्वपूर्ण घटनाहरूमा फोर्ट सम्टरको लडाई, मुक्तिको घोषणा, गेटिसबर्गको लडाई, शेर्म्यानको मार्च र अप्पोम्याटक्समा आत्मसमर्पण समावेश छन्।")
         ]),
         UnifiedQuestion(id: "q_25_094", correctAnswer: 1, variants: [
@@ -895,18 +895,18 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_117", correctAnswer: 1, variants: [
             .init(text: "Name one American Indian tribe in the United States.",
-                  options: ["The Egyptians", "Cherokee (or Navajo, Sioux, Apache, Hopi)", "The Vikings", "The Mongols"],
+                  options: ["The Egyptians", "Cherokee", "The Vikings", "The Mongols"],
                   explanation: "Recognized American Indian tribes include the Cherokee, Navajo, Sioux, Apache, Hopi, Blackfeet, Choctaw, Pueblo, and many others."),
             .init(text: "अमेरिकामा रहेको एक अमेरिकी आदिवासी जातिको नाम लिनुहोस्।",
-                  options: ["इजिप्शियनहरू", "चेरोकी (वा नाभाहो, सियु, आपाची, होपी)", "भाइकिङहरू", "मङ्गोलहरू"],
+                  options: ["इजिप्शियनहरू", "चेरोकी", "भाइकिङहरू", "मङ्गोलहरू"],
                   explanation: "मान्यता प्राप्त अमेरिकी आदिवासी जातिहरूमा चेरोकी, नाभाहो, सियु, आपाची, होपी, ब्ल्याकफिट, चोक्टा, पुएब्लो र अरू धेरै समावेश छन्।")
         ]),
         UnifiedQuestion(id: "q_25_118", correctAnswer: 1, variants: [
             .init(text: "Name one example of an American innovation.",
-                  options: ["The wheel", "The airplane (or light bulb, automobile, skyscraper)", "Paper", "Pottery"],
+                  options: ["The wheel", "The airplane", "Paper", "Pottery"],
                   explanation: "American innovations include the light bulb (Edison), the airplane (Wright Brothers), the automobile assembly line (Ford), skyscrapers, and the integrated circuit."),
             .init(text: "अमेरिकी आविष्कारको एक उदाहरणको नाम लिनुहोस्।",
-                  options: ["चक्का", "हवाइजहाज (वा बिजुलीको बत्ती, मोटरगाडी, अग्लो भवन)", "कागज", "माटोको भाँडा"],
+                  options: ["चक्का", "हवाइजहाज", "कागज", "माटोको भाँडा"],
                   explanation: "अमेरिकी आविष्कारहरूमा बिजुलीको बत्ती (एडिसन), हवाइजहाज (राइट दाजुभाइ), मोटरगाडी असेम्बली लाइन (फोर्ड), अग्ला भवनहरू र एकीकृत सर्किट समावेश छन्।")
         ]),
         UnifiedQuestion(id: "q_25_120", correctAnswer: 1, variants: [
@@ -947,18 +947,18 @@ enum NepaliQuestions {
     static let practice8: [UnifiedQuestion] = [
         UnifiedQuestion(id: "q_25_100", correctAnswer: 1, variants: [
             .init(text: "Name one war fought by the United States in the 1900s.",
-                  options: ["The Civil War", "World War II (or WWI, Korean War, Vietnam War, Persian Gulf War)", "American Revolution", "War of 1812"],
+                  options: ["The Civil War", "World War II", "American Revolution", "War of 1812"],
                   explanation: "U.S. wars in the 1900s include World War I, World War II, the Korean War, the Vietnam War, and the Persian Gulf War."),
             .init(text: "१९०० का दशकमा अमेरिकाले लडेको एक युद्धको नाम लिनुहोस्।",
-                  options: ["गृहयुद्ध", "दोस्रो विश्वयुद्ध (वा पहिलो विश्वयुद्ध, कोरियाली युद्ध, भियतनाम युद्ध, फारसी खाडी युद्ध)", "अमेरिकी क्रान्ति", "१८१२ को युद्ध"],
+                  options: ["गृहयुद्ध", "दोस्रो विश्वयुद्ध", "अमेरिकी क्रान्ति", "१८१२ को युद्ध"],
                   explanation: "१९०० का दशकमा अमेरिकाले लडेका युद्धहरूमा पहिलो विश्वयुद्ध, दोस्रो विश्वयुद्ध, कोरियाली युद्ध, भियतनाम युद्ध र फारसी खाडी युद्ध समावेश छन्।")
         ]),
         UnifiedQuestion(id: "q_25_101", correctAnswer: 1, variants: [
             .init(text: "Why did the United States enter World War I?",
-                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships (and to support the Allies)", "To gain new territory", "To stop the spread of communism"],
+                  options: ["To help Germany", "Because Germany attacked U.S. civilian ships", "To gain new territory", "To stop the spread of communism"],
                   explanation: "The U.S. entered WWI in 1917 because Germany attacked U.S. civilian ships and to support the Allied Powers (England, France, Italy, and Russia)."),
             .init(text: "अमेरिका पहिलो विश्वयुद्धमा किन सामेल भयो?",
-                  options: ["जर्मनीलाई सहयोग गर्न", "जर्मनीले अमेरिकी नागरिक जहाजहरूमा आक्रमण गरेकाले (र मित्र शक्तिहरूलाई समर्थन गर्न)", "नयाँ क्षेत्र प्राप्त गर्न", "साम्यवादको फैलावट रोक्न"],
+                  options: ["जर्मनीलाई सहयोग गर्न", "जर्मनीले अमेरिकी नागरिक जहाजहरूमा आक्रमण गरेकाले", "नयाँ क्षेत्र प्राप्त गर्न", "साम्यवादको फैलावट रोक्न"],
                   explanation: "जर्मनीले अमेरिकी नागरिक जहाजहरूमा आक्रमण गरेकाले र मित्र शक्तिहरू (बेलायत, फ्रान्स, इटाली र रूस) लाई समर्थन गर्न अमेरिका १९१७ मा पहिलो विश्वयुद्धमा सामेल भयो।")
         ]),
         UnifiedQuestion(id: "q_25_103", correctAnswer: 1, variants: [
@@ -1011,10 +1011,10 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_109", correctAnswer: 1, variants: [
             .init(text: "During the Cold War, what was one main concern of the United States?",
-                  options: ["Trade deficits", "Communism (and nuclear war)", "Immigration", "Energy independence"],
+                  options: ["Trade deficits", "Communism", "Immigration", "Energy independence"],
                   explanation: "Main U.S. concerns during the Cold War were the spread of communism and the threat of nuclear war between the superpowers."),
             .init(text: "शीतयुद्धको समयमा अमेरिकाको मुख्य चिन्ता के थियो?",
-                  options: ["व्यापार घाटा", "साम्यवाद (र आणविक युद्ध)", "आप्रवासन", "ऊर्जा स्वतन्त्रता"],
+                  options: ["व्यापार घाटा", "साम्यवाद", "आप्रवासन", "ऊर्जा स्वतन्त्रता"],
                   explanation: "शीतयुद्धको समयमा अमेरिकाका मुख्य चिन्ताहरू साम्यवादको फैलावट र महाशक्तिहरूबीचको आणविक युद्धको खतरा थिए।")
         ]),
         UnifiedQuestion(id: "q_25_110", correctAnswer: 1, variants: [
@@ -1067,10 +1067,10 @@ enum NepaliQuestions {
         ]),
         UnifiedQuestion(id: "q_25_116", correctAnswer: 2, variants: [
             .init(text: "Name one U.S. military conflict after the September 11, 2001 attacks.",
-                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan (or War in Iraq, War on Terror)", "The Civil War"],
+                  options: ["The Korean War", "The Vietnam War", "The War in Afghanistan", "The Civil War"],
                   explanation: "U.S. conflicts after 9/11 include the Global War on Terror, the War in Afghanistan (2001-2021), and the War in Iraq (2003-2011)."),
             .init(text: "सेप्टेम्बर ११, २००१ का आक्रमणपछिको एक अमेरिकी सैन्य द्वन्द्वको नाम लिनुहोस्।",
-                  options: ["कोरियाली युद्ध", "भियतनाम युद्ध", "अफगानिस्तानको युद्ध (वा इराकको युद्ध, आतंकविरुद्धको युद्ध)", "गृहयुद्ध"],
+                  options: ["कोरियाली युद्ध", "भियतनाम युद्ध", "अफगानिस्तानको युद्ध", "गृहयुद्ध"],
                   explanation: "९/११ पछिका अमेरिकी द्वन्द्वहरूमा वैश्विक आतंकविरुद्धको युद्ध, अफगानिस्तानको युद्ध (२००१-२०२१) र इराकको युद्ध (२००३-२०११) समावेश छन्।")
         ])
     ]
