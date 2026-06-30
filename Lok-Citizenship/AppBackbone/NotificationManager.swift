@@ -168,6 +168,13 @@ final class NotificationManager: ObservableObject {
         // so a lapsed streak doesn't still schedule the "don't lose your streak"
         // reminder — matching ProgressManager.currentStreak's missed-day expiry.
         let streak = ProgressManager.shared.currentStreak
+        // Whether the user already studied today — if so the streak is safe, so
+        // push the "don't lose your streak" nudge to tomorrow instead of nagging
+        // on a day they already practiced.
+        let studiedToday: Bool = {
+            guard let last = ProgressManager.shared.lastActiveDate else { return false }
+            return Calendar.current.isDateInToday(last)
+        }()
         scheduleQueue.async { [weak self] in
             guard let self else { return }
             self.center.removeAllPendingNotificationRequests()
@@ -185,7 +192,7 @@ final class NotificationManager: ObservableObject {
             // started studying — "Don't lose your streak!" before any
             // quiz session is factually wrong and will mislead new users.
             if streak >= 1 {
-                self.scheduleStreakReminder(strings: strings)
+                self.scheduleStreakReminder(strings: strings, studiedToday: studiedToday)
             }
         }
     }
@@ -224,17 +231,24 @@ final class NotificationManager: ObservableObject {
         center.add(request)
     }
 
-    nonisolated private func scheduleStreakReminder(strings: UIStrings) {
+    nonisolated private func scheduleStreakReminder(strings: UIStrings, studiedToday: Bool) {
         let content = UNMutableNotificationContent()
         content.title = strings.notifStreakTitle
         content.body = strings.notifStreakBody
         content.sound = .default
 
-        var dateComps = DateComponents()
-        dateComps.hour = 20 // 8 PM
-        dateComps.minute = 0
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComps, repeats: true)
+        // One-shot fired at the next 8 PM the streak is actually at risk. If the
+        // user already studied today (streak safe) or 8 PM has already passed,
+        // skip to tomorrow so we never nag on a day they already practiced. It is
+        // re-armed on every app launch / return to the home screen by scheduleAll().
+        let cal = Calendar.current
+        let now = Date()
+        var fire = cal.date(bySettingHour: 20, minute: 0, second: 0, of: now) ?? now
+        if studiedToday || fire <= now {
+            fire = cal.date(byAdding: .day, value: 1, to: fire) ?? fire
+        }
+        let comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
         let request = UNNotificationRequest(identifier: "citizen.streak_reminder", content: content, trigger: trigger)
         center.add(request)
     }

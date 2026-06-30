@@ -252,7 +252,7 @@ struct QuizView: View {
                     UIApplication.shared.open(url)
                 }
             }
-            Button("OK", role: .cancel) { }
+            Button(UIStrings.forLocaleCode(localeCode).resultDone, role: .cancel) { }
         }
         // Phase 2: Review-Misses push. Opens a fresh QuizView containing
         // only the wrong answers from this session. Uses `level: 0` so
@@ -585,7 +585,8 @@ private extension QuizView {
                           : "play.fill")
                         .font(.caption.bold())
                 }
-                Text(voice.isSpeaking ? "Stop" : "Listen")
+                Text(voice.isSpeaking ? UIStrings.forLocaleCode(localeCode).quizStopBtn
+                                      : UIStrings.forLocaleCode(localeCode).readingListenBtn)
                     .font(.caption.bold())
             }
             .foregroundColor(.white)

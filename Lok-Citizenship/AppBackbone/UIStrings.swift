@@ -138,6 +138,8 @@ struct UIStrings {
     let openSettings: String
     /// Settings → About section additions.
     let settingsContactSupport: String
+    /// Pre-filled subject line for the Contact Support email.
+    let settingsSupportEmailSubject: String
     let settingsRateApp: String
     /// Paywall purchase-failure copy, distinguished by cause so the
     /// user gets actionable guidance instead of a generic "try again".
@@ -290,6 +292,8 @@ struct UIStrings {
     /// "Card %d of %d"
     let practiceCardCountFormat: String
     let readingListenBtn: String
+    /// "Stop" — shown on the quiz speaker button while audio is playing.
+    let quizStopBtn: String
     let readingShowBtn: String
     let readingNextBtn: String
     let writingHeader: String
@@ -675,6 +679,7 @@ extension UIStrings {
         tryReadingPracticeBtn: "Try Reading Practice",
         openSettings: "Open Settings",
         settingsContactSupport: "Contact Support",
+        settingsSupportEmailSubject: "CitiZen App Feedback",
         settingsRateApp: "Rate CitiZen",
         paywallErrorNetwork: "Check your connection and try again.",
         paywallErrorPending: "Your purchase is waiting for approval.",
@@ -794,6 +799,7 @@ extension UIStrings {
 
         practiceCardCountFormat: "Card %d of %d",
         readingListenBtn: "Listen",
+        quizStopBtn: "Stop",
         readingShowBtn: "Show",
         readingNextBtn: "Next",
         writingHeader: "Listen and type the sentence",
@@ -1050,6 +1056,7 @@ extension UIStrings {
         tryReadingPracticeBtn: "Probar práctica de lectura",
         openSettings: "Abrir Configuración",
         settingsContactSupport: "Contactar soporte",
+        settingsSupportEmailSubject: "Comentarios sobre la app CitiZen",
         settingsRateApp: "Calificar CitiZen",
         paywallErrorNetwork: "Revisa tu conexión e intenta de nuevo.",
         paywallErrorPending: "Tu compra está esperando aprobación.",
@@ -1169,6 +1176,7 @@ extension UIStrings {
 
         practiceCardCountFormat: "Tarjeta %d de %d",
         readingListenBtn: "Escuchar",
+        quizStopBtn: "Detener",
         readingShowBtn: "Mostrar",
         readingNextBtn: "Siguiente",
         writingHeader: "Escucha y escribe la oración",
@@ -1425,6 +1433,7 @@ extension UIStrings {
         tryReadingPracticeBtn: "पढाइ अभ्यास प्रयास गर्नुहोस्",
         openSettings: "सेटिङ्स खोल्नुहोस्",
         settingsContactSupport: "सहायता सम्पर्क",
+        settingsSupportEmailSubject: "CitiZen एप प्रतिक्रिया",
         settingsRateApp: "CitiZen लाई मूल्याङ्कन गर्नुहोस्",
         paywallErrorNetwork: "तपाईंको इन्टरनेट जाँच गरेर फेरि प्रयास गर्नुहोस्।",
         paywallErrorPending: "तपाईंको खरिद अनुमोदनको पर्खाइमा छ।",
@@ -1544,6 +1553,7 @@ extension UIStrings {
 
         practiceCardCountFormat: "कार्ड %d / %d",
         readingListenBtn: "सुन्नुहोस्",
+        quizStopBtn: "रोक्नुहोस्",
         readingShowBtn: "देखाउनुहोस्",
         readingNextBtn: "अर्को",
         writingHeader: "वाक्य सुन्नुहोस् र टाइप गर्नुहोस्",
@@ -1800,6 +1810,7 @@ extension UIStrings {
         tryReadingPracticeBtn: "试试阅读练习",
         openSettings: "打开设置",
         settingsContactSupport: "联系支持",
+        settingsSupportEmailSubject: "CitiZen 应用反馈",
         settingsRateApp: "评价 CitiZen",
         paywallErrorNetwork: "请检查网络连接后重试。",
         paywallErrorPending: "你的购买正在等待批准。",
@@ -1919,6 +1930,7 @@ extension UIStrings {
 
         practiceCardCountFormat: "第 %d 张 / 共 %d 张",
         readingListenBtn: "聆听",
+        quizStopBtn: "停止",
         readingShowBtn: "显示",
         readingNextBtn: "下一个",
         writingHeader: "听句子并输入",

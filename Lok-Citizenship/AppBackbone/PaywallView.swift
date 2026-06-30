@@ -484,6 +484,8 @@ struct PaywallView: View {
                         Text(title)
                             .font(.headline)
                             .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                         if let badge {
                             Text(badge)
                                 .font(.system(size: 9, weight: .bold))

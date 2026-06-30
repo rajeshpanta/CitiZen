@@ -203,7 +203,7 @@ struct SettingsView: View {
                 // Pre-fills subject so inbound tickets are easier
                 // to triage.
                 Button(s.settingsContactSupport) {
-                    let subject = "CitiZen App Feedback"
+                    let subject = s.settingsSupportEmailSubject
                     let encoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject
                     if let url = URL(string: "mailto:support@citizenapp.us?subject=\(encoded)") {
                         openURL(url)

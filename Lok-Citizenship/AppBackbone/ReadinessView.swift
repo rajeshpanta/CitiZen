@@ -181,7 +181,7 @@ struct ReadinessView: View {
         let levelColor = colors[safe: level] ?? .gray
 
         return HStack(spacing: 12) {
-            Text("L\(level)")
+            Text("\(level)")
                 .font(.caption.bold())
                 .foregroundColor(levelColor)
                 .frame(width: 28)

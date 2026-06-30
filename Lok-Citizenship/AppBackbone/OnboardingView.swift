@@ -1809,7 +1809,7 @@ private struct OnboardingMasterView: View {
             Text(title)
                 .font(.subheadline.bold())
                 .foregroundColor(.white)
-                .lineLimit(1)
+                .lineLimit(2)
                 .minimumScaleFactor(0.85)
             Spacer()
         }

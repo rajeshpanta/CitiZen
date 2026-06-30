@@ -59,6 +59,9 @@ struct InterviewChecklistView: View {
             }
         }
         .navigationTitle(s.navInterviewChecklist)
+        // The rest of the app is dark-themed; without this the checklist renders
+        // as a light List in Light Mode and the force-white nav title vanishes.
+        .preferredColorScheme(.dark)
     }
 
     private func toggle(_ id: String) {

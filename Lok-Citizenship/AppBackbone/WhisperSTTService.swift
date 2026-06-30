@@ -134,6 +134,32 @@ final class WhisperSTTService: NSObject, SpeechToTextService {
         "bye.",
         "okay",
         "ok",
+        // Spanish silence hallucinations (Whisper is told the language, so its
+        // "silence" output comes back as that language's training-data boilerplate).
+        "gracias",
+        "gracias.",
+        "gracias por ver",
+        "gracias por ver el video",
+        "gracias por ver el video.",
+        "¡gracias por ver el video!",
+        "subtítulos realizados por la comunidad de amara.org",
+        "subtítulos por la comunidad de amara.org",
+        // Chinese silence hallucinations (Simplified + Traditional)
+        "谢谢观看",
+        "谢谢观看。",
+        "谢谢大家观看",
+        "请订阅",
+        "请点赞订阅",
+        "字幕由amara.org社区提供",
+        "謝謝觀看",
+        "謝謝觀看。",
+        "請訂閱",
+        "請按讚訂閱",
+        "字幕由amara.org社群提供",
+        // Nepali / Hindi silence hallucinations
+        "धन्यवाद",
+        "धन्यवाद।",
+        "नमस्ते",
     ]
 
     private static func isWhisperHallucination(_ text: String) -> Bool {

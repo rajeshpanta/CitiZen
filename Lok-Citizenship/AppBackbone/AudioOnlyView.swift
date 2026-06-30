@@ -405,6 +405,11 @@ struct AudioOnlyView: View {
                 // pool size — full-pool means "every question once, in
                 // shuffled order."
                 quizLogic.startAudioOnly(from: pool, questionCount: pickedLength.rawValue)
+                // Audio-Only is a hands-free STUDY mode: a speech-recognition miss
+                // (false negative) must never downgrade real progress. Treat it as
+                // non-scoring, like the onboarding placement quiz. The in-session
+                // Review-Missed sheet still works off the session-local answerLog.
+                quizLogic.tracksProgress = false
                 didAnnounceFinish = false
                 stage = .session
                 voice.start()
@@ -627,6 +632,10 @@ struct AudioOnlyView: View {
                         RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.10))
                     )
                 }
+                // Only meaningful when there were misses; on a perfect run this
+                // would just open the empty "nothing missed" sheet.
+                .disabled(quizLogic.answerLog.allSatisfy { $0.isCorrect })
+                .opacity(quizLogic.answerLog.allSatisfy { $0.isCorrect } ? 0.4 : 1)
 
                 Button {
                     dismiss()
